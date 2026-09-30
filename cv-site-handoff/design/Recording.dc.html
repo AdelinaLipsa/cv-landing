@@ -1,0 +1,226 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Build mode, the tour</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Anybody:wdth,wght@50..150,400..900&amp;family=Figtree:wght@400;500;600;700&amp;family=Tinos:wght@400;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;font-family:'Figtree',system-ui,sans-serif}
+@keyframes caret{0%,49%{opacity:1}50%,100%{opacity:0}}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; position: relative; overflow: hidden; background: #F7F6FB; font-family: 'Figtree', system-ui, sans-serif">
+
+<div style="{{ trackStyle }}">
+
+<div style="{{ homeStyle }}">
+<sc-if value="{{ is2003 }}" hint-placeholder-val="{{ false }}">
+<p style="position: absolute; left: 24px; top: 116px; margin: 0; font-family: Tinos, serif; font-size: 14px; font-weight: 700; color: #CC0000">Under construction. Please come back soon!</p>
+</sc-if>
+<div style="{{ portraitStyle }}">[photo]</div>
+<h1 style="{{ h1Style }}">Adelina Lipșa</h1>
+<p style="{{ roleStyle }}">Technical Product Owner. Full-stack developer before that.</p>
+<button type="button" onClick="{{ startStop }}" style="{{ btnStyle }}">{{ btnLabel }}</button>
+<div style="{{ tileAStyle }}">Param Decoder</div>
+<div style="{{ tileBStyle }}">Payment success held</div>
+<sc-if value="{{ is2003 }}" hint-placeholder-val="{{ false }}">
+<p style="position: absolute; left: 24px; top: 636px; margin: 0; font-family: Tinos, serif; font-size: 13px; color: #555555">You are visitor 000042. Best viewed at 800 × 600.</p>
+</sc-if>
+</div>
+
+<div style="width: 390px; height: 844px; flex-shrink: 0; position: relative">
+<h2 style="position: absolute; left: 24px; top: 150px; margin: 0; font-family: 'Anybody', sans-serif; font-weight: 700; font-stretch: 125%; font-size: 26px; letter-spacing: -0.03em; color: #17153A">Things that didn’t exist</h2>
+<div style="position: absolute; left: 24px; top: 230px; width: 162px; height: 220px; border-radius: 18px; background: #17153A; color: #F7F6FB; box-sizing: border-box; padding: 14px; display: flex; align-items: flex-end; font-size: 14px; font-weight: 600">Param Decoder</div>
+<div style="position: absolute; left: 204px; top: 262px; width: 162px; height: 160px; border-radius: 18px; background: #FFFFFF; border: 1px solid #E2E0EF; color: #17153A; box-sizing: border-box; padding: 14px; display: flex; align-items: flex-end; font-size: 14px; font-weight: 600">Checkout change log</div>
+<div style="position: absolute; left: 24px; top: 500px; width: 342px; height: 150px; border-radius: 18px; background: #FFFFFF; border: 1px solid #E2E0EF; box-sizing: border-box; padding: 16px; display: flex; flex-direction: column; justify-content: space-between">
+<span style="font-size: 12px; color: #6B6990">Payment success, June to August</span>
+<span style="height: 2px; background: #3355FF"></span>
+<span style="font-size: 14px; font-weight: 600; color: #17153A">Held at 43–45%, so the drop sat before payment</span>
+</div>
+</div>
+
+<div style="width: 390px; height: 844px; flex-shrink: 0; position: relative; color: #17153A">
+<h2 style="position: absolute; left: 24px; top: 150px; margin: 0; font-family: 'Anybody', sans-serif; font-weight: 700; font-stretch: 125%; font-size: 26px; letter-spacing: -0.03em">Career</h2>
+<div style="position: absolute; left: 38px; top: 236px; width: 4px; height: 390px; border-radius: 2px; background: #F5B53F"></div>
+<div style="position: absolute; left: 62px; top: 296px; width: 4px; height: 100px; border-radius: 2px; background: #EE6E9F"></div>
+<div style="position: absolute; left: 40px; top: 394px; width: 24px; height: 4px; background: #EE6E9F"></div>
+<div style="position: absolute; left: 90px; top: 228px; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 15px; font-weight: 700">Still shipping</span><span style="font-size: 13px; color: #6B6990">Internal tools, 2025 to now</span></div>
+<div style="position: absolute; left: 90px; top: 288px; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 15px; font-weight: 700">Yomali</span><span style="font-size: 13px; color: #6B6990">Technical Product Owner</span></div>
+<div style="position: absolute; left: 90px; top: 346px; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 15px; font-weight: 700">SiteRocket Labs</span><span style="font-size: 13px; color: #6B6990">Technical Project Manager</span></div>
+<div style="position: absolute; left: 90px; top: 440px; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 15px; font-weight: 700">Ubisoft</span><span style="font-size: 13px; color: #6B6990">Web Developer</span></div>
+<div style="position: absolute; left: 90px; top: 500px; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 15px; font-weight: 700">Fabel X</span><span style="font-size: 13px; color: #6B6990">Full-Stack Developer, Tech Lead</span></div>
+<div style="position: absolute; left: 90px; top: 560px; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 15px; font-weight: 700">Innovational, AgroCity.eu</span><span style="font-size: 13px; color: #6B6990">Full-Stack Developer</span></div>
+</div>
+
+<div style="width: 390px; height: 844px; flex-shrink: 0; position: relative; color: #17153A">
+<h2 style="position: absolute; left: 24px; top: 150px; margin: 0; font-family: 'Anybody', sans-serif; font-weight: 700; font-stretch: 125%; font-size: 26px; letter-spacing: -0.03em">The whole stack</h2>
+<div style="position: absolute; left: 24px; top: 220px; width: 342px; height: 60px; border-radius: 16px; background: #17153A; box-shadow: 0 5px 0 #0B0A22; box-sizing: border-box; padding: 0 16px; display: flex; align-items: center; justify-content: space-between"><span style="font-family: 'Anybody', sans-serif; font-weight: 800; font-size: 15px; color: #F5B53F">Product</span><span style="font-size: 13px; color: #D9D8EC">PRDs, delivery, team</span></div>
+<div style="position: absolute; left: 24px; top: 296px; width: 342px; height: 56px; border-radius: 16px; background: #FFFFFF; border: 1px solid #DCDAEC; box-shadow: 0 5px 0 #DCDAEC; box-sizing: border-box; padding: 0 16px; display: flex; align-items: center; justify-content: space-between"><span style="font-family: 'Anybody', sans-serif; font-weight: 800; font-size: 15px">Frontend</span><span style="font-size: 13px; color: #6B6990">Vue, React, Next.js</span></div>
+<div style="position: absolute; left: 24px; top: 368px; width: 342px; height: 56px; border-radius: 16px; background: #FFFFFF; border: 1px solid #DCDAEC; box-shadow: 0 5px 0 #DCDAEC; box-sizing: border-box; padding: 0 16px; display: flex; align-items: center; justify-content: space-between"><span style="font-family: 'Anybody', sans-serif; font-weight: 800; font-size: 15px">Backend</span><span style="font-size: 13px; color: #6B6990">PHP, Laravel, Python</span></div>
+<div style="position: absolute; left: 24px; top: 440px; width: 342px; height: 56px; border-radius: 16px; background: #FFFFFF; border: 1px solid #DCDAEC; box-shadow: 0 5px 0 #DCDAEC; box-sizing: border-box; padding: 0 16px; display: flex; align-items: center; justify-content: space-between"><span style="font-family: 'Anybody', sans-serif; font-weight: 800; font-size: 15px">Data</span><span style="font-size: 13px; color: #6B6990">SQL, Datadog, Kibana</span></div>
+<div style="position: absolute; left: 24px; top: 512px; width: 342px; height: 56px; border-radius: 16px; background: #FFFFFF; border: 1px solid #DCDAEC; box-shadow: 0 5px 0 #DCDAEC; box-sizing: border-box; padding: 0 16px; display: flex; align-items: center; justify-content: space-between"><span style="font-family: 'Anybody', sans-serif; font-weight: 800; font-size: 15px">Infra</span><span style="font-size: 13px; color: #6B6990">Docker, Kubernetes, AWS</span></div>
+</div>
+
+</div>
+
+<div style="{{ outlineStyle }}"></div>
+<span style="{{ outlineLabelStyle }}">{{ outlineLabel }}</span>
+
+<div style="{{ bubbleStyle }}">{{ typed }}<span style="display: inline-block; width: 2px; height: 17px; margin-left: 2px; vertical-align: -3px; background: #F7F6FB; animation: caret 1s infinite"></span></div>
+
+<div style="{{ cursorStyle }}"><svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 2.5 19.5 12l-6.8 1.6L9.3 20z" fill="#3355FF" stroke="#FFFFFF" stroke-width="1.6" stroke-linejoin="round"></path></svg></div>
+
+<div style="{{ frameStyle }}"></div>
+
+<div style="{{ notchStyle }}">
+<div style="display: flex; align-items: center; gap: 4px">
+<button type="button" onClick="{{ prev }}" aria-label="Previous step" style="width: 36px; height: 40px; border: 0; background: transparent; cursor: pointer; display: flex; align-items: center; justify-content: center"><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M12 3.5 5.5 8 12 12.5z" fill="#FFFFFF"></path><rect x="3" y="3.5" width="2" height="9" rx="1" fill="#FFFFFF"></rect></svg></button>
+<button type="button" onClick="{{ toggle }}" aria-label="{{ toggleLabel }}" style="width: 40px; height: 40px; border: 0; border-radius: 50%; background: rgba(255,255,255,0.22); cursor: pointer; display: flex; align-items: center; justify-content: center">
+<sc-if value="{{ playing }}" hint-placeholder-val="{{ true }}"><svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><rect x="3.5" y="2.5" width="3" height="11" rx="1" fill="#FFFFFF"></rect><rect x="9.5" y="2.5" width="3" height="11" rx="1" fill="#FFFFFF"></rect></svg></sc-if>
+<sc-if value="{{ paused }}" hint-placeholder-val="{{ false }}"><svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><path d="M4.5 3.2 13 8l-8.5 4.8z" fill="#FFFFFF"></path></svg></sc-if>
+</button>
+<button type="button" onClick="{{ next }}" aria-label="Next step" style="width: 36px; height: 40px; border: 0; background: transparent; cursor: pointer; display: flex; align-items: center; justify-content: center"><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 3.5 10.5 8 4 12.5z" fill="#FFFFFF"></path><rect x="11" y="3.5" width="2" height="9" rx="1" fill="#FFFFFF"></rect></svg></button>
+<span style="display: flex; flex-direction: column; margin-left: 6px; min-width: 76px"><span style="font-size: 15px; font-weight: 700; color: #FFFFFF">{{ stepTitle }}</span><span style="font-size: 12px; color: #DCE3FF">{{ stepCount }}</span></span>
+<button type="button" onClick="{{ cycleSpeed }}" aria-label="Change speed" style="height: 32px; padding: 0 10px; margin-left: auto; border: 0; border-radius: 999px; background: rgba(255,255,255,0.18); color: #FFFFFF; font: 700 12px Figtree, sans-serif; cursor: pointer">{{ speedLabel }}</button>
+<button type="button" onClick="{{ close }}" aria-label="Close the tour" style="width: 36px; height: 40px; border: 0; background: transparent; cursor: pointer; display: flex; align-items: center; justify-content: center"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"></path></svg></button>
+</div>
+<span style="display: block; height: 3px; border-radius: 2px; background: rgba(255,255,255,0.25); overflow: hidden"><span style="{{ progressStyle }}"></span></span>
+</div>
+
+<nav aria-label="Primary" style="position: absolute; left: 35px; bottom: 22px; width: 320px; height: 50px; box-sizing: border-box; padding: 5px; border-radius: 999px; background: rgba(255,255,255,0.86); border: 1px solid rgba(23,21,58,0.07); box-shadow: 0 12px 32px rgba(23,21,58,0.12); display: grid; grid-template-columns: repeat(4, minmax(0, 1fr))">
+<span style="{{ pillStyle }}"></span>
+<sc-for list="{{ tabs }}" as="tab" hint-placeholder-count="4">
+<button type="button" onClick="{{ tab.go }}" style="{{ tab.style }}">{{ tab.label }}</button>
+</sc-for>
+</nav>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { active: false, playing: false, step: 0, st: 0, speed: 1, pane: 0 };
+  }
+  steps() {
+    return [
+      { title: '2003', era: 0, pane: 0, box: [16, 258, 330, 52], label: 'h1, Times, 2003', cur: [230, 292], say: 'This is my CV the way it would have looked in 2003. Please sign the guestbook.' },
+      { title: '2010', era: 1, pane: 0, box: [16, 384, 236, 62], label: 'button, glossy', cur: [180, 420], say: 'Then everything got glossy. The buttons looked edible.' },
+      { title: '2016', era: 2, pane: 0, box: [16, 462, 358, 166], label: 'cards, flat', cur: [290, 548], say: 'Then flat. We deleted every shadow, then quietly missed them.' },
+      { title: 'Now', era: 3, pane: 0, box: [16, 142, 112, 112], label: '96 × 96, radius 28', cur: [112, 214], say: 'And now it exists. Let me walk you round.' },
+      { title: 'Home', era: 3, pane: 0, box: [16, 384, 236, 62], label: 'the button that started this', cur: [196, 424], say: 'Every button here moves the whole page. Watch.' },
+      { title: 'Work', era: 3, pane: 1, box: [16, 222, 178, 236], label: 'Built', cur: [130, 330], say: 'Things that didn’t exist until somebody got annoyed enough. Usually me.' },
+      { title: 'Work', era: 3, pane: 1, box: [16, 492, 358, 166], label: 'Analysed', cur: [300, 590], say: 'Not everything I make is code. Sometimes it’s the answer to a question.' },
+      { title: 'Career', era: 3, pane: 2, box: [22, 220, 44, 420], label: 'dev, 2020 to now', cur: [54, 470], say: 'Four years writing code, then product. The dev branch never got deleted.' },
+      { title: 'Skills', era: 3, pane: 3, box: [16, 212, 358, 76], label: 'the job now', cur: [300, 256], say: 'The top layer is the job. The rest is why my specs are good. That’s the tour.' }
+    ].map((s) => ({ ...s, dur: 3 + s.say.length / 20 }));
+  }
+  componentDidMount() {
+    this.timer = setInterval(() => {
+      if (!this.state.active || !this.state.playing) return;
+      const steps = this.steps();
+      const st = this.state.st + 0.05 * this.state.speed;
+      if (st < steps[this.state.step].dur) { this.setState({ st: st }); return; }
+      if (this.state.step < steps.length - 1) { this.setState({ step: this.state.step + 1, st: 0 }); }
+      else { this.setState({ playing: false, st: steps[this.state.step].dur }); }
+    }, 50);
+  }
+  componentWillUnmount() { clearInterval(this.timer); }
+  renderVals() {
+    const steps = this.steps();
+    const a = this.state.active;
+    const s = steps[this.state.step];
+    const era = a ? s.era : 3;
+    const pane = a ? s.pane : this.state.pane;
+    const E = 'cubic-bezier(0.65, 0, 0.35, 1)';
+    const T = 'transition: all 1.8s ' + E + ';';
+    const G = 'transition: all 1.5s ' + E + ';';
+    const eras = [
+      { bg: '#FFFFFF', font: 'Tinos, Times New Roman, serif',
+        portrait: 'border-radius: 0px; background: #FFFFFF; border: 1px solid #000000; box-shadow: none; color: #000000;',
+        h1: 'font-size: 28px; font-weight: 700; color: #000000; letter-spacing: 0em;',
+        role: 'color: #000000;',
+        btn: 'background: #EFEFEF; color: #000000; border: 2px outset #CFCFCF; border-radius: 0px; box-shadow: none;',
+        tA: 'background: #FFFFFF; border: 2px dashed #3355FF; border-radius: 0px; box-shadow: none; color: #3355FF; text-decoration: underline;',
+        tB: 'background: #FFFFFF; border: 2px dashed #3355FF; border-radius: 0px; box-shadow: none; color: #3355FF; text-decoration: underline;' },
+      { bg: '#E6EEF8', font: 'Arial, Helvetica, sans-serif',
+        portrait: 'border-radius: 8px; background: #C9D6E8; border: 3px solid #FFFFFF; box-shadow: 0 3px 8px rgba(0,0,0,0.3); color: #44556B;',
+        h1: 'font-size: 30px; font-weight: 700; color: #1F3A5F; letter-spacing: 0em;',
+        role: 'color: #44556B;',
+        btn: 'background: #3B7DDD; color: #FFFFFF; border: 1px solid #2A5DA8; border-radius: 8px; box-shadow: inset 0 1px 0 rgba(255,255,255,0.55), 0 3px 6px rgba(31,58,95,0.3);',
+        tA: 'background: #FFFFFF; border: 1px solid #C9D6E8; border-radius: 10px; box-shadow: 0 4px 10px rgba(31,58,95,0.22); color: #1F3A5F; text-decoration: none;',
+        tB: 'background: #FFFFFF; border: 1px solid #C9D6E8; border-radius: 10px; box-shadow: 0 4px 10px rgba(31,58,95,0.22); color: #1F3A5F; text-decoration: none;' },
+      { bg: '#FFFFFF', font: 'Figtree, sans-serif',
+        portrait: 'border-radius: 48px; background: #EEEEEE; border: 1px solid #EEEEEE; box-shadow: none; color: #666666;',
+        h1: 'font-size: 32px; font-weight: 500; color: #222222; letter-spacing: 0em;',
+        role: 'color: #666666;',
+        btn: 'background: #3355FF; color: #FFFFFF; border: 1px solid #3355FF; border-radius: 2px; box-shadow: none;',
+        tA: 'background: #FFFFFF; border: 1px solid #FFFFFF; border-radius: 2px; box-shadow: 0 2px 6px rgba(0,0,0,0.16); color: #222222; text-decoration: none;',
+        tB: 'background: #FFFFFF; border: 1px solid #FFFFFF; border-radius: 2px; box-shadow: 0 2px 6px rgba(0,0,0,0.16); color: #222222; text-decoration: none;' },
+      { bg: '#F7F6FB', font: 'Figtree, sans-serif',
+        portrait: 'border-radius: 28px; background: #E6E4F2; border: 1px solid #E6E4F2; box-shadow: none; color: #6B6990;',
+        h1: 'font-family: Anybody, sans-serif; font-stretch: 125%; font-size: 36px; font-weight: 700; color: #17153A; letter-spacing: -0.03em;',
+        role: 'color: #6B6990;',
+        btn: 'background: #17153A; color: #F7F6FB; border: 1px solid #17153A; border-radius: 23px; box-shadow: 0 10px 24px rgba(23,21,58,0.18);',
+        tA: 'background: #17153A; border: 1px solid #17153A; border-radius: 20px; box-shadow: none; color: #F7F6FB; text-decoration: none;',
+        tB: 'background: #FFFFFF; border: 1px solid #E2E0EF; border-radius: 20px; box-shadow: none; color: #17153A; text-decoration: none;' }
+    ];
+    const e = eras[era];
+    const finished = this.state.step === steps.length - 1 && this.state.st >= s.dur;
+    const onHold = a && !this.state.playing && !finished;
+    const typed = onHold ? 'Presentation paused.' : s.say.slice(0, Math.floor(this.state.st * 28));
+    const total = steps.reduce((n, x) => n + x.dur, 0);
+    const done = steps.slice(0, this.state.step).reduce((n, x) => n + x.dur, 0) + this.state.st;
+    const bubX = Math.min(Math.max(s.cur[0] + 6, 12), 390 - 266 - 12);
+    const bubY = s.cur[1] + 110 > 760 ? s.cur[1] - 104 : s.cur[1] + 26;
+    const vis = (on) => 'opacity: ' + (on ? '1' : '0') + ';';
+    const speeds = [0.5, 1, 1.5, 2];
+    return {
+      trackStyle: 'position: absolute; left: 0; top: 0; width: 1560px; height: 844px; display: flex; transition: transform 1.8s ' + E + '; transform: translateX(' + (-pane * 390) + 'px);',
+      homeStyle: 'width: 390px; height: 844px; flex-shrink: 0; position: relative; font-family: ' + e.font + '; ' + T + 'background: ' + e.bg + ';',
+      is2003: era === 0,
+      portraitStyle: 'position: absolute; left: 24px; top: 150px; width: 96px; height: 96px; box-sizing: border-box; display: flex; align-items: center; justify-content: center; font-size: 13px; ' + T + e.portrait,
+      h1Style: 'position: absolute; left: 24px; top: 262px; margin: 0; line-height: 1.1; white-space: nowrap; ' + T + e.h1,
+      roleStyle: 'position: absolute; left: 24px; top: 314px; width: 330px; margin: 0; font-size: 16px; line-height: 1.45; ' + T + e.role,
+      btnStyle: 'position: absolute; left: 24px; top: 392px; height: 46px; padding: 0 20px; font: inherit; font-size: 15px; font-weight: 600; cursor: pointer; ' + T + e.btn,
+      btnLabel: a ? 'Stop the build' : 'Watch me build it',
+      tileAStyle: 'position: absolute; left: 24px; top: 470px; width: 162px; height: 150px; box-sizing: border-box; padding: 12px; display: flex; align-items: flex-end; font-size: 14px; font-weight: 600; ' + T + e.tA,
+      tileBStyle: 'position: absolute; left: 204px; top: 470px; width: 162px; height: 150px; box-sizing: border-box; padding: 12px; display: flex; align-items: flex-end; font-size: 14px; font-weight: 600; ' + T + e.tB,
+      outlineStyle: 'position: absolute; pointer-events: none; border: 1.5px dashed #3355FF; border-radius: 14px; box-sizing: border-box; ' + G + vis(a) + ' left: ' + s.box[0] + 'px; top: ' + s.box[1] + 'px; width: ' + s.box[2] + 'px; height: ' + s.box[3] + 'px;',
+      outlineLabel: s.label,
+      outlineLabelStyle: 'position: absolute; pointer-events: none; font-size: 11px; font-weight: 600; color: #3355FF; white-space: nowrap; ' + G + vis(a) + ' left: ' + (s.box[0] + 4) + 'px; top: ' + (s.box[1] - 18) + 'px;',
+      typed: typed,
+      bubbleStyle: 'position: absolute; pointer-events: none; width: 266px; box-sizing: border-box; padding: 12px 14px; border-radius: 4px 16px 16px 16px; background: #3355FF; color: #F7F6FB; font-size: 15px; line-height: 1.45; box-shadow: 0 14px 30px rgba(51,85,255,0.3); ' + G + vis(a) + ' left: ' + bubX + 'px; top: ' + bubY + 'px; transform: translateY(' + (a ? '0px' : '14px') + ');',
+      cursorStyle: 'position: absolute; pointer-events: none; ' + G + vis(a) + ' left: ' + s.cur[0] + 'px; top: ' + s.cur[1] + 'px;',
+      frameStyle: 'position: absolute; inset: 0; pointer-events: none; transition: box-shadow 1.6s ' + E + '; box-shadow: inset 0 0 0 ' + (a ? '5px' : '0px') + ' #3355FF, inset 0 0 ' + (a ? '36px' : '0px') + ' rgba(51,85,255,0.22);',
+      notchStyle: 'position: absolute; left: 35px; top: 0; width: 320px; box-sizing: border-box; padding: 10px 10px 12px; display: flex; flex-direction: column; gap: 8px; border-radius: 0 0 24px 24px; background: #3355FF; transition: transform 1.4s ' + E + '; transform: translateY(' + (a ? '0px' : '-110px') + ');',
+      playing: this.state.playing,
+      paused: !this.state.playing,
+      toggleLabel: this.state.playing ? 'Pause' : 'Play',
+      toggle: () => finished ? this.setState({ step: 0, st: 0, playing: true }) : this.setState({ playing: !this.state.playing }),
+      prev: () => this.setState({ step: Math.max(0, this.state.step - 1), st: 0 }),
+      next: () => this.setState({ step: Math.min(steps.length - 1, this.state.step + 1), st: 0 }),
+      stepTitle: s.title,
+      stepCount: (this.state.step + 1) + ' of ' + steps.length,
+      speedLabel: this.state.speed + '×',
+      cycleSpeed: () => this.setState({ speed: speeds[(speeds.indexOf(this.state.speed) + 1) % speeds.length] }),
+      close: () => this.setState({ active: false, playing: false, pane: s.pane }),
+      startStop: () => a ? this.setState({ active: false, playing: false, pane: s.pane }) : this.setState({ active: true, playing: true, step: 0, st: 0 }),
+      progressStyle: 'display: block; height: 3px; border-radius: 2px; background: #FFFFFF; transition: width 0.1s linear; width: ' + (100 * done / total) + '%;',
+      pillStyle: 'position: absolute; left: 5px; top: 5px; width: 77.5px; height: 40px; border-radius: 999px; background: #17153A; transition: transform 1.8s ' + E + '; transform: translateX(' + (pane * 77.5) + 'px);',
+      tabs: ['Home', 'Work', 'Career', 'Skills'].map((label, i) => ({
+        label: label,
+        style: 'position: relative; height: 40px; border: 0; background: transparent; font: 600 14px Figtree, sans-serif; cursor: pointer; transition: color 1.2s ' + E + '; color: ' + (i === pane ? '#F7F6FB' : '#17153A') + ';',
+        go: () => this.setState({ active: false, playing: false, pane: i })
+      }))
+    };
+  }
+}
+</script>
+</body>
+</html>

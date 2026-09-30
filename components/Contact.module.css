@@ -1,0 +1,37 @@
+.contact { display: flex; flex-direction: column; gap: 14px; padding-top: 8px; }
+.h { font-size: 40px; }
+
+.waWrap { align-self: flex-start; margin-top: 40px; }
+
+.wa {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: 56px;
+  padding: 0 24px 0 18px;
+  border-radius: 999px;
+  background: var(--ink);
+  color: var(--paper);
+  font-size: 17px;
+  font-weight: 600;
+  text-decoration: none;
+  box-shadow: 0 12px 28px rgba(23, 21, 58, 0.18);
+}
+
+.hint { font-size: 14px; line-height: 1.45; color: var(--steam); }
+
+.rows { display: flex; flex-direction: column; margin-top: 26px; border-top: 1px solid var(--line); }
+
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 64px;
+  border-bottom: 1px solid var(--line);
+  text-decoration: none;
+  color: var(--steam);
+}
+.row > span { display: flex; flex-direction: column; gap: 2px; }
+.row b { font-size: 16px; font-weight: 600; color: var(--ink); }
+.row small { font-size: 13px; }
+a.row:hover b { color: var(--blueprint); }

@@ -1,0 +1,63 @@
+.boot {
+  min-height: 100dvh;
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 40px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  font-family: var(--font-2003), "Times New Roman", serif;
+  font-size: 16px;
+  line-height: 1.4;
+  color: #000;
+}
+
+:global(html:not([data-built]) body):has(.boot) {
+  background-color: #fff;
+  background-image: linear-gradient(#e4e9ff 1px, transparent 1px), linear-gradient(90deg, #e4e9ff 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+.h1 {
+  font-family: inherit;
+  font-size: 32px;
+  font-stretch: normal;
+  letter-spacing: 0;
+  line-height: 1.2;
+}
+
+.actions { display: flex; flex-direction: column; gap: 10px; align-items: flex-start; }
+
+.button {
+  font-family: inherit;
+  font-size: 16px;
+  color: #000;
+  background: #efefef;
+  border: 2px outset #cfcfcf;
+  border-radius: 0;
+  padding: 4px 12px;
+  cursor: pointer;
+}
+
+.button:active { border-style: inset; }
+
+.link { color: var(--blueprint); }
+.link:hover { color: #1e3bd6; }
+
+.boxes { display: flex; flex-direction: column; gap: 10px; margin-top: 8px; }
+.pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+
+.box {
+  border: 2px dashed var(--blueprint);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  color: var(--blueprint);
+}
+
+.todo { font-size: 14px; color: #555; }
+.enc { color: var(--blueprint); }
+.h1 { position: relative; }
+.ghost { visibility: hidden; }
+.decrypt { position: absolute; inset: 0; }

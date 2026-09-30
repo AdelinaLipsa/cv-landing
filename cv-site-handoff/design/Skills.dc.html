@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Skills as the stack</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Anybody:wdth,wght@50..150,400..900&amp;family=Figtree:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;font-family:'Figtree',system-ui,sans-serif}
+a{color:#17153A}
+</style>
+</helmet>
+<div style="width: 390px; height: 960px; box-sizing: border-box; background: #F7F6FB; color: #17153A; font-family: 'Figtree', system-ui, sans-serif; position: relative; overflow: hidden; padding: 36px 16px 0; display: flex; flex-direction: column; gap: 14px">
+<div style="display: flex; flex-direction: column; gap: 6px; padding: 0 6px">
+<h1 style="margin: 0; font-family: 'Anybody', sans-serif; font-weight: 900; font-stretch: 110%; font-size: 34px; line-height: 0.98">The whole stack</h1>
+<p style="margin: 0; font-size: 16px; line-height: 1.45; color: #3A385E">With the product on top. Pick something I made and see which layers it took.</p>
+</div>
+<div style="display: flex; flex-wrap: wrap; gap: 8px; padding: 0 6px">
+<sc-for list="{{ things }}" as="t" hint-placeholder-count="5">
+<button type="button" onClick="{{ t.pick }}" style="{{ t.style }}">{{ t.label }}</button>
+</sc-for>
+</div>
+<div style="display: flex; flex-direction: column; gap: 10px; margin-top: 4px">
+<sc-for list="{{ layers }}" as="layer" hint-placeholder-count="5">
+<div style="{{ layer.slabStyle }}">
+<span style="{{ layer.nameStyle }}">{{ layer.name }}</span>
+<div style="display: flex; flex-wrap: wrap; gap: 6px">
+<sc-for list="{{ layer.chips }}" as="c" hint-placeholder-count="4">
+<span style="{{ c.style }}">{{ c.name }}</span>
+</sc-for>
+</div>
+</div>
+</sc-for>
+</div>
+<div style="display: flex; flex-direction: column; gap: 8px; padding: 14px 16px; border-radius: 20px; background: #FFFFFF; border: 1px solid #DCDAEC">
+<span style="font-size: 15px; line-height: 1.45">{{ note }}</span>
+<div style="display: flex; gap: 14px; font-size: 13px; font-weight: 600; color: #3A385E">
+<span style="display: flex; align-items: center; gap: 6px"><span style="width: 12px; height: 12px; border-radius: 4px; background: #F5B53F"></span>Built it</span>
+<span style="display: flex; align-items: center; gap: 6px"><span style="width: 12px; height: 12px; border-radius: 4px; background: #EE6E9F"></span>Specced or owned it</span>
+</div>
+</div>
+<nav aria-label="Primary" style="position: absolute; left: 16px; right: 16px; bottom: 20px; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); padding: 6px; border-radius: 999px; background: rgba(255,255,255,0.78); border: 1px solid rgba(23,21,58,0.08); box-shadow: 0 10px 30px rgba(23,21,58,0.14)">
+<a href="Home.dc.html" style="height: 44px; border-radius: 999px; display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 600; text-decoration: none">Home</a>
+<a href="Wall.dc.html" style="height: 44px; border-radius: 999px; display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 600; text-decoration: none">Work</a>
+<a href="Career.dc.html" style="height: 44px; border-radius: 999px; display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 600; text-decoration: none">Career</a>
+<a href="Skills.dc.html" style="height: 44px; border-radius: 999px; background: #17153A; color: #F7F6FB; display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 600; text-decoration: none">Skills</a>
+</nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":960}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { thing: 'all' };
+  }
+  renderVals() {
+    const layers = [
+      { name: 'Product', top: true, chips: ['PRDs', 'Requirements', 'Stakeholders', 'Vendors', 'Team lead', 'Delivery'] },
+      { name: 'Frontend', chips: ['JavaScript', 'Vue', 'React', 'Next.js', 'Tailwind'] },
+      { name: 'Backend', chips: ['PHP', 'Laravel', 'Python', 'REST APIs', 'Webhooks'] },
+      { name: 'Data', chips: ['SQL', 'Datadog', 'Kibana'] },
+      { name: 'Infra', chips: ['Docker', 'Kubernetes', 'Rancher', 'AWS', 'GitLab', 'SFTP'] }
+    ];
+    const things = {
+      all: { label: 'Everything', note: 'Five layers, one person. The product layer sits on top because that is the job now. The rest is why the specs are good.' },
+      ubisoft: { label: 'Ubisoft QA platform', built: ['JavaScript', 'Vue', 'PHP', 'Laravel', 'Kubernetes', 'Rancher', 'Kibana', 'GitLab'], owned: ['Requirements'], note: 'Ubisoft: the internal platform testers used daily. Built full-stack, shipped to Kubernetes, requirements gathered with the QA teams.' },
+      eligibility: { label: 'Eligibility pipeline', built: ['AWS'], owned: ['Requirements', 'Stakeholders', 'Laravel', 'SFTP'], note: 'SiteRocket Labs: set up per-vendor S3 and IAM hands-on, wrote the Laravel pipeline requirements, ran the vendor escalations.' },
+      decoder: { label: 'Param Decoder', built: ['JavaScript'], owned: [], note: 'A browser tool for reading affiliate links and postbacks. Built for the support and affiliate teams. [TBC: full stack]' },
+      payments: { label: 'Payment analysis', built: ['SQL', 'Datadog'], owned: [], note: 'Yomali: showed payment success held at 43–45% from June to August, so the conversion drop sat before payment.' }
+    };
+    const cur = things[this.state.thing];
+    const isAll = this.state.thing === 'all';
+    const pill = 'height: 38px; padding: 0 14px; border-radius: 999px; font: 600 14px Figtree, sans-serif; cursor: pointer; ';
+    return {
+      things: Object.keys(things).map((k) => ({
+        label: things[k].label,
+        style: pill + (k === this.state.thing ? 'background: #17153A; color: #F7F6FB; border: 1.5px solid #17153A;' : 'background: transparent; color: #17153A; border: 1.5px solid #CFCDE3;'),
+        pick: () => this.setState({ thing: k })
+      })),
+      layers: layers.map((l) => {
+        const touched = isAll || l.chips.some((c) => (cur.built || []).includes(c) || (cur.owned || []).includes(c));
+        const dark = l.top;
+        return {
+          name: l.name,
+          slabStyle: 'display: flex; flex-direction: column; gap: 8px; padding: 12px 14px 14px; border-radius: 18px; ' + (dark ? 'background: #17153A; box-shadow: 0 5px 0 #0B0A22;' : 'background: #FFFFFF; box-shadow: 0 5px 0 #DCDAEC; border: 1px solid #DCDAEC;') + ' opacity: ' + (touched ? '1' : '0.45') + ';',
+          nameStyle: 'font-family: Anybody, sans-serif; font-weight: 800; font-size: 15px; color: ' + (dark ? '#F5B53F' : '#17153A') + ';',
+          chips: l.chips.map((c) => {
+            const b = (cur.built || []).includes(c);
+            const o = (cur.owned || []).includes(c);
+            let s = 'padding: 5px 10px; border-radius: 10px; font-size: 13px; font-weight: 600; ';
+            if (b) s += 'background: #F5B53F; color: #17153A;';
+            else if (o) s += 'background: #EE6E9F; color: #17153A;';
+            else if (dark) s += 'background: rgba(247,246,251,0.1); color: ' + (isAll ? '#F7F6FB' : '#8E8CAE') + ';';
+            else s += 'background: #F1F0F8; color: ' + (isAll ? '#17153A' : '#8E8CAE') + ';';
+            return { name: c, style: s };
+          })
+        };
+      }),
+      note: cur.note
+    };
+  }
+}
+</script>
+</body>
+</html>

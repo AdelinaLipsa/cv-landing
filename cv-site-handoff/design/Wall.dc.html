@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Work wall</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Anybody:wdth,wght@50..150,400..900&amp;family=Figtree:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;font-family:'Figtree',system-ui,sans-serif}
+a{color:#17153A}
+</style>
+</helmet>
+<div style="width: 390px; height: 1340px; box-sizing: border-box; background: #F7F6FB; color: #17153A; font-family: 'Figtree', system-ui, sans-serif; position: relative; overflow: hidden; display: flex; flex-direction: column; gap: 26px; padding: 56px 20px 0">
+<div style="display: flex; flex-direction: column; gap: 10px; padding: 0 4px">
+<h1 style="margin: 0; font-family: 'Anybody', sans-serif; font-weight: 700; font-stretch: 125%; font-size: 30px; line-height: 1.02; letter-spacing: -0.03em">Things that<br>didn’t exist</h1>
+<p style="margin: 0; font-size: 15px; line-height: 1.5; color: #6B6990">Each one started as a gap somebody kept tripping over.</p>
+</div>
+<div style="padding: 0 4px"><div style="display: flex; gap: 20px; font-size: 14px; font-weight: 600">
+<button type="button" style="padding: 0 0 6px; border: 0; border-bottom: 2px solid #17153A; background: transparent; color: #17153A; font: 600 14px Figtree, sans-serif">All</button>
+<button type="button" style="display: flex; align-items: center; gap: 6px; padding: 0 0 6px; border: 0; border-bottom: 2px solid transparent; background: transparent; color: #6B6990; font: 600 14px Figtree, sans-serif"><span style="width: 7px; height: 7px; border-radius: 50%; background: #F5B53F"></span>Built</button>
+<button type="button" style="display: flex; align-items: center; gap: 6px; padding: 0 0 6px; border: 0; border-bottom: 2px solid transparent; background: transparent; color: #6B6990; font: 600 14px Figtree, sans-serif"><span style="width: 7px; height: 7px; border-radius: 50%; background: #EE6E9F"></span>Owned</button>
+<button type="button" style="display: flex; align-items: center; gap: 6px; padding: 0 0 6px; border: 0; border-bottom: 2px solid transparent; background: transparent; color: #6B6990; font: 600 14px Figtree, sans-serif"><span style="width: 7px; height: 7px; border-radius: 50%; background: #3355FF"></span>Analysed</button>
+</div></div>
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 12px; align-items: start">
+<div style="display: flex; flex-direction: column; gap: 22px"><a href="#tile" style="display: flex; flex-direction: column; gap: 9px; text-decoration: none; color: #17153A">
+<span style="height: 230px; border-radius: 18px; background: #17153A; display: flex; align-items: flex-end; padding: 12px; box-sizing: border-box; font-size: 11px; color: #8E8CAE">[recording]</span>
+<span style="display: flex; flex-direction: column; gap: 3px"><span style="font-size: 14px; font-weight: 600; line-height: 1.3">Param Decoder</span><span style="display: flex; align-items: center; gap: 6px; font-size: 12px; color: #6B6990"><span style="width: 7px; height: 7px; border-radius: 50%; background: #F5B53F"></span>Built</span></span>
+</a><a href="#tile" style="display: flex; flex-direction: column; gap: 9px; text-decoration: none; color: #17153A">
+<span style="height: 170px; border-radius: 18px; background: #2A2760; display: flex; align-items: flex-end; padding: 12px; box-sizing: border-box; font-size: 11px; color: #8E8CAE">[recording, demo data]</span>
+<span style="display: flex; flex-direction: column; gap: 3px"><span style="font-size: 14px; font-weight: 600; line-height: 1.3">CS dashboard, not a 2-hour report</span><span style="display: flex; align-items: center; gap: 6px; font-size: 12px; color: #6B6990"><span style="width: 7px; height: 7px; border-radius: 50%; background: #F5B53F"></span>Built</span></span>
+</a></div>
+<div style="display: flex; flex-direction: column; gap: 22px; margin-top: 40px"><a href="#tile" style="display: flex; flex-direction: column; gap: 9px; text-decoration: none; color: #17153A">
+<span style="height: 150px; border-radius: 18px; background: #FFFFFF; border: 1px solid #E2E0EF; display: flex; align-items: flex-end; padding: 12px; box-sizing: border-box; font-size: 11px; color: #6B6990">[recording, demo data]</span>
+<span style="display: flex; flex-direction: column; gap: 3px"><span style="font-size: 14px; font-weight: 600; line-height: 1.3">Checkout change log</span><span style="display: flex; align-items: center; gap: 6px; font-size: 12px; color: #6B6990"><span style="width: 7px; height: 7px; border-radius: 50%; background: #F5B53F"></span>Built</span></span>
+</a><a href="#tile" style="display: flex; flex-direction: column; gap: 9px; text-decoration: none; color: #17153A">
+<span style="height: 210px; border-radius: 18px; background: #17153A; display: flex; align-items: flex-end; padding: 12px; box-sizing: border-box; font-size: 11px; color: #8E8CAE">[live terminal, TBC]</span>
+<span style="display: flex; flex-direction: column; gap: 3px"><span style="font-size: 14px; font-weight: 600; line-height: 1.3">Hookwarden</span><span style="display: flex; align-items: center; gap: 6px; font-size: 12px; color: #6B6990"><span style="width: 7px; height: 7px; border-radius: 50%; background: #F5B53F"></span>Built</span></span>
+</a></div>
+</div><a href="#tile" style="display: flex; flex-direction: column; gap: 9px; text-decoration: none; color: #17153A">
+<span style="height: 170px; border-radius: 18px; background: #FFFFFF; border: 1px solid #E2E0EF; padding: 18px; box-sizing: border-box; display: flex; flex-direction: column; justify-content: space-between">
+<span style="font-size: 12px; color: #6B6990">Payment success, June to August</span>
+<span style="position: relative; height: 60px; border-bottom: 1px solid #E2E0EF"><span style="position: absolute; left: 0; right: 0; top: 22px; height: 12px; background: #3355FF; opacity: 0.14; border-radius: 3px"></span><span style="position: absolute; left: 0; right: 0; top: 27px; height: 2px; background: #3355FF"></span><span style="position: absolute; right: 0; top: 0; font-size: 12px; font-weight: 700; color: #3355FF">43–45%</span></span>
+<span style="display: flex; justify-content: space-between; font-size: 11px; color: #6B6990"><span>Jun</span><span>Jul</span><span>Aug</span></span>
+</span>
+<span style="display: flex; flex-direction: column; gap: 3px"><span style="font-size: 14px; font-weight: 600">Payment success held, so the drop sat before payment</span><span style="display: flex; align-items: center; gap: 6px; font-size: 12px; color: #6B6990"><span style="width: 7px; height: 7px; border-radius: 50%; background: #3355FF"></span>Analysed</span></span>
+</a><div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 12px; align-items: start">
+<div style="display: flex; flex-direction: column; gap: 22px"><a href="#tile" style="display: flex; flex-direction: column; gap: 9px; text-decoration: none; color: #17153A">
+<span style="height: 180px; border-radius: 18px; background: #FFFFFF; border: 1px solid #E2E0EF; display: flex; align-items: flex-end; padding: 12px; box-sizing: border-box; font-size: 11px; color: #6B6990">[live diagram]</span>
+<span style="display: flex; flex-direction: column; gap: 3px"><span style="font-size: 14px; font-weight: 600; line-height: 1.3">Three Vue apps, one page</span><span style="display: flex; align-items: center; gap: 6px; font-size: 12px; color: #6B6990"><span style="width: 7px; height: 7px; border-radius: 50%; background: #F5B53F"></span>Built</span></span>
+</a><a href="#tile" style="display: flex; flex-direction: column; gap: 9px; text-decoration: none; color: #17153A">
+<span style="height: 200px; border-radius: 18px; background: #E6E4F2; display: flex; align-items: flex-end; padding: 12px; box-sizing: border-box; font-size: 11px; color: #6B6990">[live pass mock]</span>
+<span style="display: flex; flex-direction: column; gap: 3px"><span style="font-size: 14px; font-weight: 600; line-height: 1.3">Wallet membership cards</span><span style="display: flex; align-items: center; gap: 6px; font-size: 12px; color: #6B6990"><span style="width: 7px; height: 7px; border-radius: 50%; background: #EE6E9F"></span>Owned</span></span>
+</a></div>
+<div style="display: flex; flex-direction: column; gap: 22px; margin-top: 28px"><a href="#tile" style="display: flex; flex-direction: column; gap: 9px; text-decoration: none; color: #17153A">
+<span style="height: 150px; border-radius: 18px; background: #FFFFFF; border: 1px solid #E2E0EF; display: flex; align-items: flex-end; padding: 12px; box-sizing: border-box; font-size: 11px; color: #6B6990">[live flow]</span>
+<span style="display: flex; flex-direction: column; gap: 3px"><span style="font-size: 14px; font-weight: 600; line-height: 1.3">Self-service refunds</span><span style="display: flex; align-items: center; gap: 6px; font-size: 12px; color: #6B6990"><span style="width: 7px; height: 7px; border-radius: 50%; background: #EE6E9F"></span>Owned</span></span>
+</a><a href="#tile" style="display: flex; flex-direction: column; gap: 9px; text-decoration: none; color: #17153A">
+<span style="height: 230px; border-radius: 18px; background: #D9D8EC; display: flex; align-items: flex-end; padding: 12px; box-sizing: border-box; font-size: 11px; color: #6B6990">[photo, TBC]</span>
+<span style="display: flex; flex-direction: column; gap: 3px"><span style="font-size: 14px; font-weight: 600; line-height: 1.3">Ruined Saints</span><span style="display: flex; align-items: center; gap: 6px; font-size: 12px; color: #6B6990"><span style="width: 7px; height: 7px; border-radius: 50%; background: #F5B53F"></span>Built</span></span>
+</a></div>
+</div>
+<nav aria-label="Primary" style="position: absolute; left: 50%; bottom: 22px; transform: translateX(-50%); display: flex; gap: 2px; padding: 5px; border-radius: 999px; background: rgba(255,255,255,0.82); border: 1px solid rgba(23,21,58,0.07); box-shadow: 0 12px 32px rgba(23,21,58,0.12)">
+<a href="Home.dc.html" style="height: 40px; padding: 0 16px; border-radius: 999px; display: flex; align-items: center; font-size: 14px; font-weight: 600; text-decoration: none">Home</a>
+<a href="Wall.dc.html" style="height: 40px; padding: 0 16px; border-radius: 999px; background: #17153A; color: #F7F6FB; display: flex; align-items: center; font-size: 14px; font-weight: 600; text-decoration: none">Work</a>
+<a href="Career.dc.html" style="height: 40px; padding: 0 16px; border-radius: 999px; display: flex; align-items: center; font-size: 14px; font-weight: 600; text-decoration: none">Career</a>
+<a href="Skills.dc.html" style="height: 40px; padding: 0 16px; border-radius: 999px; display: flex; align-items: center; font-size: 14px; font-weight: 600; text-decoration: none">Skills</a>
+</nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":1340}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Motion</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Anybody:wdth,wght@50..150,400..900&amp;family=Figtree:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;font-family:'Figtree',system-ui,sans-serif}
+</style>
+</helmet>
+<div style="width: 1280px; height: 800px; box-sizing: border-box; padding: 72px 88px; background: #17153A; color: #F7F6FB; display: flex; flex-direction: column; gap: 26px; font-family: 'Figtree', system-ui, sans-serif">
+<h2 style="margin: 0; font-family: 'Anybody', sans-serif; font-weight: 900; font-size: 56px; letter-spacing: -0.01em">Motion</h2>
+<p style="margin: 0; max-width: 760px; font-size: 20px; line-height: 1.5; color: #D9D8EC">Nothing snappy. Everything eases in, has weight and settles slowly. You can still grab anything mid-flight.</p>
+<div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 20px">
+<div style="display: flex; flex-direction: column; gap: 10px; padding: 22px; border-radius: 22px; background: #221F4D">
+<svg width="100%" height="64" viewBox="0 0 200 64" fill="none" aria-hidden="true"><path d="M4 60 C 50 60, 70 8, 120 8 L 196 8" stroke="#F5B53F" stroke-width="3" stroke-linecap="round"></path></svg>
+<span style="font-size: 22px; font-weight: 700">drift</span>
+<span style="font-size: 15px; color: #B8B6D9">stiffness 120, damping 26</span>
+<span style="font-size: 16px; line-height: 1.4">Buttons, toggles, tab pill</span>
+</div>
+<div style="display: flex; flex-direction: column; gap: 10px; padding: 22px; border-radius: 22px; background: #221F4D">
+<svg width="100%" height="64" viewBox="0 0 200 64" fill="none" aria-hidden="true"><path d="M4 60 C 70 60, 100 9, 160 8 L 196 8" stroke="#F5B53F" stroke-width="3" stroke-linecap="round"></path></svg>
+<span style="font-size: 22px; font-weight: 700">glide</span>
+<span style="font-size: 15px; color: #B8B6D9">stiffness 90, damping 22</span>
+<span style="font-size: 16px; line-height: 1.4">Sheets, pane swipes, tile zoom</span>
+</div>
+<div style="display: flex; flex-direction: column; gap: 10px; padding: 22px; border-radius: 22px; background: #221F4D">
+<svg width="100%" height="64" viewBox="0 0 200 64" fill="none" aria-hidden="true"><path d="M4 60 C 70 58, 100 10, 196 8" stroke="#F5B53F" stroke-width="3" stroke-linecap="round"></path></svg>
+<span style="font-size: 22px; font-weight: 700">slow</span>
+<span style="font-size: 15px; color: #B8B6D9">stiffness 50, damping 18</span>
+<span style="font-size: 16px; line-height: 1.4">Era changes and big reveals in the build</span>
+</div>
+<div style="display: flex; flex-direction: column; gap: 10px; padding: 22px; border-radius: 22px; background: #221F4D">
+<svg width="100%" height="64" viewBox="0 0 200 64" fill="none" aria-hidden="true"><path d="M4 60 C 50 60, 70 0, 110 2 C 140 4, 150 9, 196 8" stroke="#EE6E9F" stroke-width="3" stroke-linecap="round"></path></svg>
+<span style="font-size: 22px; font-weight: 700">land</span>
+<span style="font-size: 15px; color: #B8B6D9">stiffness 70, damping 12</span>
+<span style="font-size: 16px; line-height: 1.4">Once, a soft overshoot when the build ends</span>
+</div>
+</div>
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 56px; row-gap: 14px; margin-top: 8px">
+<span style="font-size: 17px; line-height: 1.45; color: #D9D8EC"><b style="color: #F7F6FB">Interruptible.</b> Reverse any animation mid-flight from its current speed.</span>
+<span style="font-size: 17px; line-height: 1.45; color: #D9D8EC"><b style="color: #F7F6FB">Glass on chrome only.</b> Top bar, tab bar and sheets blur. Work never sits behind blur.</span>
+<span style="font-size: 17px; line-height: 1.45; color: #D9D8EC"><b style="color: #F7F6FB">Wall parallax.</b> Each column drifts at its own rate, 0.015 to 0.035 of scroll.</span>
+<span style="font-size: 17px; line-height: 1.45; color: #D9D8EC"><b style="color: #F7F6FB">Reveals once.</b> Staggered 40 to 60ms inside a group, never on every section.</span>
+<span style="font-size: 17px; line-height: 1.45; color: #D9D8EC"><b style="color: #F7F6FB">Velocity gestures.</b> Swipes and sheet drags snap by how fast you let go.</span>
+<span style="font-size: 17px; line-height: 1.45; color: #D9D8EC"><b style="color: #F7F6FB">Reduced motion.</b> Crossfades only, and the page opens already built.</span>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":800}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

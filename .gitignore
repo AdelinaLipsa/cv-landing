@@ -1,0 +1,11 @@
+node_modules
+.next
+next-env.d.ts
+*.tsbuildinfo
+.DS_Store
+*.zip
+.claude/
+.vercel
+.env*
+# Old site: names the current employer, stays local
+index.html
