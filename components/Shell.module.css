@@ -23,12 +23,20 @@
   padding: calc(22px + env(safe-area-inset-top)) 24px calc(120px + env(safe-area-inset-bottom));
 }
 
-.tabbar {
+/* Tab bar and the sound button sit together, centred. */
+.chrome {
   position: absolute;
   left: 50%;
   bottom: calc(22px + env(safe-area-inset-bottom));
   transform: translateX(-50%);
-  width: min(360px, calc(100% - 32px));
+  display: flex;
+  gap: 8px;
+  z-index: 20;
+}
+
+.tabbar {
+  position: relative;
+  width: min(360px, calc(100vw - 32px - 60px));
   height: 52px;
   padding: 5px;
   display: grid;

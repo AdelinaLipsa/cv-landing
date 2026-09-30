@@ -14,6 +14,7 @@ import Work from "./panes/Work";
 import Career from "./panes/Career";
 import Skills from "./panes/Skills";
 import ClickSpark from "./ClickSpark";
+import SoundToggle from "./SoundToggle";
 
 import s from "./Shell.module.css";
 
@@ -176,6 +177,7 @@ export default function Shell({ code }: { code: Snippets }) {
           ))}
         </motion.div>
 
+        <div className={s.chrome}>
         <nav className={s.tabbar} aria-label="Primary">
           <motion.span className={s.pill} style={{ x: pillX }} aria-hidden="true" />
           {TABS.map((t, i) => (
@@ -190,6 +192,8 @@ export default function Shell({ code }: { code: Snippets }) {
             </button>
           ))}
         </nav>
+        <SoundToggle />
+        </div>
       </div>
       </ClickSpark>
       </main>

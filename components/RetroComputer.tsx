@@ -27,7 +27,7 @@ export default function RetroComputer({ className }: { className?: string }) {
 }
 
 async function mount(el: HTMLElement) {
-  const THREE = await import("three");
+  const [THREE, { RoomEnvironment }] = await Promise.all([import("three"), import("three/examples/jsm/environments/RoomEnvironment.js")]);
   const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
@@ -40,14 +40,50 @@ async function mount(el: HTMLElement) {
   camera.position.set(3.4, 2.6, 8.2);
   camera.lookAt(0, 1.2, 0);
 
-  scene.add(new THREE.HemisphereLight(0xffffff, 0xb8b6d9, 1.6));
-  const key = new THREE.DirectionalLight(0xffffff, 2.2);
+  // Reflections: a soft studio environment for the plastic and glass to catch.
+  const pmrem = new THREE.PMREMGenerator(renderer);
+  const env = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+  scene.environment = env;
+  scene.environmentIntensity = 0.45;
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 0.85;
+
+  scene.add(new THREE.HemisphereLight(0xffffff, 0xb8b6d9, 0.5));
+  const key = new THREE.DirectionalLight(0xfff4e0, 1.8);
   key.position.set(4, 6, 5);
   scene.add(key);
 
-  const beige = new THREE.MeshStandardMaterial({ color: 0xdcd3bd, roughness: 0.85 });
-  const beigeDark = new THREE.MeshStandardMaterial({ color: 0xc4b99f, roughness: 0.9 });
-  const dark = new THREE.MeshStandardMaterial({ color: 0x2a2760, roughness: 0.6 });
+  // 90s plastic: satin, not matte. A fine moulded grain drives bump and roughness.
+  const grainCanvas = document.createElement("canvas");
+  grainCanvas.width = grainCanvas.height = 128;
+  const g = grainCanvas.getContext("2d")!;
+  const img = g.createImageData(128, 128);
+  for (let p = 0; p < img.data.length; p += 4) {
+    const v = 150 + Math.random() * 70;
+    img.data[p] = img.data[p + 1] = img.data[p + 2] = v;
+    img.data[p + 3] = 255;
+  }
+  g.putImageData(img, 0, 0);
+  const grain = new THREE.CanvasTexture(grainCanvas);
+  grain.wrapS = grain.wrapT = THREE.RepeatWrapping;
+  grain.repeat.set(6, 6);
+
+  const plastic = (color: number, roughness: number) =>
+    new THREE.MeshPhysicalMaterial({
+      color,
+      roughness,
+      roughnessMap: grain,
+      bumpMap: grain,
+      bumpScale: 0.6,
+      clearcoat: 0.35,
+      clearcoatRoughness: 0.35,
+      sheen: 0.3,
+      sheenRoughness: 0.6,
+      envMapIntensity: 0.9,
+    });
+  const beige = plastic(0xcdbb94, 0.45);
+  const beigeDark = plastic(0xb3a27c, 0.55);
+  const dark = new THREE.MeshPhysicalMaterial({ color: 0x2a2760, roughness: 0.35, clearcoat: 0.6 });
   const box = (w: number, h: number, d: number, m: T.Material, x = 0, y = 0, z = 0) => {
     const mesh = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m);
     mesh.position.set(x, y, z);
@@ -78,6 +114,13 @@ async function mount(el: HTMLElement) {
   const screen = new THREE.Mesh(new THREE.PlaneGeometry(1.7, 1.53), new THREE.MeshBasicMaterial({ map: tex }));
   screen.position.set(0, 1.72, 0.66);
   pc.add(screen);
+  // CRT glass: a thin glossy pane in front of the picture that catches the room.
+  const glass = new THREE.Mesh(
+    new THREE.PlaneGeometry(1.7, 1.53),
+    new THREE.MeshPhysicalMaterial({ color: 0x000000, roughness: 0.04, metalness: 0, clearcoat: 1, clearcoatRoughness: 0.02, transparent: true, opacity: 0.18, envMapIntensity: 1.6 })
+  );
+  glass.position.set(0, 1.72, 0.665);
+  pc.add(glass);
 
   // Keyboard with instanced keys
   const kb = new THREE.Group();
@@ -146,6 +189,9 @@ async function mount(el: HTMLElement) {
       if (o instanceof THREE.Mesh) { o.geometry.dispose(); (Array.isArray(o.material) ? o.material : [o.material]).forEach((mt) => mt.dispose()); }
     });
     tex.dispose();
+    grain.dispose();
+    env.dispose();
+    pmrem.dispose();
     renderer.dispose();
     renderer.domElement.remove();
   };

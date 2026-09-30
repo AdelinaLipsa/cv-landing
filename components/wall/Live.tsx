@@ -56,7 +56,8 @@ export function Accounts25() {
 
 export function Flow({ steps, accent = "var(--naruto)" }: { steps: string[]; accent?: string }) {
   const [ref, inView] = useLive();
-  const on = inView && !useStill();
+  const still = useStill(); // always call the hook; && would skip it while off screen
+  const on = inView && !still;
   return (
     <div ref={ref} className={`${s.live} ${s.white} ${s.flow}`}>
       <span className={s.flowRail} style={{ background: accent }} aria-hidden="true" />
@@ -79,7 +80,8 @@ export function Flow({ steps, accent = "var(--naruto)" }: { steps: string[]; acc
 
 export function MicroFrontends() {
   const [ref, inView] = useLive();
-  const on = inView && !useStill();
+  const still = useStill(); // always call the hook; && would skip it while off screen
+  const on = inView && !still;
   const apps = [40, 150, 260];
   return (
     <div ref={ref} className={`${s.live} ${s.white}`}>
