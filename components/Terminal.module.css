@@ -56,3 +56,12 @@
   font: inherit;
   caret-color: var(--broth);
 }
+
+.help { display: grid; gap: 2px; margin: 6px 0 10px; }
+.helpRow { display: grid; grid-template-columns: minmax(150px, max-content) 1fr; gap: 14px; }
+.cmd { color: var(--broth); }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0 8px; }
+.chip { height: 30px; padding: 0 10px; border: 1px solid rgba(247, 246, 251, 0.18); border-radius: 8px; background: rgba(247, 246, 251, 0.06); color: var(--on-ink); font: inherit; font-size: 12px; cursor: pointer; }
+.chip:hover { border-color: var(--broth); color: var(--broth); }
+@media (max-width: 520px) { .helpRow { grid-template-columns: 1fr; gap: 0; margin-bottom: 4px; } }
+@media (max-width: 520px) { .banner { height: 76px; } }

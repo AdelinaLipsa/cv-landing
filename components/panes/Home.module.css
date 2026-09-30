@@ -188,3 +188,4 @@
 .termBtn > span:first-child { color: var(--broth); }
 .termHint { display: none; color: var(--on-ink-muted); }
 @media (hover: hover) and (pointer: fine) { .termHint { display: inline; } }
+.termNote { font-size: 13px; color: var(--steam); max-width: 420px; }

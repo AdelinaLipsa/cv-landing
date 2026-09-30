@@ -180,6 +180,7 @@ export default function Home({ ui }: { ui: UI }) {
           <button type="button" className={s.termBtn} onClick={ui.terminal}>
             <span aria-hidden="true">&gt;_</span> Open the terminal<span className={s.termHint}>, or press `</span>
           </button>
+          <p className={s.termNote}>There’s a terminal in here: my career as a git log, the CV as JSON, and a sudo command you should try.</p>
         </div>
         <div className={s.retro} data-tour="retro"><RetroComputer className={s.retroCanvas} /></div>
       </section>

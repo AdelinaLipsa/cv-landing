@@ -14,7 +14,17 @@ const ASCIIText = dynamic(() => import("./ASCIIText"), { ssr: false });
 
 type Line = { id: number; node: ReactNode };
 
-const HELP = "whoami, ls projects, cat about.txt, git log, curl cv, sudo hire adelina, clear, exit";
+// Everything you can type, with what it does. Shown on open, by `help`, and as tap-to-run chips.
+const COMMANDS = [
+  { cmd: "whoami", does: "who I am, in one line" },
+  { cmd: "cat about.txt", does: "the about, unabridged" },
+  { cmd: "git log", does: "my career as commits, dev and product branches" },
+  { cmd: "ls projects", does: "things that didn’t exist, pick one to open it" },
+  { cmd: "curl cv", does: "the whole CV as JSON, for the curious" },
+  { cmd: "sudo hire adelina", does: "you know what this does" },
+  { cmd: "clear", does: "wipe the screen" },
+  { cmd: "exit", does: "close the terminal (or Esc, or `)" },
+];
 const hash = (id: string) => [...id].reduce((h, c) => (h * 31 + c.charCodeAt(0)) >>> 0, 7).toString(16).padStart(7, "0").slice(0, 7);
 
 export default function Terminal({ onClose, onContact, onWork }: { onClose: () => void; onContact: () => void; onWork: () => void }) {
@@ -31,10 +41,18 @@ export default function Terminal({ onClose, onContact, onWork }: { onClose: () =
 
   useEffect(() => {
     input.current?.focus();
-    print(<span className={s.muted}>Type help. Esc or ` closes.</span>);
+    print(<span>Hi, you found the terminal. Type a command, or tap one below.</span>, helpList());
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => { body.current?.scrollTo({ top: body.current.scrollHeight }); }, [lines]);
+
+  const helpList = () => (
+    <div className={s.help}>
+      {COMMANDS.map((c) => (
+        <div key={c.cmd} className={s.helpRow}><span className={s.cmd}>{c.cmd}</span><span className={s.muted}>{c.does}</span></div>
+      ))}
+    </div>
+  );
 
   const run = (raw: string) => {
     const cmd = raw.trim().replace(/\s+/g, " ");
@@ -45,7 +63,7 @@ export default function Terminal({ onClose, onContact, onWork }: { onClose: () =
 
     switch (cmd.toLowerCase()) {
       case "help":
-        return print(HELP);
+        return print(helpList());
       case "whoami":
         return print(`${profile.name}. ${profile.role}. ${profile.roleSecond}`, <span className={s.muted}>{profile.location}</span>);
       case "ls projects":
@@ -124,6 +142,11 @@ export default function Terminal({ onClose, onContact, onWork }: { onClose: () =
         )}
         <div ref={body} className={s.body} aria-live="polite">
           {lines.map((l) => <div key={l.id} className={s.line}>{l.node}</div>)}
+          <div className={s.chips} aria-label="Commands you can run">
+            {COMMANDS.filter((c) => c.cmd !== "clear").map((c) => (
+              <button key={c.cmd} type="button" className={s.chip} onClick={(e) => { e.stopPropagation(); run(c.cmd); input.current?.focus(); }}>{c.cmd}</button>
+            ))}
+          </div>
           <label className={s.inputRow}>
             <span className={s.prompt}>adelina@cv ~ $</span>
             <input
