@@ -17,6 +17,7 @@ export type Tile = {
   more?: string[];
   href?: string;
   video?: { mp4: string; webm: string; poster: string };
+  image?: { src: string; alt: string };
   tbc?: string;
   wide?: boolean; // breaks the grid, full width
 };
@@ -42,9 +43,9 @@ export const tiles: Tile[] = [
   },
   {
     id: "hookwarden", title: "Hookwarden", label: "Built", kind: "live", shape: "tall",
-    didntExist: "a quick check of webhook signature handling.", now: "Hookwarden.",
-    more: ["A webhook security scanner."],
-    tbc: "not on the current CV, confirm it can be shown and add the repo link",
+    didntExist: "a fast way to find webhook-verification bugs.", now: "Hookwarden, open source.",
+    more: ["A local CLI that finds webhook signature-verification bugs across 21 providers, in JS/TS, Python, PHP and Go.", "Three-state verdicts, and nothing leaves your machine. Ties straight into the payments and fraud work."],
+    href: "https://github.com/Hookwarden/hookwarden",
   },
   {
     id: "payments", title: "Payment success held", label: "Analysed", kind: "live", shape: "land", wide: true,
@@ -68,9 +69,10 @@ export const tiles: Tile[] = [
   },
   {
     id: "ruined-saints", title: "Ruined Saints", label: "Built", kind: "image", shape: "tall",
-    didntExist: "an independent streetwear label.", now: "Ruined Saints, since Jun 2025.",
-    more: ["Founder and creative director."],
-    tbc: "renders",
+    didntExist: "the streetwear label I wanted, and a store to sell it.", now: "Ruined Saints, store included.",
+    more: ["Founder and creative director since Jun 2025. Drop-based apparel and fragrance; this is MIR, from Drop One.", "Built the store end to end: Next.js storefront, Medusa v2 backend and admin, Stripe, Sameday and DHL shipping, Resend email."],
+    image: { src: "/wall/ruined-saints.jpg", alt: "MIR, a Ruined Saints fragrance bottle on dark linen" },
+    tbc: "store isn’t live yet: ruinedsaints.com shows a parking page",
   },
   {
     id: "three-ds", title: "What moved conversion", label: "Analysed", kind: "live", shape: "square",
@@ -92,6 +94,11 @@ export const tiles: Tile[] = [
     didntExist: "the clothes I wanted.", now: "clothes I made.",
     tbc: "photos",
   },
-  { id: "bite", title: "BITE Chrome extension", label: "Built", kind: "video", shape: "land", didntExist: "", now: "", tbc: "not on the current CV, confirm what it is and whether it can be shown" },
+  {
+    id: "bite", title: "Tracking checker, a Chrome extension", label: "Built", kind: "video", shape: "land",
+    didntExist: "a way to check tracking without opening DevTools.", now: "a Chrome extension: present, missing or uncertain.",
+    more: ["Checks whether the tracking code is on the page, including code injected later, and says present, missing or uncertain.", "Built hands-on for the team, alongside a video-skipping tool. An internal tool, so it’s shown generically."],
+    tbc: "demo-data recording",
+  },
   { id: "sites", title: "My own sites", label: "Built", kind: "video", shape: "land", didntExist: "", now: "", tbc: "which sites are still live" },
 ];

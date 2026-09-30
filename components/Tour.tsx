@@ -170,7 +170,13 @@ export default function Tour({ code, onStep, onClose }: {
         aria-live="polite"
       >
         <img src="/adelina.jpg" alt="" className={s.avatar} />
-        <span>{typed}<span className={s.caret} /></span>
+        <span className={s.bubbleText}>
+          <span>{typed}<span className={s.caret} /></span>
+          {/* The web's history is the aside, shown once her line has finished. */}
+          {step.web && playing && local * TYPE_CPS >= step.say.length + 8 && (
+            <motion.small className={s.web} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>{step.web}</motion.small>
+          )}
+        </span>
       </motion.div>
 
       <motion.div className={s.cursor} style={{ x: cx, y: cy }} aria-hidden="true">
@@ -213,6 +219,7 @@ export function Stepper() {
         <RBStep key={i}>
           <span className={s.stepperCount}>{st.title}</span>
           <p className={s.stepperSay}>{st.say}</p>
+          {st.web && <p className={s.stepperWeb}>{st.web}</p>}
         </RBStep>
       ))}
     </RBStepper>

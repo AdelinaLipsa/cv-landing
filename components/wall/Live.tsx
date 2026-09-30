@@ -123,11 +123,13 @@ export function WalletPass() {
   );
 }
 
+// Illustrative run. Hookwarden's real verdicts are three-state: verified, missing, uncertain.
 const TERMINAL = [
   { t: "$ hookwarden scan ./api", c: "" },
   { t: "finding webhook handlers…", c: "muted" },
-  { t: "✓ signature verified   payments.ts", c: "ok" },
-  { t: "✗ no timing-safe compare   orders.ts", c: "bad" },
+  { t: "✓ verified    stripe.ts", c: "ok" },
+  { t: "✗ missing     orders.ts", c: "bad" },
+  { t: "? uncertain   refunds.ts", c: "muted" },
   { t: "done. nothing left the machine.", c: "muted" },
 ];
 

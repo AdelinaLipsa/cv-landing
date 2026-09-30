@@ -80,7 +80,7 @@ function Zoom({ tile, onClose }: { tile: Tile; onClose: () => void }) {
           </div>
           <Label kind={tile.label} />
           {(tile.more ?? []).map((m) => <p key={m} className={p.lede}>{m}</p>)}
-          {tile.href && <a href={tile.href} target="_blank" rel="noopener" className={p.textLink}>Open it</a>}
+          {tile.href && <a href={tile.href} target="_blank" rel="noopener" className={p.textLink}>{tile.href.includes("github.com") ? "See the code" : "Open it"}</a>}
           {tile.tbc && <p className={p.tbc}>[TBC: {tile.tbc}]</p>}
         </motion.div>
       </motion.div>

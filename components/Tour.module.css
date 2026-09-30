@@ -108,3 +108,7 @@
 .stepperBox { box-shadow: none; }
 .stepperCount { font-size: 13px; font-weight: 600; color: var(--blueprint); }
 .stepperSay { margin-top: 8px; font-size: 18px; line-height: 1.5; }
+
+.bubbleText { display: flex; flex-direction: column; gap: 6px; }
+.web { display: block; padding-top: 6px; border-top: 1px solid rgba(255, 255, 255, 0.25); font-size: 12.5px; line-height: 1.4; color: #dce3ff; }
+.stepperWeb { margin-top: 8px; font-size: 14px; color: var(--steam); }

@@ -113,7 +113,7 @@ export default function Home({ ui }: { ui: UI }) {
               />
             ) : profile.name}
           </motion.h1>
-          <p className={s.role}>
+          <p className={s.role} data-tour="role">
             <b>{profile.role}.</b>{" "}
             <span>
               Full-stack developer before that. Still ships{" "}
@@ -173,7 +173,7 @@ export default function Home({ ui }: { ui: UI }) {
           <p className={p.lede}>{about[1]}</p>
           <p className={p.lede}>{about[2]}</p>
           <ul className={s.offList}>
-            <li><b>{ventures[0].name}</b><span>{ventures[0].note} {ventures[0].role}, {ventures[0].dates}.</span><span className={p.tbc}>[TBC: renders]</span></li>
+            <li><b>{ventures[0].name}</b><span>{ventures[0].note} {ventures[0].role}, {ventures[0].dates}.</span><span className={p.tbc}>[TBC: store link, once ruinedsaints.com is live]</span></li>
             <li><b>Sewing</b><span>Sometimes the clothes I’m wearing.</span><span className={p.tbc}>[TBC: photos]</span></li>
             <li><b>Games</b><span>Video games. In the dark. With ramen.</span></li>
           </ul>
@@ -182,7 +182,7 @@ export default function Home({ ui }: { ui: UI }) {
           </button>
           <p className={s.termNote}>There’s a terminal in here: my career as a git log, the CV as JSON, and a sudo command you should try.</p>
         </div>
-        <div className={s.retro} data-tour="retro"><RetroComputer className={s.retroCanvas} /></div>
+        <div className={s.retro} data-tour="retro"><RetroComputer className={s.retroCanvas} character={ui.character} /></div>
       </section>
     </div>
   );

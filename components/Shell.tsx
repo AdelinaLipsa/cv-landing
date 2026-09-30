@@ -34,11 +34,12 @@ export type UI = {
   terminal: () => void;
   touring: boolean;
   returning: boolean;
+  character: boolean;
   era: number;
   stage: number;
 };
 
-export default function Shell({ code }: { code: Snippets }) {
+export default function Shell({ code, character }: { code: Snippets; character: boolean }) {
   const viewport = useRef<HTMLDivElement>(null);
   const [w, setW] = useState(0);
   const [pane, setPane] = useState(0);
@@ -140,6 +141,7 @@ export default function Shell({ code }: { code: Snippets }) {
     terminal: () => setTerm(true),
     touring,
     returning,
+    character,
     era,
     stage,
   };

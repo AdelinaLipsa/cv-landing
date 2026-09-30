@@ -35,6 +35,7 @@ function Video({ src }: { src: NonNullable<Tile["video"]> }) {
 export default function Media({ tile }: { tile: Tile }) {
   if (LIVE[tile.id]) return LIVE[tile.id]();
   if (tile.video) return <Video src={tile.video} />;
+  if (tile.image) return <img className={s.video} src={tile.image.src} alt={tile.image.alt} loading="lazy" />;
   const dark = tile.kind === "video";
   return (
     <div className={`${s.live} ${dark ? (tile.id === "cs-dashboard" ? s.ink2 : s.ink) : s.mist} ${s.placeholder}`}>
