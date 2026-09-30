@@ -173,32 +173,118 @@ async function mount(el: HTMLElement, character: boolean) {
   }
   world.add(stones);
 
-  // The kid: jeans, blue T-shirt, yellow backpack, curly dark hair. About 1.3 units tall.
+  // Teen Adelina: dark curly hair in a ponytail, thin gold rectangular glasses, black tee, jeans,
+  // white sneakers, yellow backpack. Smooth shapes and two-part limbs, so the run bends at knees and elbows.
   const kid = new THREE.Group();
-  const limb = (w: number, h: number, m: T.Material, px: number, py: number) => {
-    const pivot = new THREE.Group();
-    pivot.position.set(px, py, 0);
-    pivot.add(box(w, h, w, m, 0, -h / 2, 0));
-    kid.add(pivot);
-    return pivot;
+  const skin = new THREE.MeshPhysicalMaterial({ color: 0xf0c4a0, roughness: 0.55, sheen: 0.4, sheenColor: new THREE.Color(0xffd6c8) });
+  const hairM = new THREE.MeshStandardMaterial({ color: 0x1b1412, roughness: 0.7 });
+  const tee = new THREE.MeshStandardMaterial({ color: 0x1a1822, roughness: 0.85 });
+  const denim = new THREE.MeshStandardMaterial({ color: 0x3d5a8c, roughness: 0.85 });
+  const white = new THREE.MeshStandardMaterial({ color: 0xf4f3f7, roughness: 0.6 });
+  const gold = new THREE.MeshStandardMaterial({ color: 0xd4af6a, metalness: 0.9, roughness: 0.3 });
+  const pack = new THREE.MeshPhysicalMaterial({ color: 0xf5b53f, roughness: 0.45, clearcoat: 0.3 });
+  const mesh = (g: T.BufferGeometry, m: T.Material, x = 0, y = 0, z = 0) => {
+    const o = new THREE.Mesh(g, m);
+    o.position.set(x, y, z);
+    return o;
   };
-  const jeans = mat(0x2a2760), shirt = mat(0x3355ff, 0.5), skin = mat(0xf1c7a4, 0.7), hair = mat(0x1a1530, 0.8);
-  const legL = limb(0.14, 0.5, jeans, -0.1, 0.5), legR = limb(0.14, 0.5, jeans, 0.1, 0.5);
-  kid.add(box(0.42, 0.5, 0.26, shirt, 0, 0.75, 0));
-  const armL = limb(0.11, 0.42, shirt, -0.27, 0.97), armR = limb(0.11, 0.42, shirt, 0.27, 0.97);
-  kid.add(box(0.34, 0.4, 0.16, mat(0xf5b53f, 0.45), 0, 0.8, -0.2));
-  const head = new THREE.Mesh(new THREE.SphereGeometry(0.2, 20, 16), skin);
-  head.position.y = 1.2;
-  kid.add(head);
-  for (const [x, y, z, r] of [[0, 0.16, -0.02, 0.13], [-0.12, 0.1, 0, 0.1], [0.12, 0.1, 0, 0.1], [-0.08, 0.13, -0.1, 0.11], [0.08, 0.13, -0.1, 0.11], [0, 0.06, -0.15, 0.12], [-0.15, 0.02, -0.07, 0.08], [0.15, 0.02, -0.07, 0.08]]) {
-    const curl = new THREE.Mesh(new THREE.SphereGeometry(r, 12, 10), hair);
-    curl.position.set(x, 1.2 + y, z);
-    kid.add(curl);
+  const capsule = (r: number, len: number, m: T.Material, y: number) => mesh(new THREE.CapsuleGeometry(r, len, 8, 16), m, 0, y, 0);
+  const pivot = (parent: T.Object3D, x: number, y: number, z = 0) => {
+    const g = new THREE.Group();
+    g.position.set(x, y, z);
+    parent.add(g);
+    return g;
+  };
+
+  // Legs: thigh, knee, shin, sneaker.
+  const legs = [-1, 1].map((side) => {
+    const hip = pivot(kid, side * 0.08, 0.72);
+    hip.add(capsule(0.066, 0.24, denim, -0.17));
+    const knee = pivot(hip, 0, -0.34);
+    knee.add(capsule(0.056, 0.22, denim, -0.15));
+    const shoe = mesh(new THREE.CapsuleGeometry(0.055, 0.1, 6, 12), white, 0, -0.33, 0.04);
+    shoe.rotation.x = Math.PI / 2;
+    shoe.scale.set(1.05, 1, 0.8);
+    knee.add(shoe);
+    return { hip, knee };
+  });
+
+  // Hips, torso, neck.
+  const pelvis = mesh(new THREE.CapsuleGeometry(0.12, 0.08, 8, 16), denim, 0, 0.78, 0);
+  pelvis.rotation.z = Math.PI / 2;
+  pelvis.scale.set(1, 1, 0.75);
+  kid.add(pelvis);
+  const torso = capsule(0.145, 0.2, tee, 1.0);
+  torso.scale.set(1, 1, 0.72);
+  kid.add(torso);
+  kid.add(mesh(new THREE.CylinderGeometry(0.042, 0.048, 0.1, 16), skin, 0, 1.19, 0));
+
+  // Arms: short sleeve, upper arm, elbow, forearm, hand.
+  const arms = [-1, 1].map((side) => {
+    const shoulder = pivot(kid, side * 0.19, 1.13);
+    shoulder.add(mesh(new THREE.CylinderGeometry(0.06, 0.058, 0.1, 16), tee, 0, -0.04, 0));
+    shoulder.add(capsule(0.045, 0.16, skin, -0.13));
+    const elbow = pivot(shoulder, 0, -0.25);
+    elbow.add(capsule(0.04, 0.15, skin, -0.1));
+    elbow.add(mesh(new THREE.SphereGeometry(0.048, 16, 12), skin, 0, -0.22, 0));
+    return { shoulder, elbow };
+  });
+
+  // Backpack with straps.
+  const bag = mesh(new THREE.CapsuleGeometry(0.13, 0.14, 8, 16), pack, 0, 1.0, -0.17);
+  bag.scale.set(1.15, 1, 0.55);
+  kid.add(bag);
+  for (const side of [-1, 1]) kid.add(mesh(new THREE.BoxGeometry(0.035, 0.34, 0.02), pack, side * 0.09, 1.02, 0.1));
+
+  // Head and face.
+  const headG = pivot(kid, 0, 1.36);
+  const head = mesh(new THREE.SphereGeometry(0.17, 40, 32), skin);
+  head.scale.set(0.95, 1.05, 1);
+  headG.add(head);
+  headG.add(mesh(new THREE.SphereGeometry(0.018, 12, 10), skin, 0, -0.01, 0.168)); // nose
+  for (const side of [-1, 1]) {
+    headG.add(mesh(new THREE.SphereGeometry(0.019, 16, 12), hairM, side * 0.058, 0.02, 0.152)); // eyes
+    const brow = mesh(new THREE.CapsuleGeometry(0.008, 0.04, 4, 8), hairM, side * 0.058, 0.075, 0.155);
+    brow.rotation.z = Math.PI / 2 + side * 0.15;
+    headG.add(brow);
+    // Glasses: thin gold rectangles, like hers.
+    const rim = mesh(new THREE.TorusGeometry(0.052, 0.0055, 6, 4), gold, side * 0.062, 0.018, 0.172);
+    rim.rotation.z = Math.PI / 4;
+    rim.scale.set(1.25, 0.82, 1);
+    headG.add(rim);
+    const arm = mesh(new THREE.BoxGeometry(0.006, 0.006, 0.17), gold, side * 0.155, 0.03, 0.09);
+    headG.add(arm);
   }
-  const shadow = new THREE.Mesh(new THREE.CircleGeometry(0.3, 20), new THREE.MeshBasicMaterial({ color: 0x17153a, transparent: true, opacity: 0.12 }));
+  const bridge = mesh(new THREE.CylinderGeometry(0.005, 0.005, 0.04, 6), gold, 0, 0.03, 0.176);
+  bridge.rotation.z = Math.PI / 2;
+  headG.add(bridge);
+  const smile = mesh(new THREE.TorusGeometry(0.03, 0.006, 6, 12, Math.PI * 0.7), new THREE.MeshStandardMaterial({ color: 0xb8606b, roughness: 0.6 }), 0, -0.07, 0.158);
+  smile.rotation.z = Math.PI + Math.PI * 0.15;
+  headG.add(smile);
+
+  // Hair: a cap pulled back, curls at the hairline, and a curly ponytail with a pink scrunchie.
+  const cap = mesh(new THREE.SphereGeometry(0.183, 40, 24, 0, Math.PI * 2, 0, Math.PI * 0.56), hairM, 0, 0.012, -0.012);
+  cap.rotation.x = -0.32;
+  cap.scale.set(1, 1.04, 1.02);
+  headG.add(cap);
+  for (const [x, y, z, r] of [[-0.1, 0.12, 0.1, 0.045], [0, 0.15, 0.1, 0.05], [0.1, 0.12, 0.1, 0.045], [-0.15, 0.04, 0.05, 0.04], [0.15, 0.04, 0.05, 0.04], [-0.06, 0.16, 0.02, 0.05], [0.06, 0.16, 0.02, 0.05]]) {
+    headG.add(mesh(new THREE.SphereGeometry(r, 16, 12), hairM, x, y, z));
+  }
+  const tail = pivot(headG, 0, 0.08, -0.16);
+  const scrunchie = mesh(new THREE.TorusGeometry(0.038, 0.017, 10, 20), new THREE.MeshStandardMaterial({ color: 0xee6e9f, roughness: 0.7 }));
+  scrunchie.rotation.x = Math.PI / 2 - 0.5;
+  tail.add(scrunchie);
+  for (let k = 0; k < 7; k++) {
+    const r = 0.068 - k * 0.006;
+    tail.add(mesh(new THREE.SphereGeometry(r, 16, 12), hairM, Math.sin(k * 1.7) * 0.02, -0.03 - k * 0.055, -0.05 - k * 0.03));
+    tail.add(mesh(new THREE.SphereGeometry(r * 0.6, 12, 10), hairM, Math.cos(k * 2.3) * 0.04, -0.05 - k * 0.055, -0.04 - k * 0.03)); // curls
+  }
+
+  const shadow = new THREE.Mesh(new THREE.CircleGeometry(0.28, 24), new THREE.MeshBasicMaterial({ color: 0x17153a, transparent: true, opacity: 0.12 }));
   shadow.rotation.x = -Math.PI / 2;
   shadow.position.y = 0.01;
   kid.add(shadow);
+  kid.scale.setScalar(1.2);
   world.add(kid);
 
   // A stool at the computer, for the real character's seated typing animation.
@@ -221,34 +307,42 @@ async function mount(el: HTMLElement, character: boolean) {
   // Frame the computer and where the kid ends up, from their bounding sphere (the school sits in the background).
   // The sphere doesn't change as the model tilts, so nothing gets cut off mid-tilt.
   const frameBox = new THREE.Box3().setFromObject(pc);
-  frameBox.expandByPoint(route.getPointAt(1).clone().add(new THREE.Vector3(0.3, 1.5, 0.3)));
+  frameBox.expandByPoint(route.getPointAt(1).clone().add(new THREE.Vector3(0.3, 1.8, 0.3)));
   const sphere = frameBox.getBoundingSphere(new THREE.Sphere());
 
   // Timeline: at school, run home, then sit at the computer while it plays. Loops.
   const LOOP = 14, LEAVE = 0.8, ARRIVE = 5.8, POWER = 0.45;
   const ease = (u: number) => (u < 0.5 ? 2 * u * u : 1 - (-2 * u + 2) ** 2 / 2);
+  // Rotation around x: negative swings a limb forward, positive back.
+  const limbs = (hipL: number, hipR: number, kneeL: number, kneeR: number, shL: number, shR: number, elL: number, elR: number) => {
+    legs[0].hip.rotation.x = hipL; legs[1].hip.rotation.x = hipR;
+    legs[0].knee.rotation.x = kneeL; legs[1].knee.rotation.x = kneeR;
+    arms[0].shoulder.rotation.x = shL; arms[1].shoulder.rotation.x = shR;
+    arms[0].elbow.rotation.x = elL; arms[1].elbow.rotation.x = elR;
+  };
   const poseKid = (t: number) => {
     if (hero) return poseHero(hero, t);
     if (t < LEAVE) {
       const p = route.getPointAt(0);
       kid.position.set(p.x, p.y, p.z);
       kid.rotation.y = 0.9;
-      legL.rotation.x = legR.rotation.x = armL.rotation.x = armR.rotation.x = 0;
+      limbs(0, 0, 0, 0, 0.05, 0.05, -0.15, -0.15);
+      tail.rotation.set(0.15 + Math.sin(t * 3) * 0.05, 0, 0);
     } else if (t < ARRIVE) {
       const u = ease((t - LEAVE) / (ARRIVE - LEAVE));
       const p = route.getPointAt(u), d = route.getTangentAt(u);
-      kid.position.set(p.x, p.y + Math.abs(Math.sin(t * 11)) * 0.06, p.z);
+      const ph = t * 11, s = Math.sin(ph);
+      kid.position.set(p.x, p.y + Math.abs(Math.cos(ph)) * 0.05, p.z);
       kid.rotation.y = Math.atan2(d.x, d.z);
-      const swing = Math.sin(t * 11) * 0.8;
-      legL.rotation.x = swing; legR.rotation.x = -swing;
-      armL.rotation.x = -swing; armR.rotation.x = swing;
+      limbs(-s * 0.75, s * 0.75, 0.15 + Math.max(0, s) * 1.2, 0.15 + Math.max(0, -s) * 1.2, s * 0.8, -s * 0.8, -1.3, -1.3);
+      tail.rotation.set(0.35 + Math.sin(ph * 2) * 0.18, 0, Math.sin(ph) * 0.25); // ponytail bounces
     } else {
       const p = route.getPointAt(1);
       kid.position.set(p.x, p.y, p.z);
       kid.rotation.y += (Math.PI - kid.rotation.y) * 0.15; // turn to the screen
-      legL.rotation.x = legR.rotation.x = 0;
-      armL.rotation.x = -1.1 + Math.sin(t * 18) * 0.08; // typing
-      armR.rotation.x = -1.1 + Math.cos(t * 18) * 0.08;
+      const tap = Math.sin(t * 18) * 0.06;
+      limbs(0, 0, 0, 0, -0.95 + tap, -0.95 - tap, -0.55, -0.55); // typing
+      tail.rotation.set(0.12, 0, Math.sin(t * 2) * 0.05);
     }
   };
   const poseHero = (h: Hero, t: number) => {
