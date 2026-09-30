@@ -287,6 +287,13 @@ async function mount(el: HTMLElement, character: boolean) {
   kid.scale.setScalar(1.2);
   world.add(kid);
 
+  // Where she sits: a cushion on the floor in front of the keyboard.
+  const home = route.getPointAt(1);
+  const SIT = new THREE.Vector3(home.x + 0.1, FLOOR, home.z - 0.4);
+  const cushion = mesh(new THREE.CylinderGeometry(0.34, 0.36, 0.12, 28), new THREE.MeshStandardMaterial({ color: 0xee6e9f, roughness: 0.8 }), SIT.x, FLOOR + 0.06, SIT.z);
+  cushion.scale.set(1, 1, 0.85);
+  world.add(cushion);
+
   // A stool at the computer, for the real character's seated typing animation.
   const stool = new THREE.Group();
   stool.add(box(0.7, 0.08, 0.7, mat(0x2a2760, 0.4), 0, 0.62, 0));
@@ -322,6 +329,7 @@ async function mount(el: HTMLElement, character: boolean) {
   };
   const poseKid = (t: number) => {
     if (hero) return poseHero(hero, t);
+    shadow.visible = t < ARRIVE + 0.15; // seated, the cushion grounds her; the shadow would sink with her
     if (t < LEAVE) {
       const p = route.getPointAt(0);
       kid.position.set(p.x, p.y, p.z);
@@ -337,11 +345,13 @@ async function mount(el: HTMLElement, character: boolean) {
       limbs(-s * 0.75, s * 0.75, 0.15 + Math.max(0, s) * 1.2, 0.15 + Math.max(0, -s) * 1.2, s * 0.8, -s * 0.8, -1.3, -1.3);
       tail.rotation.set(0.35 + Math.sin(ph * 2) * 0.18, 0, Math.sin(ph) * 0.25); // ponytail bounces
     } else {
-      const p = route.getPointAt(1);
-      kid.position.set(p.x, p.y, p.z);
-      kid.rotation.y += (Math.PI - kid.rotation.y) * 0.15; // turn to the screen
-      const tap = Math.sin(t * 18) * 0.06;
-      limbs(0, 0, 0, 0, -0.95 + tap, -0.95 - tap, -0.55, -0.55); // typing
+      // Home: turn to the screen and sit down on the cushion, knees up, hands on the keys.
+      const k = ease(Math.min(1, (t - ARRIVE) / 0.5));
+      const HIP = 0.72 * 1.2; // hip height when standing, scaled
+      kid.position.set(home.x + (SIT.x - home.x) * k, FLOOR + (0.12 - HIP) * k, home.z + (SIT.z - home.z) * k);
+      kid.rotation.y += (Math.PI - kid.rotation.y) * 0.15;
+      const tap = Math.sin(t * 18) * 0.05 * k;
+      limbs(-1.35 * k, -1.35 * k, 1.5 * k, 1.5 * k, -0.35 - 0.75 * k + tap, -0.35 - 0.75 * k - tap, -0.5 * k, -0.5 * k);
       tail.rotation.set(0.12, 0, Math.sin(t * 2) * 0.05);
     }
   };
