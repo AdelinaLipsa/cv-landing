@@ -167,7 +167,7 @@ export default function Home({ ui }: { ui: UI }) {
       </section>
 
       <section className={`${s.offDuty} ${s.dropper}`} {...drop(STAGE.offDuty)}>
-        <div className={s.offText}>
+        <div className={s.offText} data-tour="offduty">
           <h2 className={s.h2}><BlurText text="Off duty" animateBy="words" delay={60} /></h2>
           {origin.map((o) => <p key={o} className={p.lede}>{o}</p>)}
           <p className={p.lede}>{about[1]}</p>

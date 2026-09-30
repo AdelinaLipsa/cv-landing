@@ -81,7 +81,7 @@ export default function Career({ ui }: { ui: UI }) {
 
         <ol className={s.rows}>
           {rows.map((r, i) => (
-            <li key={i} style={{ height: H }} data-tour={r.kind === "merge" ? "merge" : undefined}>
+            <li key={i} style={{ height: H }} data-tour={r.kind === "job" ? `job-${r.job.id}` : r.kind}>
               {r.kind === "fork" ? (
                 <div className={s.fork}><b>product branches off</b><span>2025. The dev branch stays.</span></div>
               ) : (
@@ -98,7 +98,7 @@ export default function Career({ ui }: { ui: UI }) {
       <dl className={s.also}>
         <div><dt>Also running</dt>{ventures.map((v) => <dd key={v.name}><b>{v.name}</b>, {v.role.toLowerCase()}. {v.note}</dd>)}</div>
         <div><dt>Certifications</dt>{certifications.map((c) => <dd key={c}>{c}</dd>)}</div>
-        <div><dt>Education</dt>{education.map((e) => <dd key={e.what}>{e.what}, {e.where}, {e.when}</dd>)}</div>
+        <div><dt>Education</dt>{education.map((e) => <dd key={e.what} data-tour={e.what === "Psychology" ? "edu-psychology" : "edu-web"}>{e.what}, {e.where}, {e.when}</dd>)}</div>
         <div><dt>Languages</dt>{languages.map((l) => <dd key={l}>{l}</dd>)}</div>
       </dl>
     </div>
