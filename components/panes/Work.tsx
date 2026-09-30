@@ -142,7 +142,7 @@ export default function Work(_: { ui: UI }) {
             <>
               {w > 0 && <Masonry items={toItems(shown.slice(0, w))} onSelect={select} parallax={parallax} />}
               <button type="button" className={s.wide} data-tour="wide" onClick={() => select(shown[w].id)} aria-label={shown[w].title}>
-                <Card tile={shown[w]} h={170 * scale} />
+                <Card tile={shown[w]} h={desktop ? 230 : 262} />
               </button>
               {w < shown.length - 1 && <Masonry items={toItems(shown.slice(w + 1))} onSelect={select} parallax={parallax} />}
             </>

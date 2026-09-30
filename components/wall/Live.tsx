@@ -18,19 +18,61 @@ function useStill() {
   return useCalm();
 }
 
+// Where conversion fell. Bar lengths are an illustrative shape; the one real figure is 43–45%
+// payment success, June to August (CV). The point: upstream shrank, the payment step held.
+const MONTHS = ["Jun", "Jul", "Aug"] as const;
+const FUNNEL = [
+  { label: "Visits", values: [100, 100, 100] },
+  { label: "Reached checkout", values: [62, 51, 43], drop: true },
+  { label: "Tried to pay", values: [56, 46, 39] },
+  { label: "Paid", values: [25, 20.5, 17.2], pay: true },
+];
+
 export function PaymentsChart() {
   const [ref, on] = useLive();
-  // Plot runs 30% (bottom) to 60% (top). Only the CV's band is drawn: 43–45%, June to August.
-  const top = (v: number) => `${((60 - v) / 30) * 100}%`;
+  const still = useStill();
+  const [m, setM] = useState(0);
+  useEffect(() => {
+    if (!on || still) return;
+    const id = setInterval(() => setM((v) => (v + 1) % MONTHS.length), 2200);
+    return () => clearInterval(id);
+  }, [on, still]);
+  const month = on ? m : 0;
+
   return (
-    <div ref={ref} className={`${s.live} ${s.white}`}>
-      <span className={s.liveCap}>Payment success, June to August</span>
-      <div className={s.plot} aria-hidden="true">
-        <motion.span className={s.band} style={{ top: top(45), bottom: `calc(100% - ${top(43)})`, originX: 0 }} initial={{ scaleX: 0 }} animate={{ scaleX: on ? 1 : 0 }} transition={slow} />
-        <motion.span className={s.bandLine} style={{ top: top(44), originX: 0 }} initial={{ scaleX: 0 }} animate={{ scaleX: on ? 1 : 0 }} transition={{ ...slow, delay: 0.2 }} />
-        <b className={s.bandLabel} style={{ top: `calc(${top(45)} - 22px)` }}><CountUp from={30} to={43} startWhen={on} duration={1.4} />–<CountUp from={30} to={45} startWhen={on} duration={1.4} />%</b>
+    <div ref={ref} className={`${s.live} ${s.white} ${s.funnel}`}>
+      <div className={s.funnelHead}>
+        <span className={s.liveCap}>Where conversion fell</span>
+        <span className={s.months} role="tablist" aria-label="Month">
+          {MONTHS.map((mo, i) => (
+            <span key={mo} className={i === month ? s.monthOn : undefined}>{mo}</span>
+          ))}
+        </span>
       </div>
-      <span className={s.months}><span>Jun</span><span>Jul</span><span>Aug</span></span>
+      <div className={s.rows}>
+        {FUNNEL.map((row) => (
+          <div key={row.label} className={s.frow}>
+            <span className={s.flabel}>{row.label}</span>
+            <span className={s.track}>
+              <motion.span
+                className={`${s.fbar} ${row.pay ? s.fbarPay : ""} ${row.drop ? s.fbarDrop : ""}`}
+                style={{ originX: 0 }}
+                initial={{ scaleX: 0 }}
+                animate={{ scaleX: on ? row.values[month] / 100 : 0 }}
+                transition={slow}
+              />
+            </span>
+            {row.drop && <span className={s.dropTag}>the drop is here</span>}
+            {row.pay && (
+              <b className={s.payTag}>
+                <CountUp from={30} to={43} startWhen={on} duration={1.4} />–<CountUp from={30} to={45} startWhen={on} duration={1.4} />%
+                <span className={s.payLong}> of attempts</span>, every month
+              </b>
+            )}
+          </div>
+        ))}
+      </div>
+      <span className={s.fnote}>Illustrative shape. The one real figure is 43–45%.</span>
     </div>
   );
 }
