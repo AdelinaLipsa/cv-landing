@@ -37,8 +37,7 @@ async function mount(el: HTMLElement) {
 
   const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(30, 1, 0.1, 100);
-  camera.position.set(3.4, 2.6, 8.2);
-  camera.lookAt(0, 1.2, 0);
+  const VIEW = new THREE.Vector3(3.4, 2.6, 8.2).normalize(); // the 3/4 angle we look from
 
   // Reflections: a soft studio environment for the plastic and glass to catch.
   const pmrem = new THREE.PMREMGenerator(renderer);
@@ -137,10 +136,20 @@ async function mount(el: HTMLElement) {
   pc.position.y = -0.2;
   scene.add(pc);
 
+  // Frame the whole model, keyboard included, from its bounding sphere.
+  // The sphere doesn't change as the model tilts, so nothing gets cut off mid-tilt.
+  const sphere = new THREE.Box3().setFromObject(pc).getBoundingSphere(new THREE.Sphere());
+
   const size = () => {
     const { width, height } = el.getBoundingClientRect();
     renderer.setSize(width, height, false);
     camera.aspect = width / Math.max(height, 1);
+    const vfov = THREE.MathUtils.degToRad(camera.fov);
+    const hfov = 2 * Math.atan(Math.tan(vfov / 2) * camera.aspect);
+    // 0.86: the sphere is loose around a box-shaped model; this still leaves room for the tilt.
+    const dist = (sphere.radius / Math.sin(Math.min(vfov, hfov) / 2)) * 0.86;
+    camera.position.copy(sphere.center).addScaledVector(VIEW, dist);
+    camera.lookAt(sphere.center);
     camera.updateProjectionMatrix();
   };
   const ro = new ResizeObserver(size);
@@ -151,8 +160,10 @@ async function mount(el: HTMLElement) {
   let tx = 0, ty = 0;
   const onMove = (e: PointerEvent) => {
     const r = el.getBoundingClientRect();
-    tx = ((e.clientX - r.left) / r.width - 0.5) * 0.5;
-    ty = ((e.clientY - r.top) / r.height - 0.5) * 0.2;
+    // Clamped: a cursor far outside the canvas must not spin the screen away.
+    const clamp = (v: number) => Math.max(-0.5, Math.min(0.5, v));
+    tx = clamp((e.clientX - r.left) / r.width - 0.5) * 0.35; // up to about ±10°
+    ty = clamp((e.clientY - r.top) / r.height - 0.5) * 0.1; // up to about ±3°
   };
   window.addEventListener("pointermove", onMove, { passive: true });
 

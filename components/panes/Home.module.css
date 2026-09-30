@@ -104,26 +104,6 @@
   .dock { display: flex; flex-direction: column; gap: 14px; margin-top: 36px; font-size: 14px; }
 
   .cards { display: block; position: relative; height: 600px; }
-  .cardsLabel { position: absolute; right: 30px; top: -30px; font-size: 12px; font-weight: 600; color: var(--blueprint); }
-  .card { position: absolute; margin: 0; border-radius: 24px; background: #fff; box-shadow: var(--shadow); padding: 20px 22px; }
-  .decoder { left: 0; top: 0; width: 440px; transform: rotate(-2deg); display: flex; flex-direction: column; gap: 14px; }
-  .decoderHead { display: flex; align-items: center; justify-content: space-between; font-size: 14px; }
-  .tabs { display: flex; gap: 6px; }
-  .tabs i { font-style: normal; padding: 4px 10px; border-radius: 999px; background: #f1f0f8; font-size: 12px; font-weight: 600; }
-  .tabs .on { background: var(--ink); color: var(--paper); }
-  .url { padding: 10px 12px; border-radius: 12px; background: var(--paper); border: 1px solid var(--line); font-family: var(--font-mono); font-size: 12px; color: var(--body-2); white-space: nowrap; overflow: hidden; }
-  .params { display: grid; grid-template-columns: 1fr 1fr; row-gap: 8px; margin: 0; font-size: 13px; }
-  .params dt { color: var(--steam); }
-  .params dd { margin: 0; font-weight: 600; }
-  .chart { right: -20px; top: 250px; width: 320px; height: 190px; transform: rotate(2.5deg); display: flex; flex-direction: column; justify-content: space-between; font-size: 13px; }
-  .chart > b { font-size: 14px; font-weight: 600; }
-  .band { position: relative; height: 56px; border-bottom: 1px solid var(--line); }
-  .band b { position: absolute; right: 0; top: 0; font-weight: 700; color: var(--blueprint); }
-  .bandFill { position: absolute; inset: 20px 0 auto; height: 12px; border-radius: 3px; background: var(--blueprint); opacity: 0.14; }
-  .bandLine { position: absolute; inset: 25px 0 auto; height: 2px; background: var(--blueprint); }
-  .code { left: -20px; top: 450px; width: 340px; background: var(--ink); transform: rotate(-1deg); box-shadow: 0 24px 50px rgba(23, 21, 58, 0.28); font-family: var(--font-mono); font-size: 13px; line-height: 1.7; color: var(--on-ink-muted); white-space: pre; }
-  .kw { color: var(--naruto); }
-  .str { color: var(--broth); }
 
   .preview { margin-top: 64px; }
   .h2 { font-size: 40px; }
@@ -203,7 +183,6 @@
 .rotate { display: inline-flex; overflow: hidden; vertical-align: bottom; }
 .rotateSplit { overflow: hidden; padding-bottom: 0.1em; }
 .counterDigits { display: inline-flex; vertical-align: -3px; }
-.decoder:global(.glare-hover) { display: flex; place-items: stretch; }
 
 .termBtn { align-self: flex-start; display: inline-flex; gap: 10px; align-items: center; height: 40px; padding: 0 14px; border: 0; border-radius: 12px; background: var(--ink); color: var(--on-ink); font-family: var(--font-mono), monospace; font-size: 13px; cursor: pointer; }
 .termBtn > span:first-child { color: var(--broth); }

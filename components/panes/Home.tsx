@@ -17,7 +17,7 @@ import VariableProximity from "../VariableProximity";
 import RotatingText from "../RotatingText";
 import Counter from "../Counter";
 import BlurText from "../BlurText";
-import GlareHover from "../GlareHover";
+import HeroCards from "../HeroCards";
 import p from "./pane.module.css";
 import s from "./Home.module.css";
 
@@ -145,21 +145,8 @@ export default function Home({ ui }: { ui: UI }) {
         </div>
 
         {/* Live, not screenshots. */}
-        <div className={`${s.cards} ${s.dropper}`} aria-hidden="true" data-tour="cards" {...drop(STAGE.cards)}>
-          <span className={s.cardsLabel}>live, not a screenshot</span>
-          <GlareHover className={`${s.card} ${s.decoder}`} width="440px" height="auto" background="#fff" borderRadius="24px" borderColor="transparent" glareColor="#3355ff" glareOpacity={0.14} glareSize={260} transitionDuration={900}>
-            <div className={s.decoderHead}><b>Param Decoder</b><span className={s.tabs}><i className={s.on}>Inspect</i><i>Compare</i><i>Postback</i></span></div>
-            <div className={s.url}>https://offer.example/?aff_id=1042&amp;sub1=spring&amp;cid=a9f3…</div>
-            <dl className={s.params}><dt>aff_id</dt><dd>1042</dd><dt>sub1</dt><dd>spring</dd><dt>cid</dt><dd>a9f3…</dd></dl>
-          </GlareHover>
-          <div className={`${s.card} ${s.chart}`}>
-            <span className={p.muted}>Payment success, June to August</span>
-            <span className={s.band}><span className={s.bandFill} /><span className={s.bandLine} /><b>43–45%</b></span>
-            <b>So the drop sat before payment.</b>
-          </div>
-          <pre className={`${s.card} ${s.code}`}>
-            <span className={s.kw}>const</span> tile = {"{\n"}  didntExist: <span className={s.str}>&quot;a way to read a link&quot;</span>,{"\n"}  now: <span className={s.str}>&quot;Param Decoder&quot;</span>,{"\n"}{"};"}
-          </pre>
+        <div className={`${s.cards} ${s.dropper}`} data-tour="cards" {...drop(STAGE.cards)}>
+          <HeroCards />
         </div>
       </div>
 
