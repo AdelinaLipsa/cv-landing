@@ -38,7 +38,7 @@ export default function Media({ tile }: { tile: Tile }) {
   if (tile.image) return <img className={s.video} src={tile.image.src} alt={tile.image.alt} loading="lazy" />;
   const dark = tile.kind === "video";
   return (
-    <div className={`${s.live} ${dark ? (tile.id === "cs-dashboard" ? s.ink2 : s.ink) : s.mist} ${s.placeholder}`}>
+    <div className={`${s.live} ${dark ? s.ink : s.mist} ${s.placeholder}`}>
       <span>{tile.kind === "video" ? "[recording, demo data]" : "[photo]"}</span>
     </div>
   );

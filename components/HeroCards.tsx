@@ -6,7 +6,7 @@ import GlareHover from "./GlareHover";
 import s from "./HeroCards.module.css";
 
 // Desktop hero: three things she made, working, not pictures of them.
-// Only the decoder is real code you can use; the other two are demo data (brief: no internal numbers).
+// The decoder is real code you can use; Hookwarden is public; the change log is generic demo data.
 
 function Decoder() {
   const [url, setUrl] = useState("https://offer.example/?aff_id=1042&sub1=spring&cid=a9f3c2&utm_source=newsletter");
@@ -45,40 +45,29 @@ function Decoder() {
   );
 }
 
-// Demo data. Shape of the real thing: complaints, chargeback threats, cancellations.
-const SERIES = [
-  { label: "Complaints", color: "var(--ink)", days: [9, 12, 8, 11, 7] },
-  { label: "Chargeback threats", color: "var(--naruto)", days: [3, 2, 4, 2, 1] },
-  { label: "Cancellations", color: "var(--blueprint)", days: [14, 11, 13, 9, 10] },
-];
-const MAX = 14;
+// Hookwarden: public, open source. An illustrative scan; the real tool gives three-state verdicts.
+const SCAN = [
+  { file: "stripe.ts", verdict: "verified" },
+  { file: "orders.ts", verdict: "missing" },
+  { file: "refunds.ts", verdict: "uncertain" },
+] as const;
 
-function Dashboard() {
+function Hookwarden() {
   const ref = useRef<HTMLDivElement>(null);
   const on = useInView(ref, { once: true, amount: 0.5 });
   return (
-    <div ref={ref} className={`${s.card} ${s.dash}`} aria-label="CS dashboard, demo data">
-      <div className={s.head}><b>CS dashboard</b><span className={s.demo}>demo data</span></div>
-      <div className={s.series}>
-        {SERIES.map((se, j) => (
-          <div key={se.label} className={s.row}>
-            <span className={s.rowLabel}>{se.label}</span>
-            <span className={s.bars} aria-hidden="true">
-              {se.days.map((d, i) => (
-                <motion.i
-                  key={i}
-                  style={{ background: se.color, originY: 1 }}
-                  initial={{ scaleY: 0 }}
-                  animate={{ scaleY: on ? d / MAX : 0 }}
-                  transition={{ ...slow, delay: j * 0.12 + i * 0.05 }}
-                />
-              ))}
-            </span>
-            <b className={s.rowValue}>{se.days[se.days.length - 1]}</b>
-          </div>
+    <div ref={ref} className={`${s.card} ${s.hook}`}>
+      <div className={s.head}><b>Hookwarden</b><span className={s.demo}>open source</span></div>
+      <code className={s.cmd}>$ hookwarden scan ./api</code>
+      <ul className={s.verdicts}>
+        {SCAN.map((r, i) => (
+          <motion.li key={r.file} initial={{ opacity: 0, x: -10 }} animate={on ? { opacity: 1, x: 0 } : {}} transition={{ ...glide, delay: 0.2 + i * 0.12 }}>
+            <span className={s.file}>{r.file}</span>
+            <span className={`${s.verdict} ${s[r.verdict]}`}>{r.verdict}</span>
+          </motion.li>
         ))}
-      </div>
-      <p className={s.foot}>Was a 1.5 to 2 hour report, every day. Now it’s this.</p>
+      </ul>
+      <p className={s.foot}>21 providers. Nothing leaves your machine. <a href="https://github.com/Hookwarden/hookwarden" target="_blank" rel="noopener">See the code</a></p>
     </div>
   );
 }
@@ -115,7 +104,7 @@ export default function HeroCards() {
     <>
       <span className={s.label}>live, not a screenshot</span>
       <Decoder />
-      <Dashboard />
+      <Hookwarden />
       <ChangeLog />
     </>
   );

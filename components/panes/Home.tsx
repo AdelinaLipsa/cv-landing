@@ -21,7 +21,7 @@ import HeroCards from "../HeroCards";
 import p from "./pane.module.css";
 import s from "./Home.module.css";
 
-const preview = ["decoder", "payments", "cs-dashboard"].map((id) => tiles.find((t) => t.id === id)!);
+const preview = ["decoder", "payments", "hookwarden"].map((id) => tiles.find((t) => t.id === id)!);
 
 export const Play = () => (
   <span className={p.playDot}>
@@ -33,10 +33,10 @@ const Svg = ({ children }: { children: React.ReactNode }) => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{children}</svg>
 );
 
-// Only things on the CV. Hookwarden and BITE join once Adelina confirms them.
+// Public things only: nothing internal to the current employer.
 const dockItems = (ui: UI) => [
   { label: "Change log", icon: <Svg><circle cx="6.5" cy="7" r="1.4" /><circle cx="6.5" cy="12" r="1.4" /><circle cx="6.5" cy="17" r="1.4" /><path d="M10.5 7h8M10.5 12h8M10.5 17h5" /></Svg> },
-  { label: "CS dashboard", className: "ink-2", icon: <Svg><path d="M4 20V11M9.3 20V5M14.6 20v-7M20 20V8" /></Svg> },
+  { label: "Hookwarden", className: "ink-2", icon: <Svg><path d="M12 3l7.5 3v5.5c0 4.8-3.2 8-7.5 9.8C7.7 19.5 4.5 16.3 4.5 11.5V6z" /><path d="M12 8.5v5a2 2 0 0 0 4 0" /></Svg> },
   { label: "Param Decoder", className: "ink", icon: <Svg><path d="M8 5 3.5 12 8 19M16 5l4.5 7L16 19" /><circle cx="12" cy="12" r="2.2" /></Svg> },
   { label: "Ruined Saints", className: "mist", icon: <Svg><ellipse cx="12" cy="7" rx="7" ry="2.6" /><path d="M8 13.5c0 3.5 1.8 6.5 4 6.5s4-3 4-6.5" /></Svg> },
 ].map((d) => ({ ...d, onClick: () => ui.go(1) }));

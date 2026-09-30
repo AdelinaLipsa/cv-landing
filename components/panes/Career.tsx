@@ -87,7 +87,7 @@ export default function Career({ ui }: { ui: UI }) {
               ) : (
                 <button type="button" className={s.row} onClick={() => open(r)}>
                   <b>{r.kind === "merge" ? stillShipping.title : r.job.company}</b>
-                  <span>{r.kind === "merge" ? "Param Decoder, change log, CS dashboard" : `${r.job.short}, ${r.job.dates}`}</span>
+                  <span>{r.kind === "merge" ? "Param Decoder, change log, Hookwarden" : `${r.job.short}, ${r.job.dates}`}</span>
                 </button>
               )}
             </li>

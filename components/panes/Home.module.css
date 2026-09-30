@@ -103,7 +103,7 @@
   .actions { margin-top: 12px; }
   .dock { display: flex; flex-direction: column; gap: 14px; margin-top: 36px; font-size: 14px; }
 
-  .cards { display: block; position: relative; height: 600px; }
+  .cards { display: block; position: relative; height: 720px; }
 
   .preview { margin-top: 64px; }
   .h2 { font-size: 40px; }

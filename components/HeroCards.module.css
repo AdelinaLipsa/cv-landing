@@ -39,17 +39,20 @@
 .param dt { color: var(--steam); font-family: var(--font-mono), monospace; font-size: 12px; }
 .param dd { margin: 0; font-weight: 600; overflow-wrap: anywhere; }
 
-/* CS dashboard */
-.dash { right: -20px; top: 270px; width: 330px; transform: rotate(2.5deg); }
-.series { display: flex; flex-direction: column; gap: 10px; }
-.row { display: grid; grid-template-columns: 118px 1fr 24px; align-items: end; gap: 10px; }
-.rowLabel { font-size: 12px; color: var(--steam); }
-.bars { display: flex; align-items: flex-end; gap: 4px; height: 26px; }
-.bars i { flex: 1; height: 100%; border-radius: 3px; }
-.rowValue { text-align: right; font-size: 13px; }
+/* Hookwarden */
+.hook { right: -20px; top: 250px; width: 330px; transform: rotate(2.5deg); }
+.cmd { font-family: var(--font-mono), monospace; font-size: 12px; color: var(--body-2); padding: 8px 10px; border-radius: 10px; background: var(--paper); border: 1px solid var(--line); }
+.verdicts { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.verdicts li { display: flex; justify-content: space-between; align-items: center; }
+.file { font-family: var(--font-mono), monospace; font-size: 12px; }
+.verdict { font-size: 11px; font-weight: 700; padding: 3px 9px; border-radius: 999px; }
+.verified { background: var(--ink); color: var(--paper); }
+.missing { background: var(--naruto); color: var(--ink); }
+.uncertain { border: 1px solid var(--line); color: var(--steam); }
+.foot a { color: var(--blueprint); font-weight: 600; }
 
 /* Change log */
-.log { left: -20px; top: 470px; width: 350px; transform: rotate(-1deg); background: var(--ink); color: var(--on-ink); box-shadow: 0 24px 50px rgba(23, 21, 58, 0.28); }
+.log { left: -20px; top: 540px; width: 350px; transform: rotate(-1deg); background: var(--ink); color: var(--on-ink); box-shadow: 0 24px 50px rgba(23, 21, 58, 0.28); }
 .log .demo { background: rgba(247, 246, 251, 0.1); color: var(--on-ink-muted); }
 .log .foot { color: var(--on-ink-muted); }
 .entries { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }

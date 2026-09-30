@@ -30,12 +30,6 @@ export const tiles: Tile[] = [
     tbc: "public link and recording",
   },
   {
-    id: "cs-dashboard", title: "CS dashboard", label: "Built", kind: "video", shape: "square",
-    didntExist: "a daily report that didn’t take 1.5 to 2 hours.", now: "a dashboard the CS team uses.",
-    more: ["Built the reporting pipeline and dashboard that replaced a 1.5 to 2 hour manual daily report.", "The CS team uses it to track complaints, chargeback threats and cancellation reasons."],
-    tbc: "demo-data recording",
-  },
-  {
     id: "change-log", title: "Checkout change log", label: "Built", kind: "video", shape: "land",
     didntExist: "one view of what changed, and when.", now: "a change log in ClickUp.",
     more: ["Part of running PRDs, standups and weekly reporting end-to-end in ClickUp.", "Gives leadership one view of dependencies, risks and timelines."],

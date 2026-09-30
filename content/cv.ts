@@ -133,7 +133,7 @@ export const stillShipping = {
   title: "Still shipping",
   dates: "2025 to now",
   lines: [
-    "Builds internal tools hands-on when the team hits a recurring pain point: the CS dashboard, a link and postback decoder, the change log.",
+    "Builds internal tools hands-on when the team hits a recurring pain point: a link and postback decoder, the change log.",
     "Built the reporting pipeline and dashboard that replaced a 1.5 to 2 hour manual daily report.",
     "Built 3DS rollout tracking in ClickUp and analysed 25 accounts to separate the 3DS effect from the wider conversion decline.",
   ],
