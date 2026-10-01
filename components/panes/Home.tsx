@@ -17,7 +17,7 @@ import RotatingText from "../RotatingText";
 import Counter from "../Counter";
 import Mark from "../Mark";
 import BlurText from "../BlurText";
-import PaymentJourney from "../PaymentJourney";
+import Workbench from "../Workbench";
 import { Rich } from "../Keyword";
 import EqualizerRing from "../EqualizerRing";
 import ThemeToggle from "../ThemeToggle";
@@ -171,9 +171,9 @@ export default function Home({ ui }: { ui: UI }) {
           </div>
         </div>
 
-        {/* Press pay: one payment through the stack she owns */}
+        {/* Four sides of the job: product, people, operations, build */}
         <div className={`${s.cards} ${s.dropper}`} data-tour="cards" {...drop(STAGE.cards)}>
-          <PaymentJourney />
+          <Workbench />
         </div>
       </div>
 

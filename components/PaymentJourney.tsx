@@ -2,11 +2,10 @@
 import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useState } from "react";
 import { useCalm } from "@/lib/useCalm";
-import SpotlightCard from "./SpotlightCard";
 import Magnet from "./Magnet";
 import s from "./PaymentJourney.module.css";
 
-// Hero centerpiece: press Pay and follow one payment through the payments product.
+// The Workbench's Product mode: press Pay and follow one payment through the payments product.
 // Risk and engineering run the steps; she owns the product: decisions, priorities, specs, delivery, measurement.
 // Demo order, demo amount, no real data.
 const METHODS = ["Card", "PayPal Pay Later", "Paze", "Amazon Pay"] as const;
@@ -48,9 +47,9 @@ export default function PaymentJourney() {
   const pick = (m: Method) => { if (!running) { setMethod(m); setAt(-1); } };
 
   return (
-    <SpotlightCard className={s.card} spotlightColor="rgba(51, 85, 255, 0.12)">
+    <div className={s.card}>
       <div className={s.head}>
-        <span className={s.kicker}>Checkout · demo</span>
+        <span className={s.kicker}>Product owner · payments</span>
         <span className={s.order}>Order #1042</span>
       </div>
       <b className={s.amount}>$49.00</b>
@@ -102,6 +101,6 @@ export default function PaymentJourney() {
           </motion.p>
         )}
       </AnimatePresence>
-    </SpotlightCard>
+    </div>
   );
 }
