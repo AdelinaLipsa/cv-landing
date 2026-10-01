@@ -25,7 +25,7 @@
   --col: 1200px;
 }
 
-/* Dark: set on <html> by layout's GATE script (saved choice, else the OS setting). */
+/* Dark: set on <html> by layout's GATE script when explicitly selected. */
 [data-theme="dark"] {
   color-scheme: dark;
   --ink: #ecebf8;

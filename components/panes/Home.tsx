@@ -4,7 +4,7 @@ import { motion, useInView } from "motion/react";
 import { useCalm } from "@/lib/useCalm";
 import Image from "next/image";
 import { STAGE } from "@/content/tour";
-import { land } from "@/lib/motion";
+import { ease, land } from "@/lib/motion";
 import type { UI } from "../Shell";
 import { about, beliefs, origin, profile, ventures } from "@/content/cv";
 import { tiles } from "@/content/wall";
@@ -37,7 +37,7 @@ export const Play = () => (
 );
 
 // Off duty pieces rise in one after another as they scroll into view.
-const rise = (k: number) => ({ initial: { opacity: 0, y: 18 }, whileInView: { opacity: 1, y: 0 }, viewport: { once: true, amount: 0.4 }, transition: { type: "spring", stiffness: 90, damping: 22, delay: k * 0.08 } }) as const;
+const rise = (k: number) => ({ initial: { opacity: 0, y: 14 }, whileInView: { opacity: 1, y: 0 }, viewport: { once: true, amount: 0.3 }, transition: { duration: 0.5, ease, delay: k * 0.12 } }) as const;
 
 const Svg = ({ children }: { children: React.ReactNode }) => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{children}</svg>
@@ -54,12 +54,14 @@ const dockItems = (ui: UI) => [
   { label: "Param Decoder", className: "ink", icon: <Svg><path d="M8 5 3.5 12 8 19M16 5l4.5 7L16 19" /><circle cx="12" cy="12" r="2.2" /></Svg> },
 ].map((d) => ({ ...d, onClick: () => ui.go(1) })).concat(
   // Her streetwear label: opens a short recording of its site, the gate and the hero.
-  { label: "Ruined Saints", className: "ink", icon: <img src="/brand/ruined-saints.svg" alt="" className="dock-wide" />, onClick: () => ui.sheet(ventures[0].name, (
-    <>
-      <video className={p.sheetVideo} src="/media/ruined-saints.mp4" poster="/media/ruined-saints.jpg" autoPlay muted loop playsInline aria-label="The Ruined Saints site: the PRAY? gate, then the hero" />
-      <p className={p.lede}>{ventures[0].note} {ventures[0].role}, {ventures[0].dates}.</p>
-    </>
-  )) }
+  {
+    label: "Ruined Saints", className: "ink", icon: <img src="/brand/ruined-saints.svg" alt="" className="dock-wide" />, onClick: () => ui.sheet(ventures[0].name, (
+      <>
+        <video className={p.sheetVideo} src="/media/ruined-saints.mp4" poster="/media/ruined-saints.jpg" autoPlay muted loop playsInline aria-label="The Ruined Saints site: the PRAY? gate, then the hero" />
+        <p className={p.lede}>{ventures[0].note} {ventures[0].role}, {ventures[0].dates}.</p>
+      </>
+    ))
+  }
 );
 
 // 2003 only. Rolls up to 42 like the counters that never meant anything.
@@ -181,10 +183,10 @@ export default function Home({ ui }: { ui: UI }) {
           <button type="button" className={s.seeAll} onClick={() => ui.go(1)}><DecryptedText text="See all" animateOn="hover" speed={40} maxIterations={8} /></button>
         </div>
         <div className={s.tiles} data-tour="preview">
-          {preview.map((t) => (
-            <button key={t.id} type="button" className={s.tile} onClick={() => ui.go(1)} aria-label={`${t.title}: see it on the Work tab`}>
+          {preview.map((t, i) => (
+            <motion.button key={t.id} type="button" className={s.tile} onClick={() => ui.go(1)} aria-label={`${t.title}: see it on the Work tab`} {...rise(i)}>
               <span className={`${s.media} ${s.teaser}`}><Card tile={t} h={260} /></span>
-            </button>
+            </motion.button>
           ))}
         </div>
       </section>
@@ -196,7 +198,7 @@ export default function Home({ ui }: { ui: UI }) {
           {/* Where it started: the road to the dev branch, on a line that draws itself */}
           <ol ref={originRef} className={s.origin} data-on={originOn || undefined}>
             {origin.map((o, i) => (
-              <li key={o.when} style={{ "--i": i } as React.CSSProperties}><span className={s.when}>{o.when}</span><p><Rich text={o.text} /></p></li>
+              <motion.li key={o.when} style={{ "--i": i } as React.CSSProperties} {...rise(i)}><span className={s.when}>{o.when}</span><p><Rich text={o.text} /></p></motion.li>
             ))}
           </ol>
 

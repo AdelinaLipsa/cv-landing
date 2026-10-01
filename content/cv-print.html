@@ -1,0 +1,348 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <title>Adelina Lipșa | CV</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 12mm 14mm 13mm;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            color: #24313b;
+            font: 9.6pt/1.28 Arial, Helvetica, sans-serif;
+        }
+
+        h1,
+        h2,
+        h3,
+        p,
+        ul {
+            margin: 0;
+        }
+
+        header {
+            border-bottom: 2px solid #147a70;
+            padding-bottom: 8px;
+            margin-bottom: 9px;
+        }
+
+        h1 {
+            color: #17252e;
+            font-size: 26pt;
+            line-height: 1;
+            letter-spacing: -.5px;
+        }
+
+        .headline {
+            color: #147a70;
+            font-size: 11pt;
+            font-weight: 700;
+            margin-top: 5px;
+        }
+
+        .contact {
+            color: #53616b;
+            font-size: 8pt;
+            margin-top: 6px;
+        }
+
+        section {
+            margin-top: 9px;
+        }
+
+        h2 {
+            color: #147a70;
+            font-size: 9pt;
+            letter-spacing: .7px;
+            text-transform: uppercase;
+            border-bottom: 1px solid #c7d9d5;
+            padding-bottom: 3px;
+            margin-bottom: 5px;
+        }
+
+        h3 {
+            color: #17252e;
+            font-size: 9.6pt;
+        }
+
+        .job {
+            margin-top: 7px;
+        }
+
+        .job-heading {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+            align-items: baseline;
+        }
+
+        .dates {
+            flex: none;
+            color: #53616b;
+            font-size: 8.6pt;
+        }
+
+        .meta {
+            color: #53616b;
+            font-size: 8.6pt;
+            margin: 1px 0 3px;
+        }
+
+        .subhead {
+            color: #147a70;
+            font-weight: 700;
+            margin: 4px 0 1px;
+        }
+
+        .continuation::before {
+            content: "SiteRocket Labs (continued): ";
+            color: #147a70;
+            font-weight: 700;
+        }
+
+        ul {
+            padding-left: 13px;
+        }
+
+        li {
+            padding-left: 1px;
+            margin: 0 0 2px;
+        }
+
+        .skills {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 3px 15px;
+        }
+
+        .skill {
+            break-inside: avoid;
+        }
+
+        .skill strong {
+            color: #17252e;
+        }
+
+        .compact {
+            color: #53616b;
+        }
+
+        .endmatter {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        a {
+            color: inherit;
+            text-decoration: none;
+        }
+
+        @media screen {
+            body {
+                width: 210mm;
+                min-height: 297mm;
+                padding: 12mm 14mm 13mm;
+                margin: 20px auto;
+                background: white;
+                box-shadow: 0 3px 24px #16252e22;
+            }
+
+            html {
+                background: #e7eceb;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <h1>Adelina Lipșa</h1>
+        <p class="headline">Technical Product Owner | Payments, 3DS, Checkout and Chargebacks</p>
+        <p class="contact">Bucharest, Romania | +40 745 362 663 | adelina.lipsa@gmail.com |
+            linkedin.com/in/adelina-lipsa</p>
+    </header>
+
+    <section>
+        <h2>Summary</h2>
+        <p>Technical Product Owner with a full-stack development background. Product owner for the payments stack of a
+            global affiliate and direct-response platform, product manager for its core engineering team and manager of
+            its technical support team. Owns gateway integrations, 3DS/SCA, alternative payment methods, fraud and
+            chargebacks, and analyses approval rates and checkout conversion with SQL and Datadog. Hands-on with
+            Laravel, Vue and Kubernetes. Certified Professional Scrum Product Owner (PSPO I and PSPO II).</p>
+    </section>
+
+    <section>
+        <h2>Experience</h2>
+        <article class="job">
+            <div class="job-heading">
+                <h3>Technical Product Owner &amp; Technical Support Team Manager</h3><span class="dates">Sep 2025 –
+                    Present</span>
+            </div>
+            <p class="meta">Yomali | United States</p>
+            <p>Product owner on the payments stack, product manager for the core engineering team, and direct manager of
+                the technical support team.</p>
+            <p class="subhead">Payments</p>
+            <ul>
+                <li>Own gateway and acquirer integrations: Chase Paymentech, NMI, Braintree, PayPal, Stripe and Amazon
+                    Pay.</li>
+                <li>Lead 3DS/SCA authentication and routing, and alternative payment methods including Paze and PayPal
+                    Pay Later.</li>
+                <li>Oversee Kount fraud monitoring and the handling of chargebacks and disputes.</li>
+                <li>Analyse payment performance across gateways (approval rates, declines, checkout conversion) using
+                    Datadog, log data and SQL.</li>
+                <li>Ran a two-week investigation comparing more than three months of logs to understand how chargebacks
+                    affected conversion rate.</li>
+                <li>Built 3DS rollout tracking in ClickUp and analysed 25 accounts to distinguish the 3DS effect from
+                    broader conversion changes.</li>
+            </ul>
+            <p class="subhead">Product Delivery and Teams</p>
+            <ul>
+                <li>Run PRDs, standups, weekly reporting and a change log end-to-end in ClickUp, giving leadership one
+                    view of dependencies, risks and timelines.</li>
+                <li>Write business plans for new initiatives at management's request.</li>
+                <li>Moved HR operations from spreadsheets to Factorial.</li>
+            </ul>
+            <p class="subhead">Customer Support Product</p>
+            <ul>
+                <li>Built the reporting pipeline and dashboard that replaced a 1.5 to 2 hour manual daily report; used
+                    by the CS team to track complaints, chargeback threats and cancellation reasons.</li>
+                <li>Proposed a single self-service refund flow to replace a multi-day email process; now in testing.
+                </li>
+                <li>Product owner for the refund and return journey (Find Order) and the human escalation protocol for
+                    the AI voice agent.</li>
+                <li>Evaluated AI quality scoring and support platforms: vendor assessment, cost modelling and scorecard
+                    design.</li>
+                <li>Managed SMS providers and the related compliance documentation.</li>
+            </ul>
+            <p class="subhead">Internal Tooling</p>
+            <ul>
+                <li>Built hands-on tools for recurring team pain points, including the CS dashboard, link and postback
+                    decoder, and change log.</li>
+            </ul>
+        </article>
+
+        <article class="job">
+            <div class="job-heading">
+                <h3>Technical Project Manager</h3><span class="dates">Feb 2025 – Sep 2025</span>
+            </div>
+            <p class="meta">SiteRocket Labs | Canada</p>
+            <p>Technical project manager at a Boston and Toronto agency building secure digital health applications,
+                reporting to the CEO. Led delivery for client Misio Health, managed in Asana.</p>
+            <ul>
+                <li>Coordinated third-party integrations for Misio's customer groups (BioFlex, Straight Line) with the
+                    Liviniti API and Revive Health, managing credentials, validation failures and escalations between
+                    the client's CTO, the CEO and the developer.</li>
+                <li class="continuation">Wrote requirements for automated member eligibility processing in Laravel:
+                    per-vendor S3 drops,
+                    scheduled SFTP transfers to Revive Health, result files written back to Caspio, with retries,
+                    logging and Slack alerts.</li>
+                <li>Set up AWS S3 folders per vendor for stage and production, with IAM policies restricting each vendor
+                    to its own directories, plus vendor records and access credentials.</li>
+                <li>Scoped a self-hosted Apple Wallet and Google Wallet membership card service, branded per client and
+                    keeping member data in-house for HIPAA, and wrote the engineering estimation brief.</li>
+                <li>Built Caspio DataPages for the member app, including the wallet card pages, and turned the service
+                    catalogue PDF into a JSON source that drives the Parked It Health branded member app.</li>
+            </ul>
+        </article>
+
+        <article class="job">
+            <div class="job-heading">
+                <h3>Web Developer</h3><span class="dates">Mar 2024 – Dec 2024</span>
+            </div>
+            <p class="meta">Ubisoft | Bucharest, Romania</p>
+            <p>QA department web developer on the internal platform testers used daily, from game build deployment to
+                testing.</p>
+            <ul>
+                <li>Designed, built and shipped features independently, full-stack in Laravel and Vue 2.</li>
+                <li>Built a micro-frontend architecture of three Vue apps on one page, coordinated by an orchestrator
+                    for shared data and events.</li>
+                <li>Integrated the platform with multiple back-end services and databases so testers had everything in
+                    one place.</li>
+                <li>Deployed to Kubernetes in production, monitored workloads in Rancher, debugged with Kibana, and
+                    handled secrets securely in SSH automation scripts.</li>
+                <li>Gathered and refined requirements directly with QA teams; evaluated new technologies and contributed
+                    to team best practices.</li>
+            </ul>
+        </article>
+
+        <article class="job">
+            <div class="job-heading">
+                <h3>Full-Stack Web Developer and Technical Lead</h3><span class="dates">Jul 2022 – Feb 2024</span>
+            </div>
+            <p class="meta">Fabel X | Cluj, Romania</p>
+            <p>Technical Lead from Jul 2023 to Dec 2023. Worked across project needs in React with TypeScript, Ruby on
+                Rails, Vue.js, Node.js, Next.js, .NET and Docker.</p>
+        </article>
+        <article class="job">
+            <div class="job-heading">
+                <h3>Full-Stack Web Developer</h3><span class="dates">Jul 2020 – Sep 2022</span>
+            </div>
+            <p class="meta">AgroCity.eu | Bucharest, Romania</p>
+            <p>Joined as Development Intern (Jul – Sep 2020), then stayed as a full-stack developer. Took the app mobile
+                with Capacitor: iOS builds in Xcode, Android builds, and publishing to the App Store and Google Play.
+                Stack: PHP, Laravel, Vue.js, SQL, TailwindCSS, Webpack.</p>
+        </article>
+        <article class="job">
+            <div class="job-heading">
+                <h3>Full-Stack Web Developer</h3><span class="dates">Dec 2020 – Oct 2021</span>
+            </div>
+            <p class="meta">Innovational | Bucharest, Romania</p>
+        </article>
+    </section>
+
+    <section>
+        <h2>Additional Experience</h2>
+        <p><strong>Founder &amp; Creative Director, Ruined Saints</strong> | Jun 2025 – Present. Independent streetwear
+            label.</p>
+        <p><strong>Founder, Bitly Digital (BITLY S.R.L.)</strong> | Mar 2025 – Present. Consulting and custom web
+            development.</p>
+    </section>
+
+    <section>
+        <h2>Skills</h2>
+        <div class="skills">
+            <p class="skill"><strong>Product Management:</strong> Product ownership, product backlog management,
+                requirements gathering, PRDs, stakeholder management, cross-functional delivery, vendor evaluation, cost
+                modelling, business plans</p>
+            <p class="skill"><strong>Agile Delivery:</strong> Scrum, Agile, standups, dependency and risk tracking,
+                change management, status reporting</p>
+            <p class="skill"><strong>Payments:</strong> Payment gateway and acquirer integration, 3DS (3-D Secure), SCA,
+                alternative payment methods, Buy Now Pay Later, fraud prevention (Kount), chargebacks and disputes</p>
+            <p class="skill"><strong>Analytics:</strong> SQL, Datadog, Kibana, log analysis, approval rate and decline
+                analysis, checkout conversion analysis, dashboards and reporting</p>
+            <p class="skill"><strong>Development:</strong> PHP, Laravel, JavaScript, Vue.js, React, Next.js, Python,
+                HTML, CSS, TailwindCSS, Webpack, REST APIs, webhooks, micro-frontends, Capacitor, Electron, full-stack
+                web development</p>
+            <p class="skill"><strong>DevOps and Cloud:</strong> Docker, Kubernetes, Rancher, AWS (S3, IAM), SFTP, Git,
+                GitLab, production deployments, secrets management</p>
+            <p class="skill"><strong>Tools:</strong> ClickUp, Asana, Caspio, Factorial</p>
+        </div>
+    </section>
+
+    <section class="endmatter">
+        <div>
+            <h2>Certifications</h2>
+            <p class="compact">Professional Scrum Product Owner II (PSPO II), Professional Scrum Product Owner I (PSPO
+                I), JavaScript Algorithms and Data Structures, Web Development</p>
+            <h2 style="margin-top:8px">Education</h2>
+            <p class="compact">Web Development, The Informal School of IT | 2019<br>Psychology, Universitatea Titu
+                Maiorescu | 2012 – 2015</p>
+        </div>
+        <div>
+            <h2>Languages</h2>
+            <p class="compact">Romanian (Native), English (Full Professional), Italian (Limited Working), German
+                (Elementary)</p>
+        </div>
+    </section>
+</body>
+
+</html>

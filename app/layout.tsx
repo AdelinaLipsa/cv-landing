@@ -8,7 +8,7 @@ const mono = JetBrains_Mono({ subsets: ["latin"], variable: "--font-mono", prelo
 const tinos = Tinos({ subsets: ["latin", "latin-ext"], weight: ["400", "700"], variable: "--font-2003", preload: false });
 
 // Skip the intro if it was seen in the last day (cv-built holds when), or on a deep link to a page.
-const GATE = `try{var m=localStorage.getItem("cv-theme");document.documentElement.dataset.theme=m||(matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light")}catch(e){}try{var t=+localStorage.getItem("cv-built");if(Date.now()-t<864e5||/^#(home|work|career|skills|contact)$/.test(location.hash))document.documentElement.dataset.built="1"}catch(e){}`;
+const GATE = `try{var m=localStorage.getItem("cv-theme");document.documentElement.dataset.theme=m||"light"}catch(e){}try{var t=+localStorage.getItem("cv-built");if(Date.now()-t<864e5||/^#(home|work|career|skills|contact)$/.test(location.hash))document.documentElement.dataset.built="1"}catch(e){}`;
 
 export const metadata: Metadata = {
   title: "Adelina Lipșa, Technical Product Owner",

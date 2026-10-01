@@ -6,7 +6,7 @@
   transition: background-color 1.8s var(--ease);
 }
 .viewport[data-era="0"] { background: var(--surface); }
-.viewport[data-era="1"] { background: #e6eef8; }
+.viewport[data-era="1"] { background: var(--surface-2); }
 .viewport[data-era="2"] { background: var(--surface); }
 
 /* The drifting grid sits behind the pages; it never catches clicks. */

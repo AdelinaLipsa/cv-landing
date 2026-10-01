@@ -4,7 +4,7 @@
 .mark { display: flex; align-items: center; gap: 10px; font-size: 15px; font-weight: 600; }
 .monogram { font-family: var(--font-display); font-weight: 800; font-stretch: 125%; font-size: 15px; }
 .markName { display: none; }
-.icons { display: flex; gap: 4px; }
+.icons { display: flex; align-items: center; gap: 4px; }
 .icon, .pdf {
   width: 44px;
   height: 44px;
@@ -201,32 +201,28 @@
 :global([data-era="2"]) .name,
 :global([data-era="2"]) .h2 { font-family: var(--font-body), sans-serif; }
 
-:global([data-era="0"]) .name { font-size: 30px; font-weight: 700; font-stretch: normal; letter-spacing: 0; color: #000; }
-:global([data-era="1"]) .name { font-size: 32px; font-weight: 700; font-stretch: normal; letter-spacing: 0; color: #1f3a5f; }
-:global([data-era="2"]) .name { font-size: 34px; font-weight: 500; font-stretch: normal; letter-spacing: 0; color: #222; }
+:global([data-era="0"]) .name { font-size: 30px; font-weight: 700; font-stretch: normal; letter-spacing: 0; }
+:global([data-era="1"]) .name { font-size: 32px; font-weight: 700; font-stretch: normal; letter-spacing: 0; }
+:global([data-era="2"]) .name { font-size: 34px; font-weight: 500; font-stretch: normal; letter-spacing: 0; }
 :is(:global([data-era="0"]), :global([data-era="1"]), :global([data-era="2"])) .h2 { font-size: 22px; font-stretch: normal; letter-spacing: 0; }
 
-:global([data-era="0"]) :is(.role b, .role span, .about) { color: #000; }
-:global([data-era="1"]) :is(.role b, .role span, .about) { color: #44556b; }
-:global([data-era="2"]) :is(.role b, .role span, .about) { color: #666; }
-
-:global([data-era="0"]) .photo { border-radius: 0; border: 1px solid #000; }
-:global([data-era="1"]) .photo { border-radius: 8px; border: 3px solid #fff; box-shadow: 0 3px 8px rgba(0, 0, 0, 0.3); }
+:global([data-era="0"]) .photo { border-radius: 0; border: 1px solid var(--line); }
+:global([data-era="1"]) .photo { border-radius: 8px; border: 3px solid var(--surface); box-shadow: var(--shadow); }
 :global([data-era="2"]) .photo { border-radius: 50%; }
 
-:global([data-era="0"]) .buildBtn { background: #efefef; color: #000; border: 2px outset #cfcfcf; border-radius: 0; box-shadow: none; font-family: inherit; font-weight: 400; }
-:global([data-era="1"]) .buildBtn { background: #3b7ddd; color: #fff; border: 1px solid #2a5da8; border-radius: 8px; box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55), 0 3px 6px rgba(31, 58, 95, 0.3); font-family: inherit; }
-:global([data-era="2"]) .buildBtn { background: #3355ff; color: #fff; border: 1px solid #3355ff; border-radius: 2px; box-shadow: none; }
+:global([data-era="0"]) .buildBtn { background: var(--surface-2); color: var(--ink); border: 2px outset var(--line); border-radius: 0; box-shadow: none; font-family: inherit; font-weight: 400; }
+:global([data-era="1"]) .buildBtn { background: var(--blueprint); color: var(--on-night); border: 1px solid var(--blueprint); border-radius: 8px; box-shadow: inset 0 1px 0 var(--glass), var(--shadow-btn); font-family: inherit; }
+:global([data-era="2"]) .buildBtn { background: var(--blueprint); color: var(--on-night); border: 1px solid var(--blueprint); border-radius: 2px; box-shadow: none; }
 :is(:global([data-era="0"]), :global([data-era="1"]), :global([data-era="2"])) .buildBtn > span:first-child { display: none; }
 
 :global([data-era="0"]) .media { background: var(--surface); border: 2px dashed var(--blueprint); border-radius: 0; box-shadow: none; }
-:global([data-era="1"]) .media { background: var(--surface); border: 1px solid #c9d6e8; border-radius: 10px; box-shadow: 0 4px 10px rgba(31, 58, 95, 0.22); }
-:global([data-era="2"]) .media { background: var(--surface); border: 1px solid #fff; border-radius: 2px; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.16); }
+:global([data-era="1"]) .media { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; box-shadow: var(--shadow); }
+:global([data-era="2"]) .media { background: var(--surface); border: 1px solid var(--line); border-radius: 2px; box-shadow: var(--shadow); }
 :is(:global([data-era="0"]), :global([data-era="1"]), :global([data-era="2"])) .media > * { opacity: 0; }
 
 :global([data-era="0"]) .tileTitle { color: var(--blueprint); text-decoration: underline; font-weight: 400; }
-:global([data-era="1"]) .tileTitle { color: #1f3a5f; }
-:global([data-era="2"]) .tileTitle { color: #222; font-weight: 500; }
+:global([data-era="1"]) .tileTitle { color: var(--blueprint); }
+:global([data-era="2"]) .tileTitle { color: var(--ink); font-weight: 500; }
 
 @media (min-width: 1000px) {
   :global([data-era="0"]) .name { font-size: 44px; }
