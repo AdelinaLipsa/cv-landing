@@ -12,7 +12,7 @@ export default function Boot({ onBuild, onSkip }: { onBuild: () => void; onSkip:
         <span className={s.decrypt}><DecryptedText text="This CV doesn’t exist yet." animateOn="hover" sequential revealDirection="start" speed={45} characters="01<>/{}[]#;" encryptedClassName={s.enc} /></span>
       </h1>
       <p>
-        Adelina Lipșa<br />Technical Product Owner<br />Full-stack developer before that<br />Bucharest, Romania
+        Adelina Lipșa<br />Technical Product Owner<br />Full-stack developer<br />Bucharest, Romania
       </p>
       <div className={s.actions}>
         <button type="button" className={s.button} onClick={onBuild}>Watch me build it</button>

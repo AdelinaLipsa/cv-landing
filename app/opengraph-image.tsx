@@ -21,7 +21,7 @@ async function font(family: string, axes: string, text: string) {
 export default async function Image() {
   const name = "Adelina Lipșa";
   const line = "It didn’t exist, so I built it.";
-  const role = "Technical Product Owner. Full-stack developer before that.";
+  const role = "Technical Product Owner. Also a full-stack developer, still shipping code.";
   const photo = `data:image/jpeg;base64,${readFileSync(join(process.cwd(), "public/adelina.jpg")).toString("base64")}`;
   const [display, body] = await Promise.all([
     font("Anybody", "wdth,wght@125,700", name + line),

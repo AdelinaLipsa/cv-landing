@@ -17,11 +17,22 @@
   cursor: pointer;
 }
 .pdf span { display: none; }
+/* LinkedIn fills in with its own blue on hover */
+.linkedin svg, .linkedin svg * { transition: color 0.3s var(--ease), fill 0.3s var(--ease), stroke 0.3s var(--ease); }
+.linkedin:hover, .linkedin:focus-visible { color: #0a66c2; }
+.linkedin:hover svg *, .linkedin:focus-visible svg * { fill: #0a66c2; stroke: #0a66c2; }
+
+/* "Message me": a real secondary button next to the primary, not a text link */
+.messageBtn { display: inline-flex; align-items: center; gap: 8px; height: 46px; padding: 0 18px 0 14px; border: 1.5px solid var(--ink); border-radius: 999px; background: transparent; color: var(--ink); font-size: 15px; font-weight: 600; cursor: pointer; transition: background-color 0.3s var(--ease), color 0.3s var(--ease), transform 0.3s var(--ease); }
+.messageBtn:hover, .messageBtn:focus-visible { background: var(--night); color: var(--on-night); transform: translateY(-1px); }
+.messageBtn svg { flex-shrink: 0; }
 
 .grid { display: grid; gap: 40px; margin-top: 44px; }
 .hero { display: flex; flex-direction: column; align-items: flex-start; gap: 18px; }
 
-.portrait { --r: 28px; width: 96px; height: 96px; margin-bottom: 4px; }
+.portrait { --r: 28px; position: relative; width: 96px; height: 96px; margin-bottom: 4px; }
+/* Dotted spec ring that turns into a spectrum when the lofi plays (EqualizerRing sizes and places it). */
+.ring { position: absolute; pointer-events: none; }
 .photo {
   width: 100%;
   height: 100%;
@@ -40,7 +51,8 @@
 .about { max-width: 520px; font-size: 16px; line-height: 1.55; color: var(--body-2); }
 .actions { display: flex; align-items: center; gap: 22px; margin-top: 2px; }
 
-.cards, .dock { display: none; }
+.dock { display: none; }
+.cards { margin-top: 8px; }
 
 .preview { display: flex; flex-direction: column; gap: 14px; margin-top: 48px; }
 .previewHead { display: flex; align-items: baseline; justify-content: space-between; }
@@ -58,20 +70,63 @@
   background: none;
   text-align: left;
   cursor: pointer;
+  min-width: 0; /* let a wide demo shrink to its grid column instead of pushing past the screen */
 }
-.tile:nth-child(3) { display: none; }
+.tile > span { width: 100%; min-width: 0; }
 .media { display: block; width: 100%; height: 196px; border-radius: 20px; overflow: hidden; }
 .tileTitle { font-size: 15px; font-weight: 600; line-height: 1.3; }
+/* The teaser tile is a whole Work card (media + caption): its own height, no clipping */
+.media.teaser { height: auto; overflow: visible; border-radius: 0; }
 
-.offDuty { display: flex; flex-direction: column; gap: 24px; margin-top: 56px; }
+.offDuty { position: relative; display: flex; flex-direction: column; gap: 24px; margin-top: 56px; }
 .offText { display: flex; flex-direction: column; gap: 14px; }
 .retro { order: -1; height: 320px; margin: 0 -24px; }
 .retroCanvas { width: 100%; height: 100%; }
-.retroCanvas canvas { display: block; width: 100% !important; height: 100% !important; }
-.offList { list-style: none; margin: 8px 0 0; padding: 0; border-top: 1px solid var(--line); }
-.offList li { display: flex; flex-direction: column; gap: 2px; padding: 14px 0; border-bottom: 1px solid var(--line); }
-.offList b { font-weight: 600; }
-.offList span { color: var(--body-2); }
+.retroCanvas canvas {
+  display: block; width: 100% !important; height: 100% !important;
+  /* Soft edges: zoomed in, the room fades out at the frame instead of being cut by a straight line. */
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 6%, #000 94%, transparent), linear-gradient(to bottom, transparent, #000 6%, #000 94%, transparent);
+  -webkit-mask-composite: source-in;
+  mask-image: linear-gradient(to right, transparent, #000 6%, #000 94%, transparent), linear-gradient(to bottom, transparent, #000 6%, #000 94%, transparent);
+  mask-composite: intersect;
+}
+/* Off duty: where it started */
+/* The timeline: a dot per step, and a piece of line from each dot to the next, so it starts and ends on a dot.
+   Drawn in sequence when it scrolls into view (data-on): each dot pops, then its line runs down. */
+.origin { --dot: 14px; --gap: 16px; --top: 4px; list-style: none; margin: 4px 0 0; padding: 0 0 0 28px; display: flex; flex-direction: column; gap: var(--gap); }
+.origin li { position: relative; display: flex; flex-direction: column; gap: 2px; }
+.origin li::before {
+  content: ""; box-sizing: border-box; position: absolute; left: -28px; top: var(--top); width: var(--dot); height: var(--dot);
+  border-radius: 50%; background: var(--paper); border: 3px solid var(--naruto); z-index: 1;
+  transform: scale(0); transition: transform 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) calc(var(--i) * 0.32s);
+}
+.origin li::after {
+  content: ""; position: absolute; left: calc(-28px + var(--dot) / 2 - 1px); top: calc(var(--top) + var(--dot) / 2);
+  bottom: calc(-1 * (var(--gap) + var(--top) + var(--dot) / 2)); /* past this step, through the gap, to the next dot's centre */
+  width: 2px; border-radius: 1px; background: var(--naruto);
+  transform: scaleY(0); transform-origin: top; transition: transform 0.32s linear calc(var(--i) * 0.32s + 0.15s);
+}
+.origin li:first-child::before { border-color: var(--broth); }
+.origin li:first-child::after { background: linear-gradient(var(--broth), var(--naruto)); }
+.origin li:nth-last-child(2)::after { background: linear-gradient(var(--naruto), var(--blueprint)); }
+.origin li:last-child::before { border-color: var(--blueprint); } /* the first dev job: the dev branch starts */
+.origin li:last-child::after { display: none; }
+.origin[data-on] li::before { transform: scale(1); }
+.origin[data-on] li::after { transform: scaleY(1); }
+@media (prefers-reduced-motion: reduce) { .origin li::before, .origin li::after { transform: none; transition: none; } }
+.when { font-size: 12px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--steam); }
+.origin p { margin: 0; font-size: 17px; line-height: 1.5; color: var(--ink); }
+
+/* Off the clock + beliefs: two quiet blocks, same rhythm */
+.offBlock { display: flex; flex-direction: column; gap: 10px; padding-top: 18px; border-top: 1px solid var(--line); }
+.offHead { font-size: 12px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--steam); }
+.offLine { margin: 0; font-size: 17px; line-height: 1.5; color: var(--ink); }
+.tags { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; }
+.tags li { padding: 6px 12px; border-radius: 999px; background: var(--surface); box-shadow: 0 1px 2px rgba(23, 21, 58, 0.06), 0 4px 12px rgba(23, 21, 58, 0.06); font-size: 13.5px; font-weight: 600; color: var(--ink); transition: transform 0.35s var(--ease), background-color 0.35s var(--ease), color 0.35s var(--ease); }
+.tags li:hover { transform: translateY(-3px) rotate(-2deg); background: var(--night); color: var(--on-night); }
+.beliefs { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.beliefs li { position: relative; padding-left: 18px; font-size: 16px; font-weight: 600; color: var(--ink); cursor: default; }
+.beliefs li::before { content: "✓"; position: absolute; left: 0; color: var(--blueprint); font-weight: 800; }
 
 @media (min-width: 1000px) {
   .markName { display: inline; }
@@ -79,7 +134,7 @@
     width: 34px;
     height: 34px;
     border-radius: 11px;
-    background: var(--ink);
+    background: var(--night);
     color: var(--broth);
     font-size: 13px;
     display: flex;
@@ -87,7 +142,7 @@
     justify-content: center;
   }
   .icons { gap: 10px; }
-  .icon, .pdf { background: #fff; border: 1px solid var(--line); border-radius: 999px; }
+  .icon, .pdf { background: var(--surface); border: 1px solid var(--line); border-radius: 999px; }
   .pdf { width: auto; padding: 0 18px; gap: 8px; font-size: 14px; font-weight: 600; text-decoration: none; }
   .pdf span { display: inline; }
 
@@ -103,12 +158,11 @@
   .actions { margin-top: 12px; }
   .dock { display: flex; flex-direction: column; gap: 14px; margin-top: 36px; font-size: 14px; }
 
-  .cards { display: block; position: relative; height: 720px; }
+  .cards { margin-top: 0; align-self: center; }
 
   .preview { margin-top: 64px; }
   .h2 { font-size: 40px; }
   .tiles { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; }
-  .tile:nth-child(3) { display: flex; }
   .media { height: 200px; border-radius: 24px; }
   .offDuty { margin-top: 80px; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: center; gap: 48px; }
   .retro { order: 0; height: 460px; margin: 0; }
@@ -117,8 +171,8 @@
 /* Build mode: sections that drop in during the 2026 build */
 .dropper { transition: opacity 1.2s var(--ease), transform 1.4s var(--ease); }
 .dropper[data-drop] { opacity: 0; transform: translateY(24px); pointer-events: none; }
-.portrait::after, .portraitLabel { transition: opacity 1.2s var(--ease); }
-.portrait[data-marks-off]::after, .portrait[data-marks-off] .portraitLabel { opacity: 0; }
+.ring, .portraitLabel { transition: opacity 1.2s var(--ease); }
+.portrait[data-marks-off] .ring, .portrait[data-marks-off] .portraitLabel { opacity: 0; }
 
 /* Font changes between eras crossfade with a short blur, so they don't pop */
 .refont { animation: refont 0.9s var(--ease); }
@@ -165,9 +219,9 @@
 :global([data-era="2"]) .buildBtn { background: #3355ff; color: #fff; border: 1px solid #3355ff; border-radius: 2px; box-shadow: none; }
 :is(:global([data-era="0"]), :global([data-era="1"]), :global([data-era="2"])) .buildBtn > span:first-child { display: none; }
 
-:global([data-era="0"]) .media { background: #fff; border: 2px dashed var(--blueprint); border-radius: 0; box-shadow: none; }
-:global([data-era="1"]) .media { background: #fff; border: 1px solid #c9d6e8; border-radius: 10px; box-shadow: 0 4px 10px rgba(31, 58, 95, 0.22); }
-:global([data-era="2"]) .media { background: #fff; border: 1px solid #fff; border-radius: 2px; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.16); }
+:global([data-era="0"]) .media { background: var(--surface); border: 2px dashed var(--blueprint); border-radius: 0; box-shadow: none; }
+:global([data-era="1"]) .media { background: var(--surface); border: 1px solid #c9d6e8; border-radius: 10px; box-shadow: 0 4px 10px rgba(31, 58, 95, 0.22); }
+:global([data-era="2"]) .media { background: var(--surface); border: 1px solid #fff; border-radius: 2px; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.16); }
 :is(:global([data-era="0"]), :global([data-era="1"]), :global([data-era="2"])) .media > * { opacity: 0; }
 
 :global([data-era="0"]) .tileTitle { color: var(--blueprint); text-decoration: underline; font-weight: 400; }
@@ -181,11 +235,16 @@
 }
 
 .rotate { display: inline-flex; overflow: hidden; vertical-align: bottom; }
+/* What she still ships is the point of the line: ink and bold, not the grey around it. */
+.role .rotate, .role .rotate span { color: var(--ink); font-weight: 700; }
+/* The rotating word gets its own line: words of different lengths would otherwise wrap and jump between rows. */
+.role .rotate { display: flex; }
 .rotateSplit { overflow: hidden; padding-bottom: 0.1em; }
 .counterDigits { display: inline-flex; vertical-align: -3px; }
 
-.termBtn { align-self: flex-start; display: inline-flex; gap: 10px; align-items: center; height: 40px; padding: 0 14px; border: 0; border-radius: 12px; background: var(--ink); color: var(--on-ink); font-family: var(--font-mono), monospace; font-size: 13px; cursor: pointer; }
-.termBtn > span:first-child { color: var(--broth); }
+/* The terminal easter egg: a compact dark pill, easy to spot */
+.termLink { align-self: flex-start; display: inline-flex; gap: 8px; align-items: center; height: 40px; margin-top: 4px; padding: 0 16px; border: 0; border-radius: 12px; background: var(--night); font-family: var(--font-mono), monospace; font-size: 13px; color: var(--on-ink); cursor: pointer; box-shadow: 0 10px 24px rgba(23, 21, 58, 0.18); transition: transform 0.3s var(--ease), box-shadow 0.3s var(--ease); }
+.termLink > span:first-child { color: var(--broth); font-weight: 700; }
+.termLink:hover, .termLink:focus-visible { transform: translateY(-2px); box-shadow: 0 14px 30px rgba(23, 21, 58, 0.26); }
 .termHint { display: none; color: var(--on-ink-muted); }
 @media (hover: hover) and (pointer: fine) { .termHint { display: inline; } }
-.termNote { font-size: 13px; color: var(--steam); max-width: 420px; }

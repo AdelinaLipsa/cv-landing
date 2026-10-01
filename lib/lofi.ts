@@ -2,6 +2,8 @@
 // 8-bit voices (square, triangle) through a warm lowpass, swung drums, vinyl crackle.
 // Plays for 10 minutes, then fades out.
 
+import { bus } from "./audioBus";
+
 const BPM = 72;
 const BEAT = 60 / BPM;
 const STEP = BEAT / 4; // sixteenths
@@ -37,6 +39,15 @@ export function startLofi(onEnd: () => void): Lofi {
   warm.frequency.value = 1900;
   warm.Q.value = 0.4;
   master.connect(warm).connect(ctx.destination);
+  // What the photo's equaliser reads.
+  const analyser = ctx.createAnalyser();
+  analyser.fftSize = 256;
+  analyser.smoothingTimeConstant = 0.72;
+  // Measured: bass peaks near -45 dB, the snare, lead and harmonics sit around -72 to -88 dB.
+  analyser.minDecibels = -100;
+  analyser.maxDecibels = -55;
+  warm.connect(analyser);
+  bus.analyser = analyser;
 
   const noise = ctx.createBuffer(1, ctx.sampleRate, ctx.sampleRate);
   const data = noise.getChannelData(0);
@@ -134,7 +145,7 @@ export function startLofi(onEnd: () => void): Lofi {
     master.gain.cancelScheduledValues(now);
     master.gain.setValueAtTime(master.gain.value, now);
     master.gain.linearRampToValueAtTime(0, now + 1.5);
-    setTimeout(() => { ctx.close(); onEnd(); }, 1700);
+    setTimeout(() => { if (bus.analyser === analyser) bus.analyser = null; ctx.close(); onEnd(); }, 1700);
   }
 
   return { stop, ctx };

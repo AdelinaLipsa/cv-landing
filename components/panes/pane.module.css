@@ -20,8 +20,8 @@
   padding: 0 20px 0 14px;
   border: 0;
   border-radius: 999px;
-  background: var(--ink);
-  color: var(--paper);
+  background: var(--night);
+  color: var(--on-night);
   font-size: 15px;
   font-weight: 600;
   text-decoration: none;
@@ -54,7 +54,7 @@
 .chip {
   padding: 5px 10px;
   border-radius: 10px;
-  background: #f1f0f8;
+  background: var(--surface-2);
   font-size: 13px;
   font-weight: 600;
 }
@@ -64,6 +64,7 @@
 .sheetList { margin: 18px 0; padding-left: 18px; display: flex; flex-direction: column; gap: 10px; color: var(--body-2); }
 
 /* Spec mark: dashed blueprint outline 8px outside its element, with a label. */
+/* Spec mark: dashed blueprint outline 8px outside its element (Contact's WhatsApp button). */
 .spec { position: relative; }
 .spec::after {
   content: "";
@@ -86,3 +87,4 @@
 @media (min-width: 900px) {
   .title { font-size: 40px; }
 }
+.sheetVideo { display: block; width: 100%; aspect-ratio: 16 / 9; margin: 18px 0 14px; border-radius: 14px; background: #000; }

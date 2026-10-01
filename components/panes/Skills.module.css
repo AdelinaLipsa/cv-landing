@@ -1,11 +1,16 @@
-.head { display: flex; flex-direction: column; gap: 8px; margin-top: 36px; }
+.head { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 8px 28px; margin-top: 36px; }
+.nudge { display: flex; align-items: flex-end; gap: 4px; margin-bottom: -18px; color: var(--naruto); animation: nudge 3.2s ease-in-out infinite; pointer-events: none; }
+.nudge svg { flex-shrink: 0; transform: translateY(14px); }
+.nudgeText { margin-bottom: 22px; font-family: var(--font-display), sans-serif; font-size: 15px; font-weight: 700; font-stretch: 112%; color: var(--ink); transform: rotate(-4deg); }
+@keyframes nudge { 0%, 100% { transform: translate(0, 0); } 50% { transform: translate(4px, -5px); } }
+@media (prefers-reduced-motion: reduce) { .nudge { animation: none; } }
 
 .picker { display: flex; flex-wrap: wrap; gap: 8px; }
 .pick {
   position: relative;
   height: 38px;
   padding: 0 14px;
-  border: 1.5px solid #cfcde3;
+  border: 1.5px solid var(--line);
   border-radius: 999px;
   background: transparent;
   font-size: 14px;
@@ -13,39 +18,35 @@
   cursor: pointer;
 }
 .pick[aria-checked="true"] { border-color: var(--ink); }
-.pickBg { position: absolute; inset: -1.5px; border-radius: 999px; background: var(--ink); }
+/* Lit while you hover a skill this role used */
+.pick { transition: border-color 0.3s, box-shadow 0.3s, transform 0.3s var(--ease); }
+.pick[data-lit] { border-color: var(--broth); box-shadow: 0 0 0 3px rgba(245, 181, 63, 0.35); transform: translateY(-2px); }
+.pickBg { position: absolute; inset: -1.5px; border-radius: 999px; background: var(--night); }
 .pickText { position: relative; transition: color 0.8s var(--ease); }
-.pick[aria-checked="true"] .pickText { color: var(--paper); }
+.pick[aria-checked="true"] .pickText { color: var(--on-night); }
 
-.layers { display: flex; flex-direction: column; gap: 10px; max-width: 760px; }
-.slab {
+.layers { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; max-width: 760px; }
+/* Wide screens: two columns, product management across the top. */
+@media (min-width: 1100px) {
+  .layers { grid-template-columns: repeat(2, minmax(0, 1fr)); max-width: none; }
+  .layers > * > :global(.card-spotlight) { height: 100%; } /* pairs in a row share a height */
+  .layers > :first-child { grid-column: 1 / -1; }
+}
+/* Layers are React Bits SpotlightCards: these beat its default dark card styles. */
+.slab:global(.card-spotlight) {
   display: flex;
   flex-direction: column;
   gap: 8px;
   padding: 12px 14px 14px;
   border-radius: 18px;
-  background: #fff;
-  border: 1px solid #dcdaec;
-  box-shadow: 0 5px 0 #dcdaec;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  box-shadow: 0 5px 0 var(--line);
 }
-.dark { background: var(--ink); border-color: var(--ink); box-shadow: 0 5px 0 #0b0a22; }
+.slab:global(.card-spotlight) > * { position: relative; z-index: 1; }
+.dark:global(.card-spotlight) { background: var(--night); border-color: var(--night); box-shadow: 0 5px 0 #0b0a22; }
 .layerName { font-family: var(--font-display); font-weight: 700; font-stretch: 125%; font-size: 15px; letter-spacing: -0.02em; }
 .dark .layerName { color: var(--broth); }
-.chip { padding: 5px 10px; border-radius: 10px; font-size: 13px; font-weight: 600; }
+.chip { padding: 5px 10px; border-radius: 10px; font-size: 13px; font-weight: 600; cursor: default; }
 
-.note {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  max-width: 760px;
-  padding: 14px 16px;
-  border-radius: 20px;
-  background: #fff;
-  border: 1px solid #dcdaec;
-  font-size: 15px;
-  line-height: 1.45;
-}
-.key { display: flex; gap: 14px; font-size: 13px; font-weight: 600; color: var(--body-2); }
-.key span { display: flex; align-items: center; gap: 6px; }
-.key i { width: 12px; height: 12px; border-radius: 4px; }
 

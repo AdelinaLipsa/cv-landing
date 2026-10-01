@@ -14,6 +14,7 @@ import Work from "./panes/Work";
 import Career from "./panes/Career";
 import Skills from "./panes/Skills";
 import ClickSpark from "./ClickSpark";
+import SideRays from "./SideRays";
 import SoundToggle from "./SoundToggle";
 
 import s from "./Shell.module.css";
@@ -24,7 +25,8 @@ const Stepper = dynamic(() => import("./Tour").then((m) => m.Stepper), { ssr: fa
 const Terminal = dynamic(() => import("./Terminal"), { ssr: false });
 
 const TABS = ["Home", "Work", "Career", "Skills"] as const;
-const BUILT_KEY = "cv-built";
+const BUILT_KEY = "cv-built"; // when the intro was last seen (ms); it shows again after a day
+const DAY = 864e5;
 
 export type UI = {
   go: (pane: number) => void;
@@ -57,6 +59,7 @@ export default function Shell({ code, character }: { code: Snippets; character: 
   useLayoutEffect(() => {
     const el = viewport.current;
     if (!el) return; // Boot is showing, the shell isn't mounted yet
+    setW(el.clientWidth); // now, not on the observer's first callback: until then the drag is clamped to 0
     const ro = new ResizeObserver(([e]) => setW(e.contentRect.width));
     ro.observe(el);
     return () => ro.disconnect();
@@ -67,7 +70,7 @@ export default function Shell({ code, character }: { code: Snippets; character: 
   useEffect(() => {
     const i = TABS.findIndex((t) => `#${t.toLowerCase()}` === location.hash);
     let stored = false;
-    try { stored = localStorage.getItem(BUILT_KEY) === "1"; } catch {}
+    try { stored = Date.now() - Number(localStorage.getItem(BUILT_KEY)) < DAY; } catch {}
     setReturning(stored);
     setBuilt(document.documentElement.dataset.built === "1");
     if (i > 0) setPane(i);
@@ -91,16 +94,46 @@ export default function Shell({ code, character }: { code: Snippets; character: 
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
+  const [dir, setDir] = useState(1); // which side the next page's blocks slide in from
   const go = useCallback((i: number, how: Transition = track) => {
+    if (i !== at.current.pane) setDir(i > at.current.pane ? 1 : -1);
     setPane(i);
     animate(x, -i * w, how);
     history.replaceState(null, "", i ? `#${TABS[i].toLowerCase()}` : location.pathname);
   }, [w, x]);
   const goRef = useRef(go);
   goRef.current = go;
+  const at = useRef({ pane, touring });
+  at.current = { pane, touring };
+
+  // Trackpad sideways swipe (or shift+wheel) turns the page, one pane per gesture.
+  useEffect(() => {
+    const el = viewport.current;
+    if (!el) return;
+    let sum = 0, locked = false, idle = 0;
+    const onWheel = (e: WheelEvent) => {
+      const dx = e.deltaX || (e.shiftKey ? e.deltaY : 0);
+      if (at.current.touring || Math.abs(dx) <= Math.abs(e.shiftKey ? 0 : e.deltaY)) return;
+      // Leave sideways scrollers inside a pane (code, carousels) alone.
+      for (let n = e.target as HTMLElement | null; n && n !== el; n = n.parentElement) {
+        if (n.scrollWidth > n.clientWidth && /auto|scroll/.test(getComputedStyle(n).overflowX)) return;
+      }
+      e.preventDefault(); // stops the browser's back/forward swipe
+      clearTimeout(idle);
+      idle = window.setTimeout(() => { sum = 0; locked = false; }, 180); // gesture (and its inertia) is over
+      if (locked) return;
+      sum += dx;
+      if (Math.abs(sum) < 60) return;
+      const next = Math.max(0, Math.min(TABS.length - 1, at.current.pane + Math.sign(sum)));
+      locked = true;
+      if (next !== at.current.pane) goRef.current(next, glide);
+    };
+    el.addEventListener("wheel", onWheel, { passive: false });
+    return () => { el.removeEventListener("wheel", onWheel); clearTimeout(idle); };
+  }, [built]);
 
   const remember = () => {
-    try { localStorage.setItem(BUILT_KEY, "1"); } catch {}
+    try { localStorage.setItem(BUILT_KEY, String(Date.now())); } catch {}
     setReturning(true);
   };
 
@@ -157,7 +190,9 @@ export default function Shell({ code, character }: { code: Snippets; character: 
       <main className="gate-shell">
       {/* Sparks in broth once the page is built. Not during the build, which is its own show. */}
       <ClickSpark sparkColor={touring || reduce ? "transparent" : "#F5B53F"} sparkSize={9} sparkRadius={18} sparkCount={8} duration={500}>
-      <div ref={viewport} className={s.viewport} data-era={era} data-touring={touring || undefined}>
+      <div ref={viewport} className={s.viewport} data-era={era} data-touring={touring || undefined} style={{ "--from": `${dir * 36}px` } as React.CSSProperties}>
+        {/* React Bits SideRays: soft light from the top-right corner, in broth and blueprint. Only once the page is "now". */}
+        {era === 3 && !reduce && <div className={s.bg}><SideRays rayColor1="#F5B53F" rayColor2="#3355FF" speed={1.2} intensity={2} blend={0.5} opacity={0.8} /></div>}
         <motion.div
           className={s.track}
           style={{ x }}
@@ -167,13 +202,14 @@ export default function Shell({ code, character }: { code: Snippets; character: 
           dragElastic={0.14}
           dragConstraints={{ left: -(TABS.length - 1) * w, right: 0 }}
           onDragEnd={(_, info) => {
-            const projected = x.get() + info.velocity.x * 0.25;
-            const i = Math.max(0, Math.min(TABS.length - 1, Math.round(-projected / w)));
+            // A fifth of the screen, or a flick, turns the page. Halfway felt stuck.
+            const dir = info.offset.x < -w * 0.2 || info.velocity.x < -500 ? 1 : info.offset.x > w * 0.2 || info.velocity.x > 500 ? -1 : 0;
+            const i = Math.max(0, Math.min(TABS.length - 1, pane + dir));
             go(i, { ...glide, velocity: info.velocity.x });
           }}
         >
           {panes.map((Pane, i) => (
-            <section key={TABS[i]} data-pane className={s.pane} aria-label={TABS[i]} aria-hidden={i !== pane} inert={i !== pane}>
+            <section key={TABS[i]} data-pane data-active={i === pane || undefined} className={s.pane} aria-label={TABS[i]} aria-hidden={i !== pane} inert={i !== pane}>
               <Pane ui={ui} />
             </section>
           ))}

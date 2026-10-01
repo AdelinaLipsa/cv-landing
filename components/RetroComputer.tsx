@@ -2,6 +2,8 @@
 import { useEffect, useRef } from "react";
 import type * as T from "three";
 import { createBattle, draw, step, W, H } from "@/lib/battle";
+import { buildHobbies } from "@/lib/hobbyModels";
+import s from "./RetroComputer.module.css";
 
 // A beige late-90s computer in three.js. The screen is a canvas texture running the pixel battle.
 // three.js is only fetched when this scrolls near view, and nothing renders while it's off screen.
@@ -23,7 +25,7 @@ export default function RetroComputer({ className, character = false }: { classN
     return () => { io.disconnect(); cleanup(); };
   }, []);
 
-  return <div ref={host} className={className} role="img" aria-label="A kid runs home from school to a beige 90s computer. It switches on, and a tiny pixel navi battles a virus on a grid." />;
+  return <div ref={host} className={className} role="img" aria-label="A kid runs home from school to her room and a beige 90s computer. Around it: a cat on the monitor, a guitar, an iPad mid-drawing, a Mega Man figure, kid Goku, a Digivice, a Pokéball, a straw hat, and boxing gloves. The computer switches on, and a tiny pixel navi battles a virus on a grid." />;
 }
 
 async function mount(el: HTMLElement, character: boolean) {
@@ -133,7 +135,75 @@ async function mount(el: HTMLElement, character: boolean) {
   kb.rotation.x = 0.06;
   pc.add(kb);
 
+  // Her room: the things she loves, around the computer she ran home to. The guitar and the iPad are built in
+  // code (lib/hobbyModels); the rest are her models (public/models). Positions are in the computer's space:
+  // floor at y 0, the case top at 0.6, the monitor top at 2.65, the keyboard in front at z 2.1.
+  // The camera looks from the front right, so the room fills the right side; the kid's route comes in from the left.
+  const hobbies = buildHobbies(THREE, reduce);
+  const place = (o: T.Object3D, x: number, y: number, z: number, scale: number, rx = 0, ry = 0, rz = 0) => {
+    o.scale.setScalar(scale); o.position.set(x, y, z); o.rotation.set(rx, ry, rz); pc.add(o);
+  };
+  place(hobbies.guitar, 2.3, 0.86, 0.35, 2.7 / 210, 0, -0.35, 0.2); // leaning on the computer
+  place(hobbies.ipad, 3.25, 0.5, -0.15, 0.95 / 160, -0.22, -0.45, 0); // on the floor between the guitar and the gloves, mid-drawing
+  const PROPS = [
+    { url: "/models/oiia-cat.glb", size: 3.2, at: [0.1, 2.65, -0.3], ry: 0.5 }, // sitting on the monitor, way bigger than it
+    { url: "/models/megaman.glb", size: 1.5, at: [1.25, 0, 2.95], ry: 0.3 }, // next to the Pokéball, in front of the keyboard
+    { url: "/models/digivice.glb", size: 1.0, at: [3.55, 0, 1.25], ry: Math.PI + 0.35 }, // on the floor next to the straw hat (the file faces away)
+    { url: "/models/pokeball.glb", size: 0.58, at: [1.95, 0, 2.35], ry: 0.3 }, // on the floor by the keyboard
+    { url: "/models/kid-goku.glb", size: 1.4, at: [2.75, 0, 2.6], ry: 0.4 }, // kid Goku, front right
+    { url: "/models/straw-hat.glb", size: 1.3, at: [2.75, 0, 1.45], ry: 0.5 }, // on the floor
+    { url: "/models/boxing-gloves.glb", size: 1.0, at: [2.55, 0, -0.95], ry: -0.4 }, // behind the guitar
+  ] as const;
+  const { GLTFLoader } = await import("three/examples/jsm/loaders/GLTFLoader.js");
+  const loader = new GLTFLoader();
+  const mixers: T.AnimationMixer[] = [];
+  let gone = false;
+  for (const prop of PROPS) {
+    loader.load(prop.url, (g) => {
+      if (gone) return;
+      // Fit its largest side to `size`, centred, resting on its spot.
+      const b = new THREE.Box3().setFromObject(g.scene);
+      const dim = b.getSize(new THREE.Vector3());
+      const k = prop.size / Math.max(dim.x, dim.y, dim.z);
+      g.scene.scale.setScalar(k);
+      const c = b.getCenter(new THREE.Vector3());
+      g.scene.position.set(-c.x * k, -b.min.y * k, -c.z * k);
+      const holder = new THREE.Group();
+      holder.position.set(prop.at[0], prop.at[1], prop.at[2]);
+      holder.rotation.y = prop.ry;
+      holder.add(g.scene);
+      pc.add(holder);
+      if (g.animations[0] && !reduce) { const mx = new THREE.AnimationMixer(g.scene); mx.clipAction(g.animations[0]).play(); mixers.push(mx); } // the oiia spin
+    });
+  }
+
   pc.position.y = -0.2;
+
+  // Hand-drawn notes in the empty space right of the scene, each arrow curving down-left onto a group:
+  // "my passions" (guitar, gloves, iPad) and "my childhood" (the collectibles). Each tip follows its spot
+  // on screen every frame, so it stays on target as the diorama turns.
+  el.style.position = "relative";
+  let zoom = 1, zoomTo = 1; // pinch / ctrl + scroll, eased in the loop
+  const NOTES = [
+    { text: "my passions", at: new THREE.Vector3(3.9, 2.4, -0.4) }, // just right of the guitar, the iPad and the gloves
+    { text: "my childhood", at: new THREE.Vector3(4.3, 1.1, 1.8) }, // just right of the Digivice, the hat and the figures
+  ].map((n) => {
+    const node = document.createElement("div");
+    node.className = s.note;
+    node.setAttribute("aria-hidden", "true");
+    node.innerHTML = `<svg class="${s.noteArrow}" width="54" height="46" viewBox="0 0 54 46" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M50 6C32 6 16 18 10 38"/><path d="M18 33l-8 7-4-10"/></svg><span class="${s.noteText}">${n.text}</span>`;
+    el.append(node);
+    return { ...n, node };
+  });
+  const placeNote = () => {
+    for (const n of NOTES) {
+      const p = pc.localToWorld(n.at.clone()).project(camera);
+      const x = ((p.x + 1) / 2) * el.clientWidth, y = ((1 - p.y) / 2) * el.clientHeight;
+      n.node.style.transform = `translate(${x}px, ${y}px) translate(-6px, -100%)`; // text up-right, arrow tip on the spot
+      n.node.dataset.placed = "";
+      n.node.style.opacity = zoom > 1.1 ? "0" : ""; // zoomed in, the notes would point past the frame
+    }
+  };
 
   // The story: a kid runs home from school to this computer. Everything tilts together as one diorama.
   const world = new THREE.Group();
@@ -142,17 +212,30 @@ async function mount(el: HTMLElement, character: boolean) {
   const FLOOR = -0.2;
   const mat = (color: number, roughness = 0.6) => new THREE.MeshStandardMaterial({ color, roughness });
 
-  // School, small and far back-left.
+  // School, small and far back-left: a European school block. Three storeys of plaster, a flat roof
+  // with a parapet (a block's roof, not a house's), rows of windows, a door with a concrete canopy, the flag on top.
   const school = new THREE.Group();
-  school.add(box(2.4, 1.4, 1.8, mat(0xe6e4f2), 0, 0.7, 0));
-  const roof = new THREE.Mesh(new THREE.ConeGeometry(1.9, 0.9, 4), mat(0xd66a92, 0.5));
-  roof.position.y = 1.85;
-  roof.rotation.y = Math.PI / 4;
-  school.add(roof);
-  school.add(box(0.45, 0.7, 0.05, mat(0x2a2760), 0, 0.35, 0.91));
-  for (const x of [-0.75, 0.75]) school.add(box(0.4, 0.35, 0.05, new THREE.MeshBasicMaterial({ color: 0x9db0ff }), x, 0.85, 0.91));
-  school.add(box(0.04, 1.1, 0.04, mat(0x6b6990), 1.3, 1.95, 0.6));
-  school.add(box(0.4, 0.24, 0.02, mat(0xf5b53f, 0.4), 1.52, 2.35, 0.6));
+  const SW = 3.0, SH = 2.2, SD = 1.8; // school width, height, depth
+  school.add(box(SW, SH, SD, mat(0xe9e2d0, 0.9), 0, SH / 2, 0));
+  school.add(box(SW + 0.12, 0.12, SD + 0.12, mat(0x6b6a72, 0.8), 0, SH + 0.06, 0)); // flat roof slab
+  for (const [x, z, w, d] of [[0, SD / 2 + 0.04, SW + 0.12, 0.06], [0, -SD / 2 - 0.04, SW + 0.12, 0.06], [SW / 2 + 0.04, 0, 0.06, SD + 0.12], [-SW / 2 - 0.04, 0, 0.06, SD + 0.12]]) {
+    school.add(box(w, 0.14, d, mat(0x55545c, 0.8), x, SH + 0.19, z)); // parapet
+  }
+  school.add(box(SW + 0.02, 0.08, SD + 0.02, mat(0xcfc6b0, 0.9), 0, 0.04, 0)); // plinth
+  const pane = new THREE.MeshBasicMaterial({ color: 0x9db0ff });
+  const sill = mat(0xffffff, 0.8);
+  for (let floor = 0; floor < 3; floor++) {
+    for (let k = 0; k < 5; k++) {
+      const x = -1.15 + k * 0.575, y = 0.42 + floor * 0.66;
+      if (floor === 0 && k === 2) continue; // the door goes here
+      school.add(box(0.34, 0.36, 0.04, pane, x, y, SD / 2 + 0.01));
+      school.add(box(0.4, 0.04, 0.07, sill, x, y - 0.2, SD / 2 + 0.03));
+    }
+  }
+  school.add(box(0.5, 0.62, 0.05, mat(0x2a2760), 0, 0.33, SD / 2 + 0.01)); // door
+  school.add(box(0.8, 0.06, 0.32, mat(0xb9b2a0, 0.8), 0, 0.7, SD / 2 + 0.16)); // concrete canopy
+  school.add(box(0.04, 0.9, 0.04, mat(0x6b6990), SW / 2 - 0.2, SH + 0.6, SD / 2 - 0.2)); // flagpole on the roof
+  school.add(box(0.4, 0.24, 0.02, mat(0xf5b53f, 0.4), SW / 2 + 0.02, SH + 0.9, SD / 2 - 0.2));
   school.position.set(-9.8, FLOOR, -4.2);
   school.rotation.y = 0.9;
   world.add(school);
@@ -173,15 +256,34 @@ async function mount(el: HTMLElement, character: boolean) {
   }
   world.add(stones);
 
-  // Teen Adelina: dark curly hair in a ponytail, thin gold rectangular glasses, black tee, jeans,
-  // white sneakers, yellow backpack. Smooth shapes and two-part limbs, so the run bends at knees and elbows.
+  // Teen Adelina, a tomboy: dark hair pulled back in a ponytail (no bangs), dark rectangular glasses,
+  // a black Sonata Arctica tee, jeans ripped at the knees, black sneakers, yellow backpack.
+  // Smooth shapes and two-part limbs, so the run bends at knees and elbows.
   const kid = new THREE.Group();
   const skin = new THREE.MeshPhysicalMaterial({ color: 0xf0c4a0, roughness: 0.55, sheen: 0.4, sheenColor: new THREE.Color(0xffd6c8) });
   const hairM = new THREE.MeshStandardMaterial({ color: 0x1b1412, roughness: 0.7 });
   const tee = new THREE.MeshStandardMaterial({ color: 0x1a1822, roughness: 0.85 });
-  const denim = new THREE.MeshStandardMaterial({ color: 0x3d5a8c, roughness: 0.85 });
+  const denim = new THREE.MeshStandardMaterial({ color: 0x31507e, roughness: 0.9 });
+  const frame = new THREE.MeshStandardMaterial({ color: 0x111114, roughness: 0.35 }); // dark glasses frames
+  const shoeM = new THREE.MeshStandardMaterial({ color: 0x17171c, roughness: 0.7 });
+  const thread = new THREE.MeshStandardMaterial({ color: 0xe9eef5, roughness: 0.9 }); // frayed denim at the rips
+  // The band tee print, painted in code: icy blue band-logo lettering on black.
+  const logoCanvas = document.createElement("canvas");
+  logoCanvas.width = 256; logoCanvas.height = 160;
+  {
+    const lg = logoCanvas.getContext("2d")!;
+    lg.fillStyle = "#1a1822"; lg.fillRect(0, 0, 256, 160);
+    lg.textAlign = "center"; lg.fillStyle = "#bfe6ff"; lg.strokeStyle = "#5fb2e6"; lg.lineWidth = 2;
+    lg.font = "italic 900 40px Georgia, serif";
+    lg.strokeText("SONATA", 128, 62); lg.fillText("SONATA", 128, 62);
+    lg.font = "italic 900 34px Georgia, serif";
+    lg.strokeText("ARCTICA", 128, 104); lg.fillText("ARCTICA", 128, 104);
+    lg.strokeStyle = "#bfe6ff"; lg.lineWidth = 3; // a frost line under the name
+    lg.beginPath(); lg.moveTo(48, 122); lg.lineTo(208, 122); lg.stroke();
+  }
+  const logoTex = new THREE.CanvasTexture(logoCanvas);
+  logoTex.colorSpace = THREE.SRGBColorSpace;
   const white = new THREE.MeshStandardMaterial({ color: 0xf4f3f7, roughness: 0.6 });
-  const gold = new THREE.MeshStandardMaterial({ color: 0xd4af6a, metalness: 0.9, roughness: 0.3 });
   const pack = new THREE.MeshPhysicalMaterial({ color: 0xf5b53f, roughness: 0.45, clearcoat: 0.3 });
   const mesh = (g: T.BufferGeometry, m: T.Material, x = 0, y = 0, z = 0) => {
     const o = new THREE.Mesh(g, m);
@@ -202,10 +304,23 @@ async function mount(el: HTMLElement, character: boolean) {
     hip.add(capsule(0.066, 0.24, denim, -0.17));
     const knee = pivot(hip, 0, -0.34);
     knee.add(capsule(0.056, 0.22, denim, -0.15));
-    const shoe = mesh(new THREE.CapsuleGeometry(0.055, 0.1, 6, 12), white, 0, -0.33, 0.04);
+    // Ripped at the knee: skin through the tear, frayed white threads across it.
+    const rip = mesh(new THREE.SphereGeometry(0.036, 16, 12), skin, side * 0.004, -0.02, 0.05);
+    rip.scale.set(1.15, 0.75, 0.4);
+    knee.add(rip);
+    for (let k = 0; k < 3; k++) {
+      const th = mesh(new THREE.BoxGeometry(0.07, 0.004, 0.004), thread, 0, -0.04 + k * 0.018, 0.064);
+      th.rotation.z = (k - 1) * 0.12;
+      knee.add(th);
+    }
+    const shoe = mesh(new THREE.CapsuleGeometry(0.055, 0.1, 6, 12), shoeM, 0, -0.33, 0.04);
     shoe.rotation.x = Math.PI / 2;
     shoe.scale.set(1.05, 1, 0.8);
     knee.add(shoe);
+    const sole = mesh(new THREE.CapsuleGeometry(0.058, 0.1, 6, 12), white, 0, -0.36, 0.045);
+    sole.rotation.x = Math.PI / 2;
+    sole.scale.set(1.08, 1.02, 0.28);
+    knee.add(sole);
     return { hip, knee };
   });
 
@@ -217,6 +332,8 @@ async function mount(el: HTMLElement, character: boolean) {
   const torso = capsule(0.145, 0.2, tee, 1.0);
   torso.scale.set(1, 1, 0.72);
   kid.add(torso);
+  const print = mesh(new THREE.PlaneGeometry(0.2, 0.125), new THREE.MeshStandardMaterial({ map: logoTex, roughness: 0.85 }), 0, 1.04, 0.106);
+  kid.add(print);
   kid.add(mesh(new THREE.CylinderGeometry(0.042, 0.048, 0.1, 16), skin, 0, 1.19, 0));
 
   // Arms: short sleeve, upper arm, elbow, forearm, hand.
@@ -227,6 +344,7 @@ async function mount(el: HTMLElement, character: boolean) {
     const elbow = pivot(shoulder, 0, -0.25);
     elbow.add(capsule(0.04, 0.15, skin, -0.1));
     elbow.add(mesh(new THREE.SphereGeometry(0.048, 16, 12), skin, 0, -0.22, 0));
+    if (side > 0) elbow.add(mesh(new THREE.CylinderGeometry(0.046, 0.046, 0.04, 16), frame, 0, -0.17, 0)); // wristband
     return { shoulder, elbow };
   });
 
@@ -242,36 +360,37 @@ async function mount(el: HTMLElement, character: boolean) {
   head.scale.set(0.95, 1.05, 1);
   headG.add(head);
   headG.add(mesh(new THREE.SphereGeometry(0.018, 12, 10), skin, 0, -0.01, 0.168)); // nose
+  for (const side of [-1, 1]) { const ear = mesh(new THREE.SphereGeometry(0.035, 16, 12), skin, side * 0.162, 0.0, 0.0); ear.scale.set(0.5, 1, 0.8); headG.add(ear); }
   for (const side of [-1, 1]) {
     headG.add(mesh(new THREE.SphereGeometry(0.019, 16, 12), hairM, side * 0.058, 0.02, 0.152)); // eyes
     const brow = mesh(new THREE.CapsuleGeometry(0.008, 0.04, 4, 8), hairM, side * 0.058, 0.075, 0.155);
     brow.rotation.z = Math.PI / 2 + side * 0.15;
     headG.add(brow);
-    // Glasses: thin gold rectangles, like hers.
-    const rim = mesh(new THREE.TorusGeometry(0.052, 0.0055, 6, 4), gold, side * 0.062, 0.018, 0.172);
+    // Glasses: dark, thick, rectangular frames, like hers.
+    const rim = mesh(new THREE.TorusGeometry(0.052, 0.01, 6, 4), frame, side * 0.064, 0.018, 0.174);
     rim.rotation.z = Math.PI / 4;
-    rim.scale.set(1.25, 0.82, 1);
+    rim.scale.set(1.32, 0.78, 1);
     headG.add(rim);
-    const arm = mesh(new THREE.BoxGeometry(0.006, 0.006, 0.17), gold, side * 0.155, 0.03, 0.09);
+    const arm = mesh(new THREE.BoxGeometry(0.01, 0.012, 0.17), frame, side * 0.16, 0.03, 0.09);
     headG.add(arm);
   }
-  const bridge = mesh(new THREE.CylinderGeometry(0.005, 0.005, 0.04, 6), gold, 0, 0.03, 0.176);
+  const bridge = mesh(new THREE.CylinderGeometry(0.008, 0.008, 0.035, 6), frame, 0, 0.03, 0.178);
   bridge.rotation.z = Math.PI / 2;
   headG.add(bridge);
-  const smile = mesh(new THREE.TorusGeometry(0.03, 0.006, 6, 12, Math.PI * 0.7), new THREE.MeshStandardMaterial({ color: 0xb8606b, roughness: 0.6 }), 0, -0.07, 0.158);
-  smile.rotation.z = Math.PI + Math.PI * 0.15;
+  const smile = mesh(new THREE.TorusGeometry(0.026, 0.005, 6, 12, Math.PI * 0.55), new THREE.MeshStandardMaterial({ color: 0x8a5048, roughness: 0.6 }), 0, -0.072, 0.158); // a small half smile
+  smile.rotation.z = Math.PI + Math.PI * 0.22;
   headG.add(smile);
 
-  // Hair: a cap pulled back, curls at the hairline, and a curly ponytail with a pink scrunchie.
+  // Hair: pulled straight back, no bangs, into a ponytail with a plain black hair tie.
   const cap = mesh(new THREE.SphereGeometry(0.183, 40, 24, 0, Math.PI * 2, 0, Math.PI * 0.56), hairM, 0, 0.012, -0.012);
   cap.rotation.x = -0.32;
   cap.scale.set(1, 1.04, 1.02);
   headG.add(cap);
-  for (const [x, y, z, r] of [[-0.1, 0.12, 0.1, 0.045], [0, 0.15, 0.1, 0.05], [0.1, 0.12, 0.1, 0.045], [-0.15, 0.04, 0.05, 0.04], [0.15, 0.04, 0.05, 0.04], [-0.06, 0.16, 0.02, 0.05], [0.06, 0.16, 0.02, 0.05]]) {
-    headG.add(mesh(new THREE.SphereGeometry(r, 16, 12), hairM, x, y, z));
+  for (const [x, y, z, r] of [[-0.12, 0.1, -0.06, 0.06], [0.12, 0.1, -0.06, 0.06], [0, 0.17, -0.04, 0.07]]) {
+    headG.add(mesh(new THREE.SphereGeometry(r, 16, 12), hairM, x, y, z)); // volume at the crown and sides, swept back
   }
   const tail = pivot(headG, 0, 0.08, -0.16);
-  const scrunchie = mesh(new THREE.TorusGeometry(0.038, 0.017, 10, 20), new THREE.MeshStandardMaterial({ color: 0xee6e9f, roughness: 0.7 }));
+  const scrunchie = mesh(new THREE.TorusGeometry(0.03, 0.011, 10, 20), frame); // plain black hair tie
   scrunchie.rotation.x = Math.PI / 2 - 0.5;
   tail.add(scrunchie);
   for (let k = 0; k < 7; k++) {
@@ -290,7 +409,7 @@ async function mount(el: HTMLElement, character: boolean) {
   // Where she sits: a cushion on the floor in front of the keyboard.
   const home = route.getPointAt(1);
   const SIT = new THREE.Vector3(home.x + 0.1, FLOOR, home.z - 0.4);
-  const cushion = mesh(new THREE.CylinderGeometry(0.34, 0.36, 0.12, 28), new THREE.MeshStandardMaterial({ color: 0xee6e9f, roughness: 0.8 }), SIT.x, FLOOR + 0.06, SIT.z);
+  const cushion = mesh(new THREE.CylinderGeometry(0.34, 0.36, 0.12, 28), new THREE.MeshStandardMaterial({ color: 0x2a2760, roughness: 0.85 }), SIT.x, FLOOR + 0.06, SIT.z);
   cushion.scale.set(1, 1, 0.85);
   world.add(cushion);
 
@@ -311,10 +430,13 @@ async function mount(el: HTMLElement, character: boolean) {
     stool.visible = true;
   }
 
-  // Frame the computer and where the kid ends up, from their bounding sphere (the school sits in the background).
-  // The sphere doesn't change as the model tilts, so nothing gets cut off mid-tilt.
+  // Frame the computer, its objects and the path's end (the school sits in the background), at the resting
+  // angle. The camera orbits the centre of that sphere, so a turn keeps the room where it is.
+  world.rotation.y = -0.35;
+  world.updateMatrixWorld(true);
   const frameBox = new THREE.Box3().setFromObject(pc);
-  frameBox.expandByPoint(route.getPointAt(1).clone().add(new THREE.Vector3(0.3, 1.8, 0.3)));
+  for (const prop of PROPS) frameBox.expandByPoint(pc.localToWorld(new THREE.Vector3(prop.at[0], prop.at[1] + prop.size, prop.at[2])));
+  frameBox.expandByPoint(world.localToWorld(route.getPointAt(1).clone().add(new THREE.Vector3(0.3, 1.8, 0.3))));
   const sphere = frameBox.getBoundingSphere(new THREE.Sphere());
 
   // Timeline: at school, run home, then sit at the computer while it plays. Loops.
@@ -387,32 +509,65 @@ async function mount(el: HTMLElement, character: boolean) {
     draw(ctx, battle);
   };
 
+  let camDist = 1;
+  const view = new THREE.Vector3();
+  // Zoomed in, the view can be dragged around: `pan` moves what the camera looks at, across the screen.
+  const pan = new THREE.Vector2(), target = new THREE.Vector3(), right = new THREE.Vector3(), upv = new THREE.Vector3();
+  const aim = (turn: number) => {
+    view.copy(VIEW).applyAxisAngle(THREE.Object3D.DEFAULT_UP, -turn);
+    right.crossVectors(THREE.Object3D.DEFAULT_UP, view).normalize();
+    upv.crossVectors(view, right).normalize();
+    target.copy(sphere.center).addScaledVector(right, pan.x).addScaledVector(upv, pan.y);
+    camera.position.copy(target).addScaledVector(view, camDist / zoom);
+    camera.lookAt(target);
+  };
   const size = () => {
     const { width, height } = el.getBoundingClientRect();
     renderer.setSize(width, height, false);
     camera.aspect = width / Math.max(height, 1);
     const vfov = THREE.MathUtils.degToRad(camera.fov);
     const hfov = 2 * Math.atan(Math.tan(vfov / 2) * camera.aspect);
-    // 0.86: the sphere is loose around a box-shaped model; this still leaves room for the tilt.
+    // 0.86: the sphere is loose around a box-shaped model; this keeps the room big.
     const dist = (sphere.radius / Math.sin(Math.min(vfov, hfov) / 2)) * 0.86;
-    camera.position.copy(sphere.center).addScaledVector(VIEW, dist);
-    camera.lookAt(sphere.center);
+    camDist = dist;
+    aim(0);
     camera.updateProjectionMatrix();
   };
   const ro = new ResizeObserver(size);
   ro.observe(el);
   size();
 
-  // Tilt towards the pointer, eased.
-  let tx = 0, ty = 0;
-  const onMove = (e: PointerEvent) => {
-    const r = el.getBoundingClientRect();
-    // Clamped: a cursor far outside the canvas must not spin the screen away.
-    const clamp = (v: number) => Math.max(-0.5, Math.min(0.5, v));
-    tx = clamp((e.clientX - r.left) / r.width - 0.5) * 0.35; // up to about ±10°
-    ty = clamp((e.clientY - r.top) / r.height - 0.5) * 0.1; // up to about ±3°
+  // Sways slowly by itself; drag it to turn it. The turn is clamped so the room stays in frame.
+  let yaw = 0, sway = 0, turn = 0, drag: { x: number; y: number; yaw: number; px: number; py: number } | null = null;
+  const onDown = (e: PointerEvent) => {
+    e.stopPropagation(); // the pages are draggable too: this drag turns the room, not the page
+    el.setPointerCapture(e.pointerId);
+    drag = { x: e.clientX, y: e.clientY, yaw, px: pan.x, py: pan.y };
+    el.style.cursor = "grabbing";
   };
-  window.addEventListener("pointermove", onMove, { passive: true });
+  const onMove = (e: PointerEvent) => {
+    if (!drag) return;
+    const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
+    if (zoom > 1.05) {
+      // Zoomed in: drag the view, like a map. Kept within the room.
+      const k = (sphere.radius * 2) / (el.clientWidth * zoom), lim = sphere.radius * (1 - 1 / zoom);
+      pan.set(Math.max(-lim, Math.min(lim, drag.px - dx * k)), Math.max(-lim, Math.min(lim, drag.py + dy * k)));
+    } else yaw = Math.max(-0.9, Math.min(0.9, drag.yaw + (dx / el.clientWidth) * 2.5));
+  };
+  const onUp = () => { drag = null; el.style.cursor = "grab"; };
+  el.style.cursor = "grab";
+  // Pinch on a trackpad (or ctrl + scroll) zooms. A plain scroll still scrolls the page.
+  const onWheel = (e: WheelEvent) => {
+    if (!e.ctrlKey) return;
+    e.preventDefault(); // otherwise the browser zooms the whole page
+    zoomTo = Math.max(0.7, Math.min(2.2, zoomTo * Math.exp(-e.deltaY * 0.01)));
+  };
+  el.addEventListener("wheel", onWheel, { passive: false });
+  el.style.touchAction = "pan-y"; // vertical swipes still scroll the page on phones
+  el.addEventListener("pointerdown", onDown);
+  el.addEventListener("pointermove", onMove);
+  el.addEventListener("pointerup", onUp);
+  el.addEventListener("pointercancel", onUp);
 
   let visible = true;
   const vis = new IntersectionObserver(([e]) => { visible = e.isIntersecting; if (visible && !reduce) loop(); });
@@ -431,14 +586,19 @@ async function mount(el: HTMLElement, character: boolean) {
     while (acc >= TICK) { if (clock > ARRIVE) step(battle); acc -= TICK; ticked = true; }
     poseKid(clock);
     hero?.mixer.update(dt / 1000);
+    mixers.forEach((mx) => mx.update(dt / 1000));
+    hobbies.update(now / 1000);
     if (ticked || clock < ARRIVE + POWER) { drawScreen(clock); tex.needsUpdate = true; }
-    world.rotation.y += (-0.35 + tx - world.rotation.y) * 0.05;
-    world.rotation.x += (ty - world.rotation.x) * 0.05;
+    if (!drag) sway += dt / 1000;
+    turn += (yaw + Math.sin(sway * 0.26) * 0.3 - turn) * 0.08; // one sway every ~24 s
+    zoom += (zoomTo - zoom) * 0.12;
+    if (zoom <= 1.05) pan.multiplyScalar(0.9); // zoomed back out: drift back to the whole room
+    aim(turn);
     renderer.render(scene, camera);
+    placeNote();
     raf = requestAnimationFrame(loop);
   };
 
-  world.rotation.y = -0.35;
   if (reduce) {
     // One still frame: home, at the computer, screen on.
     poseKid(LOOP - 0.01);
@@ -446,22 +606,32 @@ async function mount(el: HTMLElement, character: boolean) {
     draw(ctx, battle);
     tex.needsUpdate = true;
     renderer.render(scene, camera);
+    placeNote();
   } else loop();
 
   return () => {
+    gone = true;
+    mixers.forEach((mx) => mx.stopAllAction());
     cancelAnimationFrame(raf);
     vis.disconnect();
     ro.disconnect();
-    window.removeEventListener("pointermove", onMove);
+    el.removeEventListener("wheel", onWheel);
+    el.removeEventListener("pointerdown", onDown);
+    el.removeEventListener("pointermove", onMove);
+    el.removeEventListener("pointerup", onUp);
+    el.removeEventListener("pointercancel", onUp);
     scene.traverse((o) => {
-      if (o instanceof THREE.Mesh) { o.geometry.dispose(); (Array.isArray(o.material) ? o.material : [o.material]).forEach((mt) => mt.dispose()); }
+      if (o instanceof THREE.Mesh) { o.geometry.dispose(); (Array.isArray(o.material) ? o.material : [o.material]).forEach((mt) => { (mt as T.MeshStandardMaterial).map?.dispose(); mt.dispose(); }); }
     });
     tex.dispose();
+    logoTex.dispose();
+    hobbies.dispose();
     grain.dispose();
     env.dispose();
     pmrem.dispose();
     renderer.dispose();
     renderer.domElement.remove();
+    NOTES.forEach((n) => n.node.remove());
   };
 }
 

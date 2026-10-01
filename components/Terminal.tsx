@@ -30,6 +30,7 @@ const hash = (id: string) => [...id].reduce((h, c) => (h * 31 + c.charCodeAt(0))
 export default function Terminal({ onClose, onContact, onWork }: { onClose: () => void; onContact: () => void; onWork: () => void }) {
   const [lines, setLines] = useState<Line[]>([]);
   const [value, setValue] = useState("");
+  const [big, setBig] = useState(false); // the green button: near full screen
   const [history, setHistory] = useState<string[]>([]);
   const [hi, setHi] = useState(-1);
   const input = useRef<HTMLInputElement>(null);
@@ -71,7 +72,7 @@ export default function Terminal({ onClose, onContact, onWork }: { onClose: () =
         return print(
           <div className={s.list}>
             <AnimatedList
-              items={tiles.map((t) => `${t.title}  (${t.label})`)}
+              items={tiles.map((t) => `${t.title}  (${t.section})`)}
               onItemSelect={() => { onClose(); onWork(); }}
               showGradients
               enableArrowNavigation={false}
@@ -120,7 +121,7 @@ export default function Terminal({ onClose, onContact, onWork }: { onClose: () =
     <>
       <motion.div className={s.backdrop} onClick={onClose} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} />
       <motion.div
-        className={s.term}
+        className={s.term} data-big={big || undefined}
         role="dialog"
         aria-modal="true"
         aria-label="Terminal"
@@ -131,7 +132,12 @@ export default function Terminal({ onClose, onContact, onWork }: { onClose: () =
         onClick={() => input.current?.focus()}
       >
         <div className={s.bar}>
-          <span className={s.dots} aria-hidden="true"><i /><i /><i /></span>
+          {/* macOS traffic lights: close, minimise (also closes here), zoom */}
+          <span className={s.dots}>
+            <button type="button" className={s.red} onClick={(e) => { e.stopPropagation(); onClose(); }} aria-label="Close terminal"><b aria-hidden="true">×</b></button>
+            <button type="button" className={s.yellow} onClick={(e) => { e.stopPropagation(); onClose(); }} aria-label="Minimise terminal"><b aria-hidden="true">−</b></button>
+            <button type="button" className={s.green} onClick={(e) => { e.stopPropagation(); setBig((b) => !b); }} aria-label={big ? "Restore terminal size" : "Make terminal bigger"} aria-pressed={big}><b aria-hidden="true">+</b></button>
+          </span>
           <span>adelina@cv</span>
           <button type="button" className={s.close} onClick={onClose} aria-label="Close terminal">esc</button>
         </div>

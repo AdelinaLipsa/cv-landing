@@ -11,11 +11,38 @@
   --broth: #f5b53f;
   --naruto: #ee6e9f;
   --blueprint: #3355ff;
+  /* Surfaces. "night" stays dark in both themes (terminals, pills, primary buttons); --on-night is its text. */
+  --surface: #fff;
+  --surface-2: #f1f0f8;
+  --glass: rgba(255, 255, 255, 0.82);
+  --night: #17153a;
+  --night-2: #2a2760;
+  --on-night: #f7f6fb;
 
   --ease: cubic-bezier(0.65, 0, 0.35, 1);
   --shadow: 0 1px 2px rgba(23, 21, 58, 0.06), 0 24px 50px rgba(23, 21, 58, 0.14);
   --shadow-btn: 0 14px 30px rgba(23, 21, 58, 0.22);
   --col: 1200px;
+}
+
+/* Dark: set on <html> by layout's GATE script (saved choice, else the OS setting). */
+[data-theme="dark"] {
+  color-scheme: dark;
+  --ink: #ecebf8;
+  --ink-2: #c9c7ee;
+  --paper: #0e0d1c;
+  --steam: #9d9bc2;
+  --body-2: #c6c4e0;
+  --line: #2b2947;
+  --mist: #23213d;
+  --surface: #17152c;
+  --surface-2: #1d1b36;
+  --glass: rgba(29, 27, 54, 0.82);
+  --night: #24215a;
+  --night-2: #322e70;
+  --blueprint: #6f86ff;
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 24px 50px rgba(0, 0, 0, 0.5);
+  --shadow-btn: 0 14px 30px rgba(0, 0, 0, 0.5);
 }
 
 * { box-sizing: border-box; }

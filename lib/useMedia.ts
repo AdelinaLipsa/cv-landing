@@ -1,5 +1,5 @@
 'use client';
-// From React Bits Masonry, shared so Masonry itself can load lazily.
+// Matches a list of media queries to values (from React Bits Masonry, kept after the wall moved to a grid).
 import { useLayoutEffect, useState } from 'react';
 
 export const useMedia = (queries: string[], values: number[], defaultValue: number): number => {

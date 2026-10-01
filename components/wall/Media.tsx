@@ -1,45 +1,31 @@
 "use client";
 import { useEffect, useRef } from "react";
+import { useInView } from "motion/react";
 import type { Tile } from "@/content/wall";
-import { Accounts25, Flow, MicroFrontends, PaymentsChart, Terminal, WalletPass } from "./Live";
-import s from "./wall.module.css";
+import { BiteDemo, ChangeLogDemo, Checkout, DecoderDemo, Flow, Gateways, MobileApp, Terminal, ThisSite } from "./Live";
 
-const LIVE: Record<string, () => React.ReactNode> = {
-  payments: () => <PaymentsChart />,
-  "three-ds": () => <Accounts25 />,
-  "self-refund": () => <Flow steps={["Customer", "Find order", "Pick a reason", "Refund done"]} />,
-  "refund-journey": () => <Flow steps={["Find order", "Return or refund", "Done"]} />,
-  "voice-escalation": () => <Flow steps={["AI voice agent", "Can’t resolve", "A person"]} />,
-  "micro-frontends": () => <MicroFrontends />,
-  wallet: () => <WalletPass />,
-  hookwarden: () => <Terminal />,
-};
-
-// muted, loop, playsInline, preload none, poster. Plays only while at least 50% in view.
-function Video({ src }: { src: NonNullable<Tile["video"]> }) {
+// A screen recording: plays by itself whenever it's on screen, pauses when scrolled away.
+function Recording({ src, poster, label }: { src: string; poster: string; label: string }) {
   const ref = useRef<HTMLVideoElement>(null);
-  useEffect(() => {
-    const v = ref.current!;
-    const io = new IntersectionObserver(([e]) => (e.isIntersecting ? v.play().catch(() => {}) : v.pause()), { threshold: 0.5 });
-    io.observe(v);
-    return () => io.disconnect();
-  }, []);
-  return (
-    <video ref={ref} className={s.video} muted loop playsInline preload="none" poster={src.poster}>
-      <source src={src.webm} type="video/webm" />
-      <source src={src.mp4} type="video/mp4" />
-    </video>
-  );
+  const on = useInView(ref, { amount: 0.3 });
+  useEffect(() => { const v = ref.current; if (v) { if (on) v.play().catch(() => {}); else v.pause(); } }, [on]);
+  return <video ref={ref} src={src} poster={poster} muted loop playsInline preload="metadata" aria-label={label} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block", background: "#000" }} />;
 }
 
+// Every Work tile is a live demo drawn in code, or a recording of the real thing.
+const LIVE: Record<string, () => React.ReactNode> = {
+  bite: () => <BiteDemo />,
+  hookwarden: () => <Terminal />,
+  decoder: () => <DecoderDemo />,
+  mobile: () => <MobileApp />,
+  "this-site": () => <ThisSite />,
+  gateways: () => <Gateways />,
+  apms: () => <Checkout />,
+  "change-log": () => <ChangeLogDemo />,
+  "ruined-saints": () => <Recording src="/media/ruined-saints.mp4" poster="/media/ruined-saints.jpg" label="The Ruined Saints site: the PRAY? gate, then the hero" />,
+  pipeline: () => <Flow steps={["Vendor file → S3", "Laravel job, with retries", "SFTP to the partner", "Results → Caspio · Slack alert"]} accent="var(--broth)" />,
+};
+
 export default function Media({ tile }: { tile: Tile }) {
-  if (LIVE[tile.id]) return LIVE[tile.id]();
-  if (tile.video) return <Video src={tile.video} />;
-  if (tile.image) return <img className={s.video} src={tile.image.src} alt={tile.image.alt} loading="lazy" />;
-  const dark = tile.kind === "video";
-  return (
-    <div className={`${s.live} ${dark ? s.ink : s.mist} ${s.placeholder}`}>
-      <span>{tile.kind === "video" ? "[recording, demo data]" : "[photo]"}</span>
-    </div>
-  );
+  return LIVE[tile.id]?.() ?? null;
 }

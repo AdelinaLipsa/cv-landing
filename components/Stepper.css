@@ -127,7 +127,7 @@
   height: 0.75rem;
   width: 0.75rem;
   border-radius: 9999px;
-  background-color: #fff;
+  background-color: var(--surface);
 }
 
 .step-number {

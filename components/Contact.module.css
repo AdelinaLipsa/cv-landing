@@ -10,8 +10,8 @@
   height: 56px;
   padding: 0 24px 0 18px;
   border-radius: 999px;
-  background: var(--ink);
-  color: var(--paper);
+  background: var(--night);
+  color: var(--on-night);
   font-size: 17px;
   font-weight: 600;
   text-decoration: none;

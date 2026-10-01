@@ -1,0 +1,41 @@
+/* React Bits SpotlightCard, restyled as the checkout card */
+.card:global(.card-spotlight) { display: flex; flex-direction: column; gap: 14px; padding: 24px; border: 0; border-radius: 28px; background: var(--surface); color: var(--ink); box-shadow: var(--shadow); }
+.card:global(.card-spotlight) > * { position: relative; z-index: 1; }
+
+.head { display: flex; justify-content: space-between; align-items: center; font-size: 12px; }
+.kicker { font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--steam); }
+.order { font-family: var(--font-mono), monospace; color: var(--steam); }
+.amount { font-family: var(--font-display), sans-serif; font-size: 40px; line-height: 1; font-stretch: 115%; letter-spacing: -0.02em; }
+
+.methods { display: flex; flex-wrap: wrap; gap: 6px; }
+.method { position: relative; height: 34px; padding: 0 12px; border: 1px solid var(--line); border-radius: 999px; background: var(--surface); font-size: 12.5px; font-weight: 600; color: var(--ink); cursor: pointer; }
+.method span { position: relative; transition: color 0.3s var(--ease); }
+.method[aria-checked="true"] span { color: var(--on-night); }
+.method:disabled { cursor: default; }
+.method .methodBg { position: absolute; inset: -1px; border-radius: 999px; background: var(--night); }
+
+.payWrap { display: block; }
+.pay { width: 100%; height: 54px; border: 0; border-radius: 16px; background: var(--blueprint); color: #fff; font-size: 16px; font-weight: 700; cursor: pointer; box-shadow: 0 14px 30px rgba(51, 85, 255, 0.35); transition: transform 0.3s var(--ease), box-shadow 0.3s var(--ease), background-color 0.4s var(--ease); }
+.pay:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 18px 36px rgba(51, 85, 255, 0.45); }
+.pay:disabled { cursor: progress; background: #6f86ff; }
+.pay[data-done] { background: var(--night); box-shadow: 0 14px 30px rgba(23, 21, 58, 0.28); }
+
+/* The journey: grey until the payment reaches each step */
+.steps { position: relative; list-style: none; margin: 4px 0 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.steps::before { content: ""; position: absolute; left: 10px; top: 12px; bottom: 12px; width: 2px; background: var(--line); }
+.steps li { position: relative; display: flex; gap: 12px; align-items: flex-start; }
+.dot { flex-shrink: 0; width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; background: var(--surface); border: 2px solid var(--line); font-size: 11px; font-weight: 800; color: #fff; transition: background-color 0.4s var(--ease), border-color 0.4s var(--ease); }
+li[data-state="now"] .dot { border-color: var(--blueprint); box-shadow: 0 0 0 5px rgba(51, 85, 255, 0.15); animation: pulse 0.9s ease-in-out infinite; }
+li[data-state="done"] .dot { background: var(--blueprint); border-color: var(--blueprint); }
+@keyframes pulse { 50% { box-shadow: 0 0 0 9px rgba(51, 85, 255, 0.05); } }
+.stepText { display: flex; flex-direction: column; gap: 2px; padding-top: 1px; min-width: 0; }
+.stepTitle { font-size: 14px; font-weight: 600; color: var(--steam); transition: color 0.4s var(--ease); }
+li[data-state="now"] .stepTitle, li[data-state="done"] .stepTitle { color: var(--ink); }
+.ok { margin-left: 8px; padding: 1px 8px; border-radius: 999px; background: rgba(47, 191, 113, 0.14); color: #1d8a52; font-size: 11px; font-style: normal; font-weight: 700; }
+.mine { display: block; overflow: hidden; font-size: 13px; line-height: 1.4; color: var(--body-2); }
+
+.hint, .outro { margin: 2px 0 0; font-size: 14px; color: var(--steam); }
+.outro { font-weight: 700; color: #1d8a52; }
+.outro span { color: var(--ink); }
+
+@media (prefers-reduced-motion: reduce) { li[data-state="now"] .dot { animation: none; } }
