@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 
-const KEY = "cv-theme";
+const KEY = "cv-theme-v2";
 
 // Light or dark. The choice is set on <html> before first paint (layout's GATE script) and remembered.
 export default function ThemeToggle({ className }: { className?: string }) {
@@ -12,7 +12,7 @@ export default function ThemeToggle({ className }: { className?: string }) {
     const next = !dark;
     setDark(next);
     document.documentElement.dataset.theme = next ? "dark" : "light";
-    try { localStorage.setItem(KEY, next ? "dark" : "light"); } catch {}
+    try { localStorage.setItem(KEY, next ? "dark" : "light"); } catch { }
   };
 
   return (
