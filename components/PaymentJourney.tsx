@@ -94,7 +94,7 @@ export default function PaymentJourney() {
       <AnimatePresence mode="wait" initial={false}>
         {done ? (
           <motion.p key="done" className={s.outro} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
-            Paid. <span>That’s the payments product I own: what ships, in what order, and how it performs.</span>
+            Paid. <span>I define requirements and lead delivery across gateways, 3DS/SCA, alternative payments and Kount, tracking approval and conversion.</span>
           </motion.p>
         ) : (
           <motion.p key="hint" className={s.hint} initial={{ opacity: 0 }} animate={{ opacity: running ? 0 : 1 }} exit={{ opacity: 0 }}>
