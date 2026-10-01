@@ -8,7 +8,7 @@ import j from "./PaymentJourney.module.css";
 import s from "./Workbench.module.css";
 
 // Hero right side: her four roles at Yomali, one tab each. All facts from content/cv.ts; demo data only.
-const MODES = ["Payments", "Engineering", "Support", "Analytics"] as const;
+const MODES = ["Payments", "Engineering", "Support", "Customers"] as const;
 type Mode = (typeof MODES)[number];
 
 // Reveals its steps one by one each time the mode opens; returns how many are shown.
@@ -23,68 +23,61 @@ function usePlay(count: number, ms: number) {
   return at;
 }
 
-// Demo tickets: the kinds of technical questions her team handles. No real accounts.
-const QUEUE = [
-  { tag: "Pixel", text: "Purchase pixel not firing on the thank-you page" },
-  { tag: "Postback", text: "Testing a postback URL before launch" },
-  { tag: "Parameters", text: "Sub-ID parameters missing from the sales report" },
-  { tag: "API", text: "Pulling order status through the API" },
-  { tag: "Checkout", text: "Custom checkout not loading on mobile" },
+// A console that prints its lines one by one: the technical side, shown as the logs it produces. Demo data.
+type Line = { k: string; text: string; ok?: string; bad?: string; sub?: boolean };
+
+function Console({ lines, ms = 520 }: { lines: Line[]; ms?: number }) {
+  const at = usePlay(lines.length, ms);
+  return (
+    <ol className={s.console} aria-live="polite">
+      {lines.map((l, i) => (
+        <li key={i} data-sub={l.sub || undefined} style={{ visibility: i < at ? "visible" : "hidden" }}>
+          <span className={s.k}>{l.k}</span>
+          <span className={s.v}>{l.text}{l.bad && <em className={s.bad}> {l.bad}</em>}{l.ok && <em className={s.good}> {l.ok}</em>}</span>
+        </li>
+      ))}
+    </ol>
+  );
+}
+
+// Support: an affiliate's tracking doesn't add up; her team traces it from pixel to postback to API.
+const TRACE: Line[] = [
+  { k: "case", text: "affiliate: sales in our report, not in theirs" },
+  { k: "pixel", text: "checkout → purchase event", ok: "fired" },
+  { k: "GET", text: "/postback?order_id=1042&aff_sub=fb_07&amount=49.00" },
+  { k: "", text: "200 OK, but click_id is empty", bad: "✗", sub: true },
+  { k: "params", text: "click_id dropped on the upsell redirect" },
+  { k: "fix", text: "pass click_id through the redirect, re-fire postback", ok: "✓" },
+  { k: "GET", text: "/api/orders/1042 → affiliate attributed", ok: "200" },
 ];
 
-// Support: a technical queue her team works through, plus what she does with customer support.
 function Support() {
-  const at = usePlay(QUEUE.length, 650);
   return (
     <div className={s.panel}>
-      <div className={j.head}><span className={j.kicker}>Team manager · technical support</span><span className={j.order}>demo queue</span></div>
-      <ul className={s.queue} aria-live="polite">
-        {QUEUE.map((q, i) => (
-          <li key={q.tag} data-done={i < at || undefined}>
-            <span className={s.tag}>{q.tag}</span>
-            <span className={s.qText}>{q.text}</span>
-            <span className={s.qState}>{i < at ? "solved" : "open"}</span>
-          </li>
-        ))}
-      </ul>
-      <p className={s.mine}>I manage the technical support team: pixels, postbacks, parameters, APIs, and checkout. I also own the AI voice agent’s escalation protocol.</p>
+      <div className={j.head}><span className={j.kicker}>Team manager · technical support</span><span className={j.order}>demo trace</span></div>
+      <Console lines={TRACE} />
+      <p className={s.mine}>I manage the technical support team that debugs vendor and affiliate integrations: pixels, postback URLs, parameters, the API, and checkout.</p>
     </div>
   );
 }
 
-// Analytics: with the head of customer support. Demo counts for the demo queue above, not real data.
-const WEEK = [
-  { tag: "Pixel", n: 14 },
-  { tag: "Postback", n: 11 },
-  { tag: "Parameters", n: 8 },
-  { tag: "API", n: 5 },
-  { tag: "Checkout", n: 4 },
+// Customers: an AI voice agent call runs through the automation she coded and lands in Zendesk; she tests every scenario end to end.
+const CALL_RUN: Line[] = [
+  { k: "call", text: "ai-agent ended · intent=refund_request · 3m12s" },
+  { k: "hook", text: "→ support-flows automation (my code)" },
+  { k: "map", text: "intent → tag, order_id → field, transcript → note" },
+  { k: "route", text: "needs_human=true → Tier 2 group" },
+  { k: "POST", text: "zendesk /api/v2/tickets", ok: "201" },
+  { k: "test", text: "refund · human handoff · dropped call · wrong order ID", ok: "4/4" },
+  { k: "stats", text: "volume, escalation rate, resolution by intent → weekly" },
 ];
-const FLOW = ["New ticket", "Tagged by topic", "Weekly report"];
 
-function Analytics() {
-  const at = usePlay(FLOW.length, 600);
-  const max = Math.max(...WEEK.map((w) => w.n));
+function Customers() {
   return (
     <div className={s.panel}>
-      <div className={j.head}><span className={j.kicker}>Statistics · customer support</span><span className={j.order}>demo week</span></div>
-      <figure className={s.chart}>
-        <figcaption className={s.colName}>Tickets by topic</figcaption>
-        {WEEK.map((w, i) => (
-          <div key={w.tag} className={s.barRow} title={`${w.tag}: ${w.n} tickets`}>
-            <span className={s.barLabel}>{w.tag}</span>
-            <span className={s.barTrack}>
-              <motion.span className={s.bar} initial={{ width: 0 }} animate={{ width: `${(w.n / max) * 100}%` }} transition={{ duration: 0.6, delay: i * 0.08 }} />
-            </span>
-            <span className={s.barValue}>{w.n}</span>
-          </div>
-        ))}
-      </figure>
-      <span className={s.colName}>Automation</span>
-      <ol className={s.flow}>
-        {FLOW.map((f, i) => <li key={f} data-on={i < at || undefined}>{f}</li>)}
-      </ol>
-      <p className={s.mine}>I work with the head of customer support: I run the support statistics and build the automations behind them.</p>
+      <div className={j.head}><span className={j.kicker}>With the head of customer support</span><span className={j.order}>demo run</span></div>
+      <Console lines={CALL_RUN} />
+      <p className={s.mine}>I code the automations behind customer support’s flows, test every AI voice agent scenario end to end in Zendesk, and run their statistics.</p>
     </div>
   );
 }
@@ -133,7 +126,7 @@ export default function Workbench() {
         ))}
       </div>
       <motion.div key={mode} role="tabpanel" aria-label={mode} className={s.body} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25 }}>
-        {mode === "Payments" ? <PaymentJourney /> : mode === "Engineering" ? <Engineering /> : mode === "Support" ? <Support /> : <Analytics />}
+        {mode === "Payments" ? <PaymentJourney /> : mode === "Engineering" ? <Engineering /> : mode === "Support" ? <Support /> : <Customers />}
       </motion.div>
     </SpotlightCard>
   );
