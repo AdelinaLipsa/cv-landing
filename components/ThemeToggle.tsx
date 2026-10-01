@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import s from "./ThemeToggle.module.css";
 
 const KEY = "cv-theme-v2";
 
@@ -16,6 +17,15 @@ export default function ThemeToggle({ className }: { className?: string }) {
   };
 
   return (
+    <span className={s.wrap}>
+      {/* Hand-drawn nudge, like the sound button's: a joke below, arrow curving up to the button */}
+      <span className={s.nudge} aria-hidden="true">
+        <span className={s.nudgeText}>{dark ? "too emo? lights on" : "reading this at 2am?"}</span>
+        <svg className={s.nudgeArrow} width="46" height="40" viewBox="0 0 46 40" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M6 4c14 2 26 10 30 26" />
+          <path d="M28 26l8 6 3-10" />
+        </svg>
+      </span>
     <button type="button" className={className} onClick={toggle} aria-label={dark ? "Switch to light mode" : "Switch to dark mode"} aria-pressed={dark}>
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
         {dark
@@ -23,5 +33,6 @@ export default function ThemeToggle({ className }: { className?: string }) {
           : <path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z" />}
       </svg>
     </button>
+    </span>
   );
 }
