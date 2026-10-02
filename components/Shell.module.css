@@ -97,7 +97,6 @@
 
 /* Gamepad: same glass circle as the sound button */
 .game { composes: btn from "./SoundToggle.module.css"; color: var(--ink); }
-.game:hover, .game:focus-visible { color: var(--blueprint); }
 @media (max-width: 420px) {
   .tab { font-size: 13px; }
   .game { width: 46px; height: 46px; }

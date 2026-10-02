@@ -3,11 +3,13 @@ import { useEffect, useRef } from "react";
 import { ACHIEVEMENTS, unlock, unlocked } from "@/lib/achievements";
 import { cheatCode, ramenStorm } from "@/lib/ramenStorm";
 import { sudo } from "@/lib/sudo";
+import { bats, boo } from "@/lib/halloween";
+import { season } from "@/lib/season";
 
 // Hidden things for the curious: a devtools welcome with commands, the Konami code,
 // secret words typed anywhere, and a tab title that misses you. ` (the terminal) lives in Shell.
 const KONAMI = ["ArrowUp", "ArrowUp", "ArrowDown", "ArrowDown", "ArrowLeft", "ArrowRight", "ArrowLeft", "ArrowRight", "b", "a"];
-const WORDS = ["ramen", "hire", "milk", "sudo"];
+const WORDS = ["ramen", "hire", "milk", "sudo", "boo"];
 
 // Once per page load: dev mode runs effects twice, and the hello shouldn't say itself twice.
 let greeted = false;
@@ -42,10 +44,11 @@ export default function EasterEggs({ contact, terminal, arcade }: { contact: () 
       hire,
       ramen,
       milk,
+      boo: () => { boo(); return "👻"; },
       sudo: () => { sudo(); return "adelina is not in the sudoers file. This incident will be reported."; },
       terminal: () => { act.current.terminal(); return "Terminal open. Type help."; },
       play: () => { act.current.arcade(); return "Arcade open. Pick a game, and good luck."; },
-      secrets: () => "Psst: click anywhere on the page first (keys typed here stay in the console). Then: ↑ ↑ ↓ ↓ ← → ← → B A. Or type ramen, hire, milk, or sudo. Or press ` and type play. Switch tabs and come back. /api/cv is the whole CV as JSON. /humans.txt says hi.",
+      secrets: () => "Psst: click anywhere on the page first (keys typed here stay in the console). Then: ↑ ↑ ↓ ↓ ← → ← → B A. Or type ramen, hire, milk, sudo, or boo. Or press ` and type play. Switch tabs and come back. /api/cv is the whole CV as JSON. /humans.txt says hi.",
       coffee: () => "418: I’m a teapot. Try ramen().",
       achievements: () => {
         const got = unlocked();
@@ -56,8 +59,9 @@ export default function EasterEggs({ contact, terminal, arcade }: { contact: () 
     const w = window as unknown as Record<string, unknown>;
     for (const [k, fn] of Object.entries(cmds)) w[k] = () => { unlock("console"); return fn(); };
 
+    const spooky = season() === "halloween";
     if (!greeted) console.log(
-      `%c${BANNER}%c\nThe console takes requests:\n  hire()      the fastest way to reach me\n  ramen()     try it\n  milk()      a public service announcement\n  terminal()  a real one, sort of\n  play()      the arcade: three tiny games\n  secrets()   everything else hidden here\n  achievements()  what you’ve found so far\n\nThe whole CV is JSON at /api/cv.`,
+      `%c${BANNER}%c\nThe console takes requests:\n  hire()      the fastest way to reach me\n  ramen()     try it\n  milk()      a public service announcement\n  terminal()  a real one, sort of\n  play()      the arcade: three tiny games\n  secrets()   everything else hidden here\n  achievements()  what you’ve found so far\n\nThe whole CV is JSON at /api/cv.${spooky ? "\n\nIt’s October. Type boo() if you dare. And keep an eye on the sky." : ""}`,
       "font: 700 18px/1.25 ui-monospace, monospace; color: #3355FF",
       "font: 16px/1.6 ui-monospace, monospace; color: #6B6990"
     );
@@ -80,18 +84,21 @@ export default function EasterEggs({ contact, terminal, arcade }: { contact: () 
       if (word === "ramen") ramen();
       else if (word === "hire") hire();
       else if (word === "milk") console.log(milk());
+      else if (word === "boo") boo();
       else sudo();
     };
 
     // The tab misses you.
     const title = document.title;
-    const onVis = () => { document.title = document.hidden ? "🍜 Your ramen is getting cold…" : title; };
+    const onVis = () => { document.title = document.hidden ? (spooky ? "👻 It’s dark in here without you…" : "🍜 Your ramen is getting cold…") : title; };
+    const stopBats = spooky ? bats() : () => {};
 
     window.addEventListener("keydown", onKey);
     document.addEventListener("visibilitychange", onVis);
     return () => {
       window.removeEventListener("keydown", onKey);
       document.removeEventListener("visibilitychange", onVis);
+      stopBats();
       for (const k of Object.keys(cmds)) delete w[k];
     };
   }, []);

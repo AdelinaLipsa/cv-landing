@@ -20,6 +20,8 @@ export const ACHIEVEMENTS = {
   roles: { name: "Four hats", hint: "Open all four roles in the hero card" },
   lost: { name: "Lost and found", hint: "Find the 404 page" },
   sudo: { name: "Incident reported", hint: "Try to sudo the page" },
+  boo: { name: "Spooked", hint: "Type boo" },
+  bat: { name: "Bat catcher", hint: "Catch a bat (they come out in October, or when you say boo)" },
 } as const;
 export type AchievementId = keyof typeof ACHIEVEMENTS;
 
