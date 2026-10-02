@@ -1,0 +1,13 @@
+/* TEAM */
+Product owner, developer, designer, ramen taster: Adelina Lipșa
+Contact: https://linkedin.com/in/adelina-lipsa
+From: Bucharest, Romania
+
+/* THANKS */
+Ramen, at 2am, in the dark.
+The Oxford comma, for its service.
+
+/* SITE */
+Built with: Next.js, React, motion, three.js, React Bits
+Standards: HTML, CSS, TypeScript, an unreasonable number of easter eggs
+Hint: open the console. Then try ↑ ↑ ↓ ↓ ← → ← → B A. Or press ` and type play.

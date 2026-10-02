@@ -40,6 +40,7 @@
 .touch { display: none; }
 @media (hover: none), (pointer: coarse) { .mouse { display: none; } .touch { display: inline; } }
 /* Phones: smaller, tighter to the button, so it covers less of the page */
+@media (max-width: 420px) { .btn { width: 46px; height: 46px; } }
 @media (max-width: 640px) {
   .nudgeText { font-size: 13px; margin: 0 -8px 24px -44px; }
   .nudgeArrow { width: 34px; height: 30px; }

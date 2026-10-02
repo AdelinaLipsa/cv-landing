@@ -7,6 +7,7 @@ import { about, jobs, profile, stillShipping } from "@/content/cv";
 import { tiles } from "@/content/wall";
 import { glide } from "@/lib/motion";
 import AnimatedList from "./AnimatedList";
+import SpaceGame from "./SpaceGame";
 import s from "./Terminal.module.css";
 
 // three.js only loads when the terminal opens.
@@ -22,6 +23,7 @@ const COMMANDS = [
   { cmd: "ls projects", does: "things that didn’t exist, pick one to open it" },
   { cmd: "curl cv", does: "the whole CV as JSON, for the curious" },
   { cmd: "sudo hire adelina", does: "you know what this does" },
+  { cmd: "play", does: "a tiny space shooter, ← → to move" },
   { cmd: "clear", does: "wipe the screen" },
   { cmd: "exit", does: "close the terminal (or Esc, or `)" },
 ];
@@ -101,6 +103,8 @@ export default function Terminal({ onClose, onContact, onWork }: { onClose: () =
         return;
       case "sudo":
         return print("sudo what? Try: sudo hire adelina");
+      case "play":
+        return print(<SpaceGame />, <span className={s.muted}>← → or drag to move. Your ship fires on its own.</span>);
       case "clear":
         return setLines([]);
       case "exit":

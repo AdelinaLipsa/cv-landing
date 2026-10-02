@@ -5,6 +5,8 @@ import { glide, track } from "@/lib/motion";
 import { useCalm } from "@/lib/useCalm";
 import { steps, STAGE } from "@/content/tour";
 import Boot from "./Boot";
+import EasterEggs from "./EasterEggs";
+import Arcade from "./Arcade";
 import Sheet from "./Sheet";
 import Contact from "./Contact";
 import dynamic from "next/dynamic";
@@ -77,13 +79,8 @@ export default function Shell({ code, character }: { code: Snippets; character: 
     if (location.hash === "#contact") setSheet({ label: "Contact", body: <Contact /> });
   }, []);
 
-  // Easter eggs: a note in devtools, and ` opens a terminal.
+  // Easter egg: ` opens a terminal. The rest live in EasterEggs.
   useEffect(() => {
-    console.log(
-      "%cHi, it’s Adelina.%c\nYou opened devtools, so you’re my kind of person.\nThe whole CV is JSON at /api/cv, and ` opens a terminal.",
-      "font: 700 16px sans-serif; color: #3355FF",
-      "font: 13px sans-serif; color: #6B6990"
-    );
     const onKey = (e: KeyboardEvent) => {
       const t = e.target as HTMLElement;
       if (e.key !== "`" || t.closest("input, textarea, [contenteditable]")) return;
@@ -231,12 +228,25 @@ export default function Shell({ code, character }: { code: Snippets; character: 
           ))}
         </nav>
         <SoundToggle />
+        {/* The arcade, findable: a gamepad next to the sound, with its own hand-drawn nudge */}
+        <span className={s.gameWrap}>
+        <span className={s.gameNudge} aria-hidden="true">
+          <svg width="40" height="36" viewBox="0 0 46 40" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 4c14 2 26 10 30 26" /><path d="M28 26l8 6 3-10" /></svg>
+          <span>games!</span>
+        </span>
+        <button type="button" className={s.game} onClick={() => ui.sheet("Arcade", <Arcade />)} aria-label="Open the arcade: two tiny games" title="Arcade: two tiny games">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d="M7 8h10a4 4 0 0 1 3.9 4.9l-1 4.3a2 2 0 0 1-3.4.9L14 16h-4l-2.5 2.1a2 2 0 0 1-3.4-.9l-1-4.3A4 4 0 0 1 7 8z" /><path d="M8 11v3M6.5 12.5h3" /><circle cx="15.5" cy="12" r=".6" fill="currentColor" /><circle cx="17.5" cy="13.5" r=".6" fill="currentColor" />
+          </svg>
+        </button>
+        </span>
         </div>
       </div>
       </ClickSpark>
       </main>
 
       {touring && <Tour code={code} onStep={onStep} onClose={endTour} />}
+      <EasterEggs contact={ui.contact} terminal={ui.terminal} />
 
       <AnimatePresence>
         {term && <Terminal onClose={() => setTerm(false)} onContact={ui.contact} onWork={() => ui.go(1)} />}

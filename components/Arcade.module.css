@@ -1,0 +1,31 @@
+.menu { display: grid; gap: 10px; }
+.card { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; padding: 16px; border: 1px solid var(--line); border-radius: 18px; background: #0d0b24; color: #e8e6ff; text-align: left; cursor: pointer; box-shadow: 0 0 30px rgba(51, 85, 255, 0.18); transition: transform 0.3s var(--ease), box-shadow 0.3s var(--ease); }
+.card:hover, .card:focus-visible { transform: translateY(-2px); box-shadow: 0 0 40px rgba(51, 85, 255, 0.35); }
+.card b { font-family: var(--font-mono), monospace; font-size: 16px; color: #5fd0ff; }
+.card span { font-size: 13.5px; line-height: 1.4; color: #b9b6e0; }
+.card em { margin-top: 4px; font-style: normal; font-size: 13px; font-weight: 700; color: var(--broth); }
+.playing { display: flex; flex-direction: column; gap: 6px; }
+.top { display: flex; justify-content: space-between; align-items: center; }
+.back { align-self: flex-start; padding: 4px 0; border: 0; background: none; color: var(--steam); font-size: 13px; font-weight: 600; cursor: pointer; }
+
+/* Ship It! touch pad: only where there's no keyboard */
+.pad { display: none; justify-content: space-between; gap: 12px; margin-top: 4px; user-select: none; -webkit-user-select: none; }
+@media (pointer: coarse) { .pad { display: flex; } }
+.dpad { display: flex; gap: 8px; }
+.pad button { width: 58px; height: 52px; border: 0; border-radius: 14px; background: #1a1640; color: #e8e6ff; font: 700 13px var(--font-mono), monospace; touch-action: none; }
+.pad button:active { background: #3355FF; }
+.pad .a { background: #3355FF; }
+.pad .b { background: #b8335f; }
+.col { display: flex; flex-direction: column; gap: 4px; }
+.col button { height: 24px; }
+.pad .c { background: #F5B53F; color: #17153a; }
+/* Controls legend: keyboard on desktop, touch on phones */
+.controls { display: flex; flex-wrap: wrap; gap: 6px 14px; margin: 4px 0 0; font-size: 12.5px; }
+.controls div { display: flex; gap: 6px; align-items: baseline; }
+.controls dt { padding: 1px 6px; border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 6px; font-family: var(--font-mono), monospace; font-size: 11.5px; font-weight: 700; color: var(--ink); }
+.controls dd { margin: 0; color: var(--body-2); }
+.touch { display: none; }
+@media (pointer: coarse) { .keys { display: none; } .touch { display: flex; } }
+.tips { margin: 2px 0 0; font-size: 12.5px; line-height: 1.45; color: var(--steam); }
+.sound { display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 12px; border: 1px solid var(--line); border-radius: 999px; background: var(--surface); color: var(--ink); font-size: 13px; font-weight: 700; cursor: pointer; }
+.sound[aria-pressed="true"] { border-color: var(--blueprint); }
