@@ -8,6 +8,9 @@ import s from "./EasterEggs.module.css";
 const KONAMI = ["ArrowUp", "ArrowUp", "ArrowDown", "ArrowDown", "ArrowLeft", "ArrowRight", "ArrowLeft", "ArrowRight", "b", "a"];
 const WORDS = ["ramen", "hire", "milk", "sudo"];
 
+// Once per page load: dev mode runs effects twice, and the hello shouldn't say itself twice.
+let greeted = false;
+
 const BANNER = String.raw`
     _    _
    / \  | |       Hi, it’s Adelina.
@@ -62,11 +65,12 @@ export default function EasterEggs({ contact, terminal }: { contact: () => void;
     const w = window as unknown as Record<string, unknown>;
     for (const [k, fn] of Object.entries(cmds)) w[k] = () => { unlock("console"); return fn(); };
 
-    console.log(
+    if (!greeted) console.log(
       `%c${BANNER}%c\nThe console takes requests:\n  hire()      the fastest way to reach me\n  ramen()     try it\n  milk()      a public service announcement\n  terminal()  a real one, sort of\n  play()      a tiny space shooter\n  secrets()   everything else hidden here\n  achievements()  what you’ve found so far\n\nThe whole CV is JSON at /api/cv.`,
       "font: 700 12px/1.25 ui-monospace, monospace; color: #3355FF",
       "font: 13px/1.6 ui-monospace, monospace; color: #6B6990"
     );
+    greeted = true;
 
     // Konami code and secret words, typed anywhere outside a text field.
     let keys: string[] = [];
