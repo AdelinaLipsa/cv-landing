@@ -104,11 +104,12 @@
 }
 @media (max-width: 340px) { .tab { font-size: 12px; } }
 
-/* "games!": the sound button's nudge, mirrored, floating above-right of the gamepad */
+/* "games!": the sound button's nudge, mirrored: text up and to the right, the arrow curving down onto the gamepad */
 .gameWrap { position: relative; display: inline-flex; }
-.gameNudge { position: absolute; right: calc(50% - 34px); bottom: calc(100% - 4px); display: flex; align-items: flex-end; pointer-events: none; color: var(--naruto); animation: gameFloat 3.6s ease-in-out infinite; }
-.gameNudge svg { display: block; transform: scaleX(-1) translate(-10px, 4px) rotate(18deg); }
-.gameNudge span { margin: 0 -10px 28px -2px; font-family: var(--font-display), sans-serif; font-size: 15px; font-weight: 700; font-stretch: 112%; white-space: nowrap; transform: rotate(10deg); color: var(--ink); text-shadow: 0 2px 0 var(--paper); }
+.gameNudge { position: absolute; left: calc(50% - 8px); bottom: calc(100% - 4px); display: flex; align-items: flex-end; pointer-events: none; color: var(--naruto); animation: gameFloat 3.6s ease-in-out infinite; }
+.gameNudge svg { display: block; flex-shrink: 0; transform: scaleX(-1) rotate(10deg); } /* the tip sits over the gamepad's centre */
+.gameNudge span { margin: 0 0 30px -6px; font-family: var(--font-display), sans-serif; font-size: 15px; font-weight: 700; font-stretch: 112%; white-space: nowrap; transform: rotate(10deg); color: var(--ink); text-shadow: 0 2px 0 var(--paper); }
 @keyframes gameFloat { 0%, 100% { transform: translate(0, 0); } 33% { transform: translate(-5px, -7px) rotate(-3deg); } 66% { transform: translate(4px, -4px) rotate(2deg); } }
 @media (prefers-reduced-motion: reduce) { .gameNudge { animation: none; } }
-@media (max-width: 640px) { .gameNudge span { font-size: 13px; margin-bottom: 22px; } .gameNudge svg { width: 32px; height: 28px; } }
+/* Phones: the gamepad sits near the screen edge, so the text stacks above the arrow and stays on screen */
+@media (max-width: 640px) { .gameNudge { left: auto; right: calc(50% - 23px); flex-direction: column-reverse; align-items: flex-end; } .gameNudge span { font-size: 13px; margin: 0 4px 0 0; } .gameNudge svg { width: 32px; height: 28px; } }

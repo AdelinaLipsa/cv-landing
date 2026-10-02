@@ -23,6 +23,8 @@ import EqualizerRing from "../EqualizerRing";
 import ThemeToggle from "../ThemeToggle";
 import Magnet from "../Magnet";
 import DecryptedText from "../DecryptedText";
+import QuickRead from "../QuickRead";
+import GuestbookButton from "../Guestbook";
 import p from "./pane.module.css";
 import s from "./Home.module.css";
 
@@ -105,10 +107,10 @@ export default function Home({ ui }: { ui: UI }) {
       <header className={s.top}>
         <span className={s.mark}><span className={s.monogram}>{profile.initials}</span><span className={s.markName}>{profile.name}</span></span>
         <div className={s.icons}>
-          <Magnet padding={24} magnetStrength={3} disabled={!!reduce}><a href={profile.linkedin} target="_blank" rel="noopener" aria-label="LinkedIn" className={`${s.icon} ${s.linkedin}`}><LinkedInIcon /></a></Magnet>
-          <Magnet padding={24} magnetStrength={3} disabled={!!reduce}><button type="button" onClick={ui.contact} aria-label="Message me" className={s.icon}><WhatsAppIcon size={18} /></button></Magnet>
-          <ThemeToggle className={s.icon} />
-          <Magnet padding={24} magnetStrength={3} disabled={!!reduce}><a href={profile.pdf} download className={s.pdf} aria-label="Download CV as PDF">
+          <Magnet padding={24} magnetStrength={3} disabled={!!reduce}><a href={profile.linkedin} target="_blank" rel="noopener" aria-label="LinkedIn" className={`${s.icon} ${s.linkedin} water`}><LinkedInIcon /></a></Magnet>
+          <Magnet padding={24} magnetStrength={3} disabled={!!reduce}><button type="button" onClick={ui.contact} aria-label="Message me" className={`${s.icon} ${s.whatsapp} water`}><WhatsAppIcon size={18} /></button></Magnet>
+          <ThemeToggle className={`${s.icon} water`} />
+          <Magnet padding={24} magnetStrength={3} disabled={!!reduce}><a href={profile.pdf} download className={`${s.pdf} water`} aria-label="Download CV as PDF">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 4v11m0 0-4.5-4.5M12 15l4.5-4.5M5 20h14" /></svg>
             <span>PDF</span>
           </a></Magnet>
@@ -162,9 +164,11 @@ export default function Home({ ui }: { ui: UI }) {
           </p>
           <p className={s.about}><Rich text={about[0]} /></p>
           <div className={s.actions}>
-            <Magnet padding={40} magnetStrength={4} disabled={!!reduce}><button type="button" className={`${p.primary} ${s.buildBtn}`} onClick={ui.build} data-tour="build"><Play />{buildLabel}</button></Magnet>
-            <button type="button" className={s.messageBtn} onClick={ui.contact}><WhatsAppIcon size={17} /><DecryptedText text="Message me" animateOn="hover" speed={40} maxIterations={8} /></button>
+            <Magnet padding={40} magnetStrength={4} disabled={!!reduce}><button type="button" className={`${p.primary} ${s.buildBtn} water`} onClick={ui.build} data-tour="build"><Play />{buildLabel}</button></Magnet>
+            <button type="button" className={`${s.messageBtn} water`} onClick={ui.contact}><WhatsAppIcon size={17} /><DecryptedText text="Message me" animateOn="hover" speed={40} maxIterations={8} /></button>
           </div>
+          {/* Skip the cutscene: the whole CV in 30 seconds, for the busy */}
+          {!touring && <button type="button" className={s.quick} onClick={() => ui.sheet("The 30-second version", <QuickRead contact={ui.contact} />)}>Busy? Read the 30-second version →</button>}
           {touring && era === 0 && <VisitorCounter />}
           <div className={`${s.dock} ${s.dropper}`} {...drop(STAGE.cards)}>
             <Dock items={dockItems(ui)} baseItemSize={60} magnification={92} distance={160} panelHeight={96} dockHeight={96} spring={{ stiffness: 120, damping: 26 }} />
@@ -207,6 +211,7 @@ export default function Home({ ui }: { ui: UI }) {
             <span className={s.offHead}>Off the clock</span>
             <p className={s.offLine}>{about[1]}</p>
             <ul className={s.tags}>{OFF.map((t) => <li key={t}>{t}</li>)}</ul>
+            <GuestbookButton open={ui.sheet} />
           </motion.div>
 
           {/* Things I believe: hover one */}

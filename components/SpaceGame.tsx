@@ -1,6 +1,8 @@
 "use client";
 import { useEffect, useRef } from "react";
 import { sfx } from "@/lib/sfx";
+import { unlock } from "@/lib/achievements";
+import { drawSnow, season } from "@/lib/season";
 import s from "./SpaceGame.module.css";
 
 // A tiny space shooter: the gamepad button in the nav, or `play` in the terminal. 192 × 120 pixels, scaled up crisp behind CRT scanlines.
@@ -39,12 +41,19 @@ type P = { x: number; y: number; vx: number; vy: number };
 type Spark = P & { life: number; max: number; color: string };
 type Pop = { x: number; y: number; text: string; life: number; color: string };
 
-export default function SpaceGame() {
+export default function SpaceGame({ onEnd }: { onEnd?: (score: number) => void }) {
+  // The final score goes to the arcade's leaderboard. A ref, so the game loop never restarts for it.
+  const report = useRef(onEnd);
+  report.current = onEnd;
   const canvas = useRef<HTMLCanvasElement>(null);
   const glow = useRef<HTMLCanvasElement>(null);
+  const strip = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const ctx = canvas.current!.getContext("2d")!;
+    const SEASON = season();
+    const tint = SEASON === "halloween" ? ["#ff8c1a", "#b46bff", "#7dff6b"] : SEASON === "christmas" ? ["#ff5a5a", "#5fd897", "#ffffff"] : KINDS.map((k) => k.color);
+    const bossColor = SEASON === "halloween" ? "#7dff6b" : "#ff5a5a";
     const bloom = glow.current!.getContext("2d")!; // a blurred copy on top, blended with screen: cheap glow
     let hi = 0;
     try { hi = Number(localStorage.getItem(HI_KEY)) || 0; } catch { }
@@ -86,7 +95,7 @@ export default function SpaceGame() {
       a.alive = false;
       sfx.pop();
       award(KINDS[a.kind].pts, a.x + 3, a.y);
-      burst(a.x + 3, a.y + 2, KINDS[a.kind].color);
+      burst(a.x + 3, a.y + 2, tint[a.kind]);
       if (Math.random() < 0.13) {
         const r = Math.random();
         drops.push({ x: a.x + 3, y: a.y + 3, vx: 0, vy: 28, type: r < 0.28 ? "T" : r < 0.5 ? "R" : r < 0.72 ? "S" : r < 0.88 ? "B" : "+" });
@@ -94,6 +103,7 @@ export default function SpaceGame() {
     };
     const end = (how: "over" | "won") => {
       state = how; stateT = 0;
+      if (score > 0) report.current?.(score);
       if (score > hi) { hi = score; try { localStorage.setItem(HI_KEY, String(hi)); } catch { } }
     };
     // B: wipes every bomb, takes out up to 6 aliens, dents the boss.
@@ -110,7 +120,7 @@ export default function SpaceGame() {
       wave++;
       state = "banner";
       stateT = 1.8;
-      banner = wave < WAVES.length ? `WAVE ${wave + 1}` : "BOSS: THE BACKLOG";
+      banner = wave < WAVES.length ? `WAVE ${wave + 1}${SEASON === "halloween" ? " · BOO!" : SEASON === "christmas" ? " · HO HO HO" : ""}` : SEASON === "halloween" ? "BOSS: THE HAUNTED BACKLOG" : SEASON === "christmas" ? "BOSS: THE YEAR-END BACKLOG" : "BOSS: THE BACKLOG";
       if (wave < WAVES.length) sfx.wave(); else sfx.warning();
       shots = []; bombs = [];
     };
@@ -224,7 +234,7 @@ export default function SpaceGame() {
                 score += 1000;
                 for (let i = 0; i < 6; i++) burst(boss.x + Math.random() * 15, boss.y + Math.random() * 8, i % 2 ? "#F5B53F" : "#ff5a5a", 16, 70);
                 pops.push({ x: boss.x + 7, y: boss.y, text: "+1000", life: 1.5, color: "#F5B53F" });
-                boss = null; shake = 0.8; flash = 0.4; bombs = []; end("won");
+                boss = null; shake = 0.8; flash = 0.4; bombs = []; end("won"); unlock("backlog");
                 sfx.boom(); setTimeout(sfx.win, 700);
                 break;
               }
@@ -260,10 +270,11 @@ export default function SpaceGame() {
         ctx.fillStyle = ["#2e2b5c", "#5a56a0", "#a9a6e8"][st.layer];
         ctx.fillRect(Math.round(st.x), Math.round(st.y), 1, warp > 1 ? 1 + st.layer * 2 : 1);
       }
+      if (SEASON === "christmas") drawSnow(ctx, t, W, H);
 
       const pose = Math.floor(Math.max(0, t) * 2) % 2;
-      aliens.forEach((a) => a.alive && sprite(KINDS[a.kind].frames[pose], a.x, a.y, KINDS[a.kind].color));
-      if (boss) sprite(BOSS, boss.x, boss.y, boss.hp < BOSS_HP / 2 && Math.floor(t * 8) % 2 ? "#ffffff" : "#ff5a5a");
+      aliens.forEach((a) => a.alive && sprite(KINDS[a.kind].frames[pose], a.x, a.y, tint[a.kind]));
+      if (boss) sprite(BOSS, boss.x, boss.y, boss.hp < BOSS_HP / 2 && Math.floor(t * 8) % 2 ? "#ffffff" : bossColor);
 
       for (const d of drops) {
         ctx.fillStyle = DROPS[d.type];
@@ -353,28 +364,27 @@ export default function SpaceGame() {
       else if (down && (e.key === "Enter" || e.key === " ")) again();
     };
     const kd = onKey(true), ku = onKey(false);
-    // Touch or mouse: drag on the game to steer.
-    const el = canvas.current!;
+    // Touch or mouse: drag on the game, or on the thumb strip under it (phones), to steer.
+    const el = canvas.current!, pad = strip.current!;
     const steer = (e: PointerEvent) => {
-      if (e.type === "pointerdown") again();
+      if (e.type === "pointerdown") { again(); (e.currentTarget as HTMLElement).setPointerCapture?.(e.pointerId); }
       if (e.buttons === 0 && e.pointerType === "mouse") return;
-      const r = el.getBoundingClientRect();
+      const r = (e.currentTarget as HTMLElement).getBoundingClientRect();
       ship = Math.max(4, Math.min(W - 4, ((e.clientX - r.left) / r.width) * W));
     };
     window.addEventListener("keydown", kd);
     window.addEventListener("keyup", ku);
-    el.addEventListener("pointerdown", steer);
-    el.addEventListener("pointermove", steer);
+    for (const t of [el, pad] as HTMLElement[]) { t.addEventListener("pointerdown", steer); t.addEventListener("pointermove", steer); }
     return () => {
       cancelAnimationFrame(raf);
       window.removeEventListener("keydown", kd);
       window.removeEventListener("keyup", ku);
-      el.removeEventListener("pointerdown", steer);
-      el.removeEventListener("pointermove", steer);
+      for (const t of [el, pad] as HTMLElement[]) { t.removeEventListener("pointerdown", steer); t.removeEventListener("pointermove", steer); }
     };
   }, []);
 
   return (
+    <>
     <div className={s.crt}>
       <canvas
         ref={canvas}
@@ -385,5 +395,8 @@ export default function SpaceGame() {
       />
       <canvas ref={glow} width={W} height={H} className={s.glow} aria-hidden="true" />
     </div>
+    {/* Phones: a big strip under the screen to steer with your thumb, so it never covers the ship */}
+    <div ref={strip} className={s.strip} aria-hidden="true"><span>◀ drag here to steer ▶</span></div>
+    </>
   );
 }

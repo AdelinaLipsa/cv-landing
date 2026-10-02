@@ -1,6 +1,8 @@
 "use client";
 import { useEffect, useRef } from "react";
 import { sfx } from "@/lib/sfx";
+import { unlock } from "@/lib/achievements";
+import { drawSnow, season } from "@/lib/season";
 import crt from "./SpaceGame.module.css";
 import s from "./Arcade.module.css";
 
@@ -40,6 +42,7 @@ const hero = (legs: keyof typeof LEGS, firing: boolean) => [...TOP, ...(firing ?
 // Wheel-bots roll the floor, drones chase you, hard-hats hide under their helmets and pop up to fire.
 const WHEEL = [["..kkkk..", ".krrrrk.", "krwkrrrk", "krrrrrrk", ".kkkkkk.", "..kmmk..", ".kmkkmk.", "..kkkk.."], ["..kkkk..", ".krrrrk.", "krwkrrrk", "krrrrrrk", ".kkkkkk.", "..kkkk..", ".kmmmmk.", "..kkkk.."]];
 const DRONE = [["kkkk.kkkk", "....k....", "..kmmmk..", ".kmrwmmk.", ".kmmmmmk.", "..k.k.k.."], [".kk...kk.", "....k....", "..kmmmk..", ".kmrwmmk.", ".kmmmmmk.", "..k.k.k.."]];
+const BAT = [["k.......k", "kk.....kk", "kkkpkpkkk", ".kkkkkkk.", "..k...k.."], ["...k.k...", "..kkkkk..", "kkkpkpkkk", "k.kkkkk.k", "..k...k.."]];
 const HAT_SHUT = ["...kkkk...", "..kaaaak..", ".kaaaaaak.", "kaaaaaaaak", "kkkkkkkkkk"];
 const HAT_OPEN = ["...kkkk...", "..kaaaak..", ".kaaaaaak.", "kkkkkkkkkk", ".kwkkkkwk.", ".kkkkkkkk.", "..kk..kk.."];
 // Scope Creep: the boss, a robot with a visor and an antenna. 16 × 16.
@@ -71,7 +74,10 @@ type Spark = { x: number; y: number; vx: number; vy: number; life: number; color
 const tile = (c: number, r: number) => (r < 0 ? "." : r >= ROWS ? "." : c < 0 || c >= COLS ? "#" : grid[r][c]);
 const solidAt = (c: number, r: number, wall: boolean) => { const t = tile(c, r); return t === "#" || t === "=" || (wall && c === ARENA - 1 && r < 13); };
 
-export default function ShipIt() {
+export default function ShipIt({ onEnd }: { onEnd?: (score: number) => void }) {
+  // The final score goes to the arcade's leaderboard. A ref, so the game loop never restarts for it.
+  const report = useRef(onEnd);
+  report.current = onEnd;
   const canvas = useRef<HTMLCanvasElement>(null);
   const glow = useRef<HTMLCanvasElement>(null);
   const keys = useRef({ left: false, right: false, jump: false, fire: false });
@@ -80,6 +86,7 @@ export default function ShipIt() {
     const ctx = canvas.current!.getContext("2d")!;
     const bloom = glow.current!.getContext("2d")!;
     const k = keys.current;
+    const SEASON = season();
 
     let p: Body & { hp: number; inv: number; face: number; charge: number; lives: number; dead: number; shot: number } = null!;
     let enemies: Enemy[] = [], shots: Shot[] = [], sparks: Spark[] = [], health: { x: number; y: number; on: boolean }[] = [];
@@ -162,7 +169,7 @@ export default function ShipIt() {
       shake = 0.4;
       ring(p.x + 5, p.y + 7);
       sfx.boom();
-      if (p.lives <= 0) { state = "over"; stateT = 0; setTimeout(sfx.lose, 600); }
+      if (p.lives <= 0) { state = "over"; stateT = 0; setTimeout(sfx.lose, 600); if (score > 0) report.current?.(score); }
     };
     const fire = (big: boolean) => {
       if (!big && shots.filter((x) => !x.foe).length >= 3) return;
@@ -287,6 +294,8 @@ export default function ShipIt() {
             boss = null; shots = []; shake = 0.8; flash = 0.4;
             sfx.boom(); setTimeout(sfx.win, 700);
             state = "won"; stateT = 0;
+            unlock("scope");
+            report.current?.(score);
           }
         }
       }
@@ -312,7 +321,7 @@ export default function ShipIt() {
         ctx.fillStyle = "#24215a"; ctx.fillRect(x + 22, 0, 4, H);
         ctx.fillStyle = "#2f2b6e"; for (let y = 10; y < H; y += 20) ctx.fillRect(x + 21, y, 6, 2);
         const id = i + Math.floor((cam * 0.4) / 32);
-        ctx.fillStyle = (Math.floor(t * 2) + id) % 3 ? "#2a2560" : id % 2 ? "#ff5a5a" : "#5fd897";
+        ctx.fillStyle = (Math.floor(t * 2) + id) % 3 ? "#2a2560" : SEASON === "halloween" ? (id % 2 ? "#ff8c1a" : "#b46bff") : id % 2 ? "#ff5a5a" : "#5fd897";
         ctx.fillRect(x + 6, 14 + (id % 3) * 14, 2, 2);
       }
       ctx.fillStyle = "#24215a"; ctx.fillRect(0, 34, W, 3);
@@ -348,7 +357,7 @@ export default function ShipIt() {
       const pose = Math.floor(t * 6) % 2;
       for (const e of enemies) if (e.alive) {
         if (e.kind === "hat") e.open > 0 ? sprite(HAT_OPEN, e.x, e.y, false) : sprite(HAT_SHUT, e.x, e.y + 2, false);
-        else sprite(e.kind === "wheel" ? WHEEL[pose] : DRONE[pose], e.x, e.y, e.vx > 0);
+        else sprite(e.kind === "wheel" ? WHEEL[pose] : SEASON === "halloween" ? BAT[pose] : DRONE[pose], e.x, e.y, e.vx > 0);
       }
       if (boss) sprite(CREEP, boss.x, boss.y, false, boss.hp < BOSS_HP / 2 && Math.floor(t * 10) % 2 ? PAL.w : undefined);
       // READY: you beam down from the top of the screen, then appear.
@@ -365,6 +374,7 @@ export default function ShipIt() {
       for (const sp of sparks) { ctx.globalAlpha = Math.min(1, sp.life * 2); ctx.fillStyle = sp.color; ctx.fillRect(Math.round(sp.x), Math.round(sp.y), 1, 1); }
       ctx.globalAlpha = 1;
       ctx.restore();
+      if (SEASON === "christmas") drawSnow(ctx, t, W, H);
       if (flash > 0) { ctx.fillStyle = `rgba(255,255,255,${flash})`; ctx.fillRect(0, 0, W, H); }
 
       // HUD: your health bar on the left, the boss's on the right, score and lives on top.
@@ -403,6 +413,7 @@ export default function ShipIt() {
     // Keyboard. Game keys don't scroll the page while you play.
     const map: Record<string, keyof typeof k> = { ArrowLeft: "left", ArrowRight: "right", ArrowUp: "jump", z: "jump", Z: "jump", x: "fire", X: "fire", " ": "fire" };
     const onKey = (down: boolean) => (e: KeyboardEvent) => {
+      if ((e.target as Element).closest?.("input, textarea")) return; // typing initials, not playing
       if (down && e.key === "Enter") again();
       const name = map[e.key];
       if (!name) return;

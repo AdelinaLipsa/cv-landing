@@ -3,6 +3,7 @@ import { motion, useSpring } from "motion/react";
 import { useEffect, useRef, useState } from "react";
 import { steps, starts, total, stepAt, type Step } from "@/content/tour";
 import { glide, ease } from "@/lib/motion";
+import { unlock } from "@/lib/achievements";
 import s from "./Tour.module.css";
 import RBStepper, { Step as RBStep } from "./Stepper";
 
@@ -91,6 +92,7 @@ export default function Tour({ code, onStep, onClose }: {
   // At the end: hold the last line, then close. The page stays built.
   useEffect(() => {
     if (!finished) return;
+    unlock("tour");
     setPlaying(false);
     const id = setTimeout(onClose, 3200);
     return () => clearTimeout(id);

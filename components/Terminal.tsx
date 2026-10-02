@@ -8,6 +8,7 @@ import { tiles } from "@/content/wall";
 import { glide } from "@/lib/motion";
 import AnimatedList from "./AnimatedList";
 import SpaceGame from "./SpaceGame";
+import { unlock } from "@/lib/achievements";
 import s from "./Terminal.module.css";
 
 // three.js only loads when the terminal opens.
@@ -43,6 +44,7 @@ export default function Terminal({ onClose, onContact, onWork }: { onClose: () =
   const print = (...nodes: ReactNode[]) => setLines((l) => [...l, ...nodes.map((node) => ({ id: nextId.current++, node }))]);
 
   useEffect(() => {
+    unlock("terminal");
     input.current?.focus();
     print(<span>Hi, you found the terminal. Type a command, or tap one below.</span>, helpList());
   }, []); // eslint-disable-line react-hooks/exhaustive-deps

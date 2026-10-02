@@ -81,3 +81,16 @@ html[data-built] .gate-boot, html:not([data-built]) .gate-shell { display: none;
 @media (prefers-reduced-motion: reduce) {
   *, ::before, ::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; scroll-behavior: auto !important; }
 }
+
+/* Water fill: on hover a button fills from the bottom like a glass, with a little wave riding the surface,
+   and drains when you leave. --water sets the liquid's colour (brand blue by default). */
+@property --fill { syntax: "<percentage>"; inherits: true; initial-value: 0%; }
+.water { position: relative; overflow: hidden; isolation: isolate; --fill: 0%; transition: --fill 0.9s cubic-bezier(0.4, 0, 0.2, 1), color 0.25s 0.25s, border-color 0.4s; }
+.water::before { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: var(--fill); background: var(--water, var(--blueprint)); z-index: -1; pointer-events: none; }
+.water::after { content: ""; position: absolute; left: -12px; right: -12px; bottom: calc(var(--fill) - 1px); height: 5px; z-index: -1; pointer-events: none; opacity: 0; transition: opacity 0.2s;
+  background: radial-gradient(circle at 6px 6px, var(--water, var(--blueprint)) 5.5px, transparent 6px) 0 0 / 12px 6px repeat-x; animation: water-wave 0.9s linear infinite; }
+.water:hover, .water:focus-visible { --fill: 100%; color: var(--water-ink, #fff); border-color: var(--water, var(--blueprint)); }
+.water:hover::after, .water:focus-visible::after { opacity: 1; }
+.water svg, .water span, .water b { position: relative; }
+@keyframes water-wave { to { transform: translateX(12px); } }
+@media (prefers-reduced-motion: reduce) { .water::after { animation: none; } }

@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import { unlock } from "@/lib/achievements";
 import s from "./ThemeToggle.module.css";
 
 const KEY = "cv-theme-v2";
@@ -14,6 +15,7 @@ export default function ThemeToggle({ className }: { className?: string }) {
     const next = !dark;
     setDark(next);
     setTouched(true);
+    if (next) unlock("dark");
     document.documentElement.dataset.theme = next ? "dark" : "light";
     try { localStorage.setItem(KEY, next ? "dark" : "light"); } catch { }
   };

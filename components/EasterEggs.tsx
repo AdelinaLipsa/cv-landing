@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useRef } from "react";
+import { ACHIEVEMENTS, unlock, unlocked } from "@/lib/achievements";
 import s from "./EasterEggs.module.css";
 
 // Hidden things for the curious: a devtools welcome with commands, the Konami code,
@@ -26,6 +27,7 @@ export default function EasterEggs({ contact, terminal }: { contact: () => void;
     // Ramen falls from the sky. Calm visitors get one bowl in the console instead.
     const ramen = () => {
       const root = layer.current;
+      unlock("ramen");
       if (calm || !root) return "🍜";
       for (let i = 0; i < 28; i++) {
         const b = document.createElement("span");
@@ -51,12 +53,17 @@ export default function EasterEggs({ contact, terminal }: { contact: () => void;
       play: () => { act.current.terminal(); return "Terminal open. Type play. Arrow keys, and good luck."; },
       secrets: () => "Psst: ↑ ↑ ↓ ↓ ← → ← → B A. Type ramen, hire, milk, or sudo anywhere on the page. Press ` and type play. Switch tabs and come back. /api/cv is the whole CV as JSON. /humans.txt says hi.",
       coffee: () => "418: I’m a teapot. Try ramen().",
+      achievements: () => {
+        const got = unlocked();
+        console.table(Object.fromEntries(Object.entries(ACHIEVEMENTS).map(([id, a]) => [a.name, { found: got.includes(id as keyof typeof ACHIEVEMENTS) ? "🏆" : "", hint: a.hint }])));
+        return `${got.length}/${Object.keys(ACHIEVEMENTS).length} found.`;
+      },
     };
     const w = window as unknown as Record<string, unknown>;
-    for (const [k, fn] of Object.entries(cmds)) w[k] = fn;
+    for (const [k, fn] of Object.entries(cmds)) w[k] = () => { unlock("console"); return fn(); };
 
     console.log(
-      `%c${BANNER}%c\nThe console takes requests:\n  hire()      the fastest way to reach me\n  ramen()     try it\n  milk()      a public service announcement\n  terminal()  a real one, sort of\n  play()      a tiny space shooter\n  secrets()   everything else hidden here\n\nThe whole CV is JSON at /api/cv.`,
+      `%c${BANNER}%c\nThe console takes requests:\n  hire()      the fastest way to reach me\n  ramen()     try it\n  milk()      a public service announcement\n  terminal()  a real one, sort of\n  play()      a tiny space shooter\n  secrets()   everything else hidden here\n  achievements()  what you’ve found so far\n\nThe whole CV is JSON at /api/cv.`,
       "font: 700 12px/1.25 ui-monospace, monospace; color: #3355FF",
       "font: 13px/1.6 ui-monospace, monospace; color: #6B6990"
     );
@@ -67,7 +74,7 @@ export default function EasterEggs({ contact, terminal }: { contact: () => void;
     const onKey = (e: KeyboardEvent) => {
       if ((e.target as Element).closest?.("input, textarea, [contenteditable]")) return;
       keys = [...keys, e.key].slice(-KONAMI.length);
-      if (keys.join() === KONAMI.join()) { keys = []; ramen(); console.log("%c+30 lives. Also, ramen.", "font: 700 14px sans-serif; color: #F5B53F"); return; }
+      if (keys.join() === KONAMI.join()) { keys = []; unlock("konami"); ramen(); console.log("%c+30 lives. Also, ramen.", "font: 700 14px sans-serif; color: #F5B53F"); return; }
       if (e.key.length !== 1) return;
       typed = (typed + e.key.toLowerCase()).slice(-8);
       const word = WORDS.find((w) => typed.endsWith(w));

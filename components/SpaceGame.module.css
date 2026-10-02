@@ -2,7 +2,7 @@
 .crt { position: relative; width: 100%; max-width: 560px; margin: 6px 0; border-radius: 10px; overflow: hidden; background: #07061a; box-shadow: 0 0 0 1px rgba(95, 208, 255, 0.15), 0 0 40px rgba(51, 85, 255, 0.25); }
 .crt canvas { display: block; width: 100%; aspect-ratio: 192 / 120; image-rendering: pixelated; touch-action: none; filter: saturate(1.15) contrast(1.05); }
 /* Bloom: the same frame, blurred and screened on top, so lasers and explosions glow */
-.crt .glow { position: absolute; inset: 0; pointer-events: none; filter: blur(3px) brightness(1.4); mix-blend-mode: screen; opacity: 0.85; image-rendering: auto; }
+.crt .glow { position: absolute; inset: 0; height: 100%; aspect-ratio: auto; pointer-events: none; filter: blur(3px) brightness(1.4); mix-blend-mode: screen; opacity: 0.85; image-rendering: auto; }
 .crt::after {
   content: "";
   position: absolute;
@@ -11,4 +11,10 @@
   background:
     repeating-linear-gradient(rgba(0, 0, 0, 0.22) 0 1px, transparent 1px 3px),
     radial-gradient(ellipse at center, transparent 55%, rgba(0, 0, 0, 0.45) 100%);
+}
+
+/* Thumb strip: phones only */
+.strip { display: none; }
+@media (pointer: coarse) {
+  .strip { display: flex; align-items: center; justify-content: center; height: 150px; margin-top: 10px; border: 2px dashed #3a3670; border-radius: 18px; background: #0d0b24; color: #8e8cae; font: 700 13px var(--font-mono), monospace; letter-spacing: 0.1em; touch-action: none; user-select: none; -webkit-user-select: none; }
 }

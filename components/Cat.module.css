@@ -1,0 +1,5 @@
+/* The cat strolls just above the bottom nav. Only the cat itself takes clicks. */
+.cat { position: fixed; left: 0; right: 0; bottom: calc(84px + env(safe-area-inset-bottom)); height: 40px; z-index: 25; pointer-events: none; }
+.sprite { position: absolute; left: 0; bottom: 0; image-rendering: pixelated; pointer-events: auto; cursor: pointer; }
+.heart { position: absolute; left: 14px; bottom: 34px; color: #ff7ac6; font-size: 16px; animation: float 1.2s ease-out forwards; pointer-events: none; }
+@keyframes float { from { opacity: 1; margin-bottom: 0; } to { opacity: 0; margin-bottom: 36px; } }

@@ -1,0 +1,17 @@
+/* 2003: Times New Roman, link blue, a blinking banner. On purpose. */
+.book { display: flex; flex-direction: column; gap: 12px; font-family: "Times New Roman", Times, serif; color: #000080; }
+.banner { margin: 0; text-align: center; font-size: 22px; font-weight: 700; color: #cc00cc; }
+.banner span { animation: blink 1s steps(1) infinite; }
+@keyframes blink { 50% { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .banner span { animation: none; } }
+.like { align-self: center; padding: 4px 12px; border: 2px outset #c0c0c0; background: #e0e0e0; font: 15px "Times New Roman", serif; color: #000; cursor: pointer; }
+.form { display: grid; gap: 8px; padding: 10px; border: 2px ridge #c0c0c0; background: #ffffcc; }
+.form label { display: grid; gap: 2px; font-size: 15px; }
+.form input, .form textarea { font: 15px "Times New Roman", serif; padding: 4px; border: 2px inset #c0c0c0; }
+.form button { justify-self: start; padding: 4px 12px; border: 2px outset #c0c0c0; background: #e0e0e0; font: 15px "Times New Roman", serif; cursor: pointer; }
+.note { margin: 0; color: #008000; font-weight: 700; }
+.entries { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.entries li { padding-bottom: 8px; border-bottom: 1px dashed #000080; font-size: 15px; }
+.entries p { margin: 2px 0 0; color: #000; }
+.entries small { color: #666; }
+.open { align-self: flex-start; margin-top: 12px; padding: 0; border: 0; background: none; font: 600 14px var(--font-body, sans-serif); color: var(--blueprint); text-decoration: underline; text-underline-offset: 4px; cursor: pointer; }

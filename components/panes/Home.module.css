@@ -19,12 +19,15 @@
 .pdf span { display: none; }
 /* LinkedIn fills in with its own blue on hover */
 .linkedin svg, .linkedin svg * { transition: color 0.3s var(--ease), fill 0.3s var(--ease), stroke 0.3s var(--ease); }
-.linkedin:hover, .linkedin:focus-visible { color: #0a66c2; }
-.linkedin:hover svg *, .linkedin:focus-visible svg * { fill: #0a66c2; stroke: #0a66c2; }
+/* Hover fills each icon with its own colour: LinkedIn blue, WhatsApp green (globals.css .water) */
+.linkedin { --water: #0a66c2; }
+.linkedin:hover svg *, .linkedin:focus-visible svg * { fill: #fff; stroke: #fff; }
+.whatsapp { --water: #25d366; }
 
 /* "Message me": a real secondary button next to the primary, not a text link */
 .messageBtn { display: inline-flex; align-items: center; gap: 8px; height: 46px; padding: 0 18px 0 14px; border: 1.5px solid var(--ink); border-radius: 999px; background: transparent; color: var(--ink); font-size: 15px; font-weight: 600; cursor: pointer; transition: background-color 0.3s var(--ease), color 0.3s var(--ease), transform 0.3s var(--ease); }
-.messageBtn:hover, .messageBtn:focus-visible { background: var(--night); color: var(--on-night); transform: translateY(-1px); }
+.messageBtn { --water: var(--blueprint); }
+.messageBtn:hover, .messageBtn:focus-visible { transform: translateY(-1px); }
 .messageBtn svg { flex-shrink: 0; }
 
 .grid { display: grid; gap: 40px; margin-top: 44px; }
@@ -244,3 +247,7 @@
 .termLink:hover, .termLink:focus-visible { transform: translateY(-2px); box-shadow: 0 14px 30px rgba(23, 21, 58, 0.26); }
 .termHint { display: none; color: var(--on-ink-muted); }
 @media (hover: hover) and (pointer: fine) { .termHint { display: inline; } }
+
+/* "Busy? The 30-second version": a quiet link under the hero buttons */
+.quick { align-self: flex-start; margin-top: 14px; padding: 0; border: 0; background: none; font-size: 14px; font-weight: 600; color: var(--body-2); text-decoration: underline; text-underline-offset: 4px; text-decoration-color: var(--line); cursor: pointer; }
+.quick:hover, .quick:focus-visible { color: var(--blueprint); text-decoration-color: currentColor; }

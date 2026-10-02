@@ -52,7 +52,7 @@ export default function SoundToggle() {
           </svg>
         </span>
       )}
-      <button type="button" className={s.btn} onClick={toggle} aria-pressed={on} aria-label={on ? "Stop the lofi" : "Play some pixel lofi"} title={on ? "Stop the lofi" : "Pixel lofi, 10 minutes"}>
+      <button type="button" className={`${s.btn} water`} onClick={toggle} aria-pressed={on} aria-label={on ? "Stop the lofi" : "Play some pixel lofi"} title={on ? "Stop the lofi" : "Pixel lofi, 10 minutes"}>
         <span className={`${s.bars} ${on ? s.playing : ""}`} aria-hidden="true"><i /><i /><i /><i /></span>
       </button>
     </span>

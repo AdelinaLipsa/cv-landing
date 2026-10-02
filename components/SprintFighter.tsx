@@ -1,6 +1,8 @@
 "use client";
 import { useEffect, useRef } from "react";
 import { sfx } from "@/lib/sfx";
+import { unlock } from "@/lib/achievements";
+import { drawSnow, season } from "@/lib/season";
 import crt from "./SpaceGame.module.css";
 import s from "./Arcade.module.css";
 
@@ -49,13 +51,17 @@ const MOVES = {
   airkick: { time: 0.35, from: 0.05, to: 0.3, reach: 15, lo: 4, hi: 14, dmg: 8, sound: "kick" },
 } as const;
 
-export default function SprintFighter() {
+export default function SprintFighter({ onEnd }: { onEnd?: (score: number) => void }) {
+  // The final score goes to the arcade's leaderboard. A ref, so the game loop never restarts for it.
+  const report = useRef(onEnd);
+  report.current = onEnd;
   const canvas = useRef<HTMLCanvasElement>(null);
   const glow = useRef<HTMLCanvasElement>(null);
   const keys = useRef<Input>({ left: false, right: false, up: false, down: false, p: false, k: false, s: false });
 
   useEffect(() => {
     const ctx = canvas.current!.getContext("2d")!;
+    const SEASON = season();
     const bloom = glow.current!.getContext("2d")!;
     const crowd = Array.from({ length: 34 }, (_, i) => ({ x: i * 6 - 4, h: 5 + ((i * 7) % 4), c: ["#2a1f4f", "#33255e", "#241a45"][i % 3], ph: i * 0.7 }));
 
@@ -65,7 +71,9 @@ export default function SprintFighter() {
     });
     let me = fighter(56, 1, PO), cpu = fighter(136, -1, SH);
     let balls: Ball[] = [], sparks: Spark[] = [];
-    let round = 1, clock = ROUND_TIME, t = 0, pause = 0, shake = 0, flash = 0;
+    let round = 1, clock = ROUND_TIME, t = 0, pause = 0, shake = 0, flash = 0, score = 0;
+    // A round you win scores 1000, plus 10 per health point left, 20 per second on the clock, 2000 more if perfect.
+    const roundWon = () => { score += 1000 + me.hp * 10 + Math.ceil(clock) * 20 + (me.hp === 100 ? 2000 : 0); };
     let state: "intro" | "fight" | "ko" | "end" = "intro", stateT = 2.2, callout = "", calloutT = 0, comboText = "", comboT = 0;
     const ai: Input & { think: number } = { left: false, right: false, up: false, down: false, p: false, k: false, s: false, think: 0 };
 
@@ -74,7 +82,7 @@ export default function SprintFighter() {
       me = fighter(56, 1, PO, me.wins); cpu = fighter(136, -1, SH, cpu.wins);
       balls = []; clock = ROUND_TIME; state = "intro"; stateT = 2.2;
     };
-    const reset = () => { me = fighter(56, 1, PO); cpu = fighter(136, -1, SH); round = 1; sparks = []; newRound(); };
+    const reset = () => { me = fighter(56, 1, PO); cpu = fighter(136, -1, SH); round = 1; score = 0; sparks = []; newRound(); };
 
     const burst = (x: number, y: number, color: string, n = 10, speed = 60) => {
       for (let i = 0; i < n; i++) {
@@ -107,7 +115,9 @@ export default function SprintFighter() {
         to.act = "ko"; to.vy = -120; to.knock = by.face * 70; to.stun = 9;
         state = "ko"; stateT = 3; pause = 0.4; shake = 0.5; flash = 0.3;
         sfx.ko(); say("K.O.", 2.4);
+        if (by === me && me.hp === 100) unlock("perfect");
         by.wins++;
+        if (by === me) roundWon();
       }
     };
 
@@ -209,6 +219,7 @@ export default function SprintFighter() {
         : f.act === "punch" && f.low ? "lowpunch" : f.act === "kick" && f.y < 0 ? "airkick" : f.act === "ko" ? "hit" : f.act;
       const [lean, fa, ba, fl, bl, drop] = POSES[name] ?? POSES.idle;
       const hip = [gx, gy - 13 + drop] as const;
+      if (SEASON === "halloween" && L === SH) { ctx.fillStyle = "#2a0a1a"; ctx.fillRect(gx - face * 7 - 2, gy - 25 + drop, 6, 22); ctx.fillStyle = "#b8335f"; ctx.fillRect(gx - face * 7 - 2, gy - 25 + drop, 6, 2); } // the cape
       const [bkx, bky] = limb(hip[0], hip[1], bl[0], 7, face, L.legs, 3); limb(bkx, bky, bl[1], 7, face, L.legs, 3);
       const neckX = hip[0] + Math.sin(lean) * 10 * face, neckY = hip[1] - Math.cos(lean) * 10;
       const sh = [hip[0] + Math.sin(lean) * 8 * face, hip[1] - Math.cos(lean) * 8] as const;
@@ -224,6 +235,7 @@ export default function SprintFighter() {
       ctx.fillStyle = L.skin; ctx.fillRect(hx - 2, hy - 2, 5, 5);
       ctx.fillStyle = L.hair; ctx.fillRect(hx - 3, hy - 3, 6, 2); ctx.fillRect(face > 0 ? hx - 3 : hx + 2, hy - 2, 1, 3);
       if (L === PO) { ctx.fillStyle = L.extra; ctx.fillRect(hx - 3, hy - 1, 6, 1); ctx.fillRect(face > 0 ? hx - 5 : hx + 3, hy - 1 + (Math.floor(t * 8) % 2), 2, 1); } // headband tails
+      if (L === PO && SEASON === "christmas") { ctx.fillStyle = "#ff5a5a"; ctx.fillRect(hx - 3, hy - 6, 6, 3); ctx.fillRect(hx - 3 - face * 2, hy - 7, 3, 2); ctx.fillStyle = "#ffffff"; ctx.fillRect(hx - 3, hy - 3, 6, 1); ctx.fillRect(hx - 4 - face * 3, hy - 7, 2, 2); } // Santa hat
       ctx.fillStyle = "#17153a"; ctx.fillRect(hx + face, hy, 1, 1); // eye
       const [fex, fey] = limb(sh[0], sh[1], fa[0], 6, face, L.sleeve); limb(fex, fey, fa[1], 6, face, L.skin);
       if (f.act === "hit" && Math.floor(t * 20) % 2) { ctx.globalAlpha = 0.5; ctx.fillStyle = "#ff5a5a"; ctx.fillRect(gx - 8, gy - 28, 16, 28); ctx.globalAlpha = 1; }
@@ -249,6 +261,7 @@ export default function SprintFighter() {
           clock = 0; state = "ko"; stateT = 2.5; say("TIME!", 2);
           const w = me.hp === cpu.hp ? null : me.hp > cpu.hp ? me : cpu;
           if (w) w.wins++;
+          if (w === me) roundWon();
         }
       }
       if (state === "fight" || state === "ko") {
@@ -264,8 +277,9 @@ export default function SprintFighter() {
         const winner = me.wins >= 2 ? me : cpu.wins >= 2 ? cpu : null;
         if (winner) {
           state = "end"; stateT = 0;
+          if (score > 0) report.current?.(score);
           winner.act = "win";
-          if (winner === me) sfx.win(); else sfx.lose();
+          if (winner === me) { sfx.win(); unlock("stakeholder"); } else sfx.lose();
         } else { round++; newRound(); }
       }
 
@@ -288,10 +302,17 @@ export default function SprintFighter() {
       ctx.save();
       if (shake > 0) ctx.translate(Math.round((Math.random() - 0.5) * 4), Math.round((Math.random() - 0.5) * 3));
       const sky = ctx.createLinearGradient(0, 0, 0, GROUND);
-      sky.addColorStop(0, "#1b1040"); sky.addColorStop(0.55, "#b8335f"); sky.addColorStop(1, "#F5B53F");
+      const spooky = SEASON === "halloween";
+      sky.addColorStop(0, spooky ? "#07041a" : "#1b1040"); sky.addColorStop(0.55, spooky ? "#3b1a5a" : "#b8335f"); sky.addColorStop(1, spooky ? "#ff8c1a" : "#F5B53F");
       ctx.fillStyle = sky; ctx.fillRect(-4, -4, W + 8, H + 8);
-      ctx.fillStyle = "#ffd27a"; ctx.beginPath(); ctx.arc(W / 2, 74, 16, 0, Math.PI * 2); ctx.fill();
-      ctx.fillStyle = "#b8335f"; for (let y = 64; y < 90; y += 4) ctx.fillRect(W / 2 - 18, y, 36, 1); // sun stripes
+      if (spooky) {
+        ctx.fillStyle = "#f3f0d0"; ctx.beginPath(); ctx.arc(W / 2 + 40, 34, 13, 0, Math.PI * 2); ctx.fill(); // full moon
+        ctx.fillStyle = "#07041a";
+        for (let i = 0; i < 4; i++) { const bx = ((t * 18 + i * 53) % (W + 20)) - 10, by = 18 + i * 9 + Math.sin(t * 3 + i) * 3, wing = Math.floor(t * 8 + i) % 2 ? 2 : -1; ctx.fillRect(Math.round(bx) - 3, Math.round(by + wing), 3, 1); ctx.fillRect(Math.round(bx), Math.round(by), 2, 2); ctx.fillRect(Math.round(bx) + 2, Math.round(by + wing), 3, 1); }
+      } else {
+        ctx.fillStyle = "#ffd27a"; ctx.beginPath(); ctx.arc(W / 2, 74, 16, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = "#b8335f"; for (let y = 64; y < 90; y += 4) ctx.fillRect(W / 2 - 18, y, 36, 1); // sun stripes
+      }
       ctx.fillStyle = "#2a1640";
       for (let i = 0; i < 16; i++) { const h = 14 + ((i * 37) % 19); ctx.fillRect(i * 13 - 4, 86 - h, 12, h + 4); }
       ctx.fillStyle = "#ffd27a"; for (let i = 0; i < 16; i++) if ((i * 7) % 3 === 0) ctx.fillRect(i * 13 + 1, 76 - ((i * 37) % 19) / 2, 1, 1); // lit windows
@@ -311,6 +332,7 @@ export default function SprintFighter() {
       for (const sp of sparks) { ctx.globalAlpha = Math.min(1, sp.life * 3); ctx.fillStyle = sp.color; ctx.fillRect(Math.round(sp.x), Math.round(sp.y), 1, 1); }
       ctx.globalAlpha = 1;
       ctx.restore();
+      if (SEASON === "christmas") drawSnow(ctx, t, W, H);
       if (flash > 0) { ctx.fillStyle = `rgba(255,255,255,${flash})`; ctx.fillRect(0, 0, W, H); }
 
       // HUD: health bars that drain red, names, round pips, clock, meters.
@@ -340,12 +362,13 @@ export default function SprintFighter() {
       if (state === "intro" && round === 1) { ctx.font = "6px monospace"; ctx.fillStyle = "#ffffff"; ctx.fillText("←→ MOVE  ↑ JUMP  ↓ CROUCH  Z PUNCH  X KICK  C SPECIAL", W / 2, 62); }
       if (state === "end") {
         const won = me.wins >= 2;
-        ctx.fillStyle = "rgba(7,6,26,0.6)"; ctx.fillRect(0, 34, W, 44);
+        ctx.fillStyle = "rgba(7,6,26,0.6)"; ctx.fillRect(0, 34, W, 46);
         ctx.font = "12px monospace"; ctx.fillStyle = won ? "#F5B53F" : "#ff5a5a";
         ctx.fillText(won ? (me.hp === 100 ? "PERFECT!" : "YOU WIN!") : "YOU LOSE", W / 2, 46);
         ctx.font = "6px monospace"; ctx.fillStyle = "#e8e6ff";
         ctx.fillText(won ? "THE STAKEHOLDER AGREES TO THE ROADMAP" : "THE STAKEHOLDER ADDED THREE MORE FEATURES", W / 2, 58);
-        ctx.fillStyle = "#8e8cae"; ctx.fillText("TAP OR PRESS ENTER FOR A REMATCH", W / 2, 68);
+        ctx.fillStyle = "#F5B53F"; ctx.fillText(`SCORE ${score}`, W / 2, 66);
+        ctx.fillStyle = "#8e8cae"; ctx.fillText("TAP OR PRESS ENTER FOR A REMATCH", W / 2, 74);
       }
 
       bloom.clearRect(0, 0, W, H);
@@ -358,6 +381,7 @@ export default function SprintFighter() {
 
     const map: Record<string, keyof Input> = { ArrowLeft: "left", ArrowRight: "right", ArrowUp: "up", ArrowDown: "down", z: "p", Z: "p", x: "k", X: "k", c: "s", C: "s" };
     const onKey = (down: boolean) => (e: KeyboardEvent) => {
+      if ((e.target as Element).closest?.("input, textarea")) return; // typing initials, not playing
       if (down && e.key === "Enter") again();
       const name = map[e.key];
       if (!name) return;
@@ -390,18 +414,17 @@ export default function SprintFighter() {
         <canvas ref={glow} width={W} height={H} className={crt.glow} aria-hidden="true" />
       </div>
       <div className={s.pad} aria-hidden="true">
-        <span className={s.dpad}>
-          <button type="button" tabIndex={-1} {...hold("left")}>◀</button>
-          <span className={s.col}>
-            <button type="button" tabIndex={-1} {...hold("up")}>▲</button>
-            <button type="button" tabIndex={-1} {...hold("down")}>▼</button>
-          </span>
-          <button type="button" tabIndex={-1} {...hold("right")}>▶</button>
+        {/* A d-pad cross on the left, the three attack buttons on the right */}
+        <span className={s.cross}>
+          <button type="button" tabIndex={-1} className={s.u} {...hold("up")}>▲</button>
+          <button type="button" tabIndex={-1} className={s.l} {...hold("left")}>◀</button>
+          <button type="button" tabIndex={-1} className={s.r} {...hold("right")}>▶</button>
+          <button type="button" tabIndex={-1} className={s.d} {...hold("down")}>▼</button>
         </span>
-        <span className={s.dpad}>
+        <span className={s.btns}>
           <button type="button" tabIndex={-1} className={s.a} {...hold("p")}>P</button>
           <button type="button" tabIndex={-1} className={s.b} {...hold("k")}>K</button>
-          <button type="button" tabIndex={-1} className={s.c} {...hold("s")}>SP</button>
+          <button type="button" tabIndex={-1} className={`${s.c} ${s.wide}`} {...hold("s")}>SP</button>
         </span>
       </div>
     </>

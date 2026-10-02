@@ -1,0 +1,9 @@
+.read { display: flex; flex-direction: column; gap: 10px; color: var(--ink); }
+.lede { margin: 0; font-size: 16px; line-height: 1.45; }
+.read h3 { margin: 6px 0 0; font-size: 12px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--steam); }
+.read ul { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 6px; font-size: 14px; line-height: 1.45; }
+.meta { margin: 0; font-size: 13.5px; color: var(--body-2); }
+.cta { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
+.primary, .secondary { display: inline-flex; align-items: center; height: 44px; padding: 0 18px; border-radius: 999px; font-size: 14.5px; font-weight: 700; text-decoration: none; cursor: pointer; }
+.primary { background: var(--night); color: var(--on-night); border: 0; }
+.secondary { background: transparent; color: var(--ink); border: 1.5px solid var(--ink); }
