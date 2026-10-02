@@ -7,14 +7,14 @@ import PaymentJourney from "./PaymentJourney";
 import j from "./PaymentJourney.module.css";
 import s from "./Workbench.module.css";
 
-// Hero right side: her four roles at Yomali, one tab each. All facts from content/cv.ts; demo data only.
+// Hero right side: her four roles at Yomali, one tab each. Facts from content/cv.ts and her own words (2026-10-01); demo data only.
 const MODES = ["Payments", "Engineering", "Support", "Customers"] as const;
 type Mode = (typeof MODES)[number];
 
 // Reveals its steps one by one each time the mode opens; returns how many are shown.
 function usePlay(count: number, ms: number) {
   const calm = useCalm();
-  const [at, setAt] = useState(calm ? count : 0);
+  const [at, setAt] = useState(0);
   useEffect(() => {
     if (at >= count) return;
     const id = setTimeout(() => setAt((v) => v + 1), calm ? 0 : ms);
@@ -29,7 +29,7 @@ type Line = { k: string; text: string; ok?: string; bad?: string; sub?: boolean 
 function Console({ lines, ms = 520 }: { lines: Line[]; ms?: number }) {
   const at = usePlay(lines.length, ms);
   return (
-    <ol className={s.console} aria-live="polite">
+    <ol className={s.console}>
       {lines.map((l, i) => (
         <li key={i} data-sub={l.sub || undefined} style={{ visibility: i < at ? "visible" : "hidden" }}>
           <span className={s.k}>{l.k}</span>
@@ -93,7 +93,7 @@ function Engineering() {
       <div className={j.head}><span className={j.kicker}>Product manager · core engineering</span><span className={j.order}>ClickUp</span></div>
       <div className={s.board}>
         {COLUMNS.map((c, i) => (
-          <div key={c} className={s.col} data-on={i === at || undefined}>
+          <div key={c} className={s.col}>
             <span className={s.colName}>{c}</span>
             {i === at && (
               <motion.div layoutId="bench-ticket" className={s.ticket} transition={{ type: "spring", stiffness: 260, damping: 28 }}>
@@ -117,15 +117,15 @@ export default function Workbench() {
   return (
     <SpotlightCard className={s.card} spotlightColor="rgba(51, 85, 255, 0.12)">
       <p className={s.lede}>My four roles at Yomali, at the same time</p>
-      <div className={s.modes} role="tablist" aria-label="My roles at Yomali">
+      <div className={s.modes} role="group" aria-label="My roles at Yomali">
         {MODES.map((m) => (
-          <button key={m} type="button" role="tab" aria-selected={m === mode} className={s.mode} onClick={() => setMode(m)}>
+          <button key={m} type="button" aria-pressed={m === mode} className={s.mode} onClick={() => setMode(m)}>
             {m === mode && <motion.span layoutId="bench-mode" className={s.modeBg} transition={{ type: "spring", stiffness: 300, damping: 30 }} />}
             <span>{m}</span>
           </button>
         ))}
       </div>
-      <motion.div key={mode} role="tabpanel" aria-label={mode} className={s.body} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25 }}>
+      <motion.div key={mode} className={s.body} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25 }}>
         {mode === "Payments" ? <PaymentJourney /> : mode === "Engineering" ? <Engineering /> : mode === "Support" ? <Support /> : <Customers />}
       </motion.div>
     </SpotlightCard>

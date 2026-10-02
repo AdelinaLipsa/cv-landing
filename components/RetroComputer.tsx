@@ -32,8 +32,10 @@ async function mount(el: HTMLElement, character: boolean) {
   const [THREE, { RoomEnvironment }] = await Promise.all([import("three"), import("three/examples/jsm/environments/RoomEnvironment.js")]);
   const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-  const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-  renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+  // Phones: 3x screens make this the heaviest thing on the page, so fewer pixels and no antialias there.
+  const touch = matchMedia("(pointer: coarse)").matches;
+  const renderer = new THREE.WebGLRenderer({ antialias: !touch, alpha: true });
+  renderer.setPixelRatio(Math.min(devicePixelRatio, touch ? 1.5 : 2));
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   el.appendChild(renderer.domElement);
 

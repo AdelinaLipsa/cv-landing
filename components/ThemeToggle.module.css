@@ -9,6 +9,9 @@
   50% { transform: translate(2px, 9px) rotate(2deg); }
   75% { transform: translate(6px, 4px) rotate(-1deg); }
 }
+.dark { display: none; }
+:global([data-theme="dark"]) .light { display: none; }
+:global([data-theme="dark"]) .dark { display: inline; }
 @media (prefers-reduced-motion: reduce) { .nudge { animation: none; } }
 @media (max-width: 640px) {
   .nudgeText { font-size: 13px; margin-top: 24px; }

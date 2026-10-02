@@ -56,15 +56,25 @@ export default function Tour({ code, onStep, onClose }: {
   }, [step]);
 
   // The one clock. Speed scales it, so typing, steps and progress stay in sync.
+  // It re-renders only when a typed character changes; the progress bar is written straight to the DOM.
+  const bar = useRef<HTMLSpanElement>(null);
   useEffect(() => {
     let raf = 0;
     let last = performance.now();
+    let shown = "";
     const loop = (now: number) => {
       const c = clock.current;
       if (c.playing && c.t < total) {
-        c.t = Math.min(total, c.t + ((now - last) / 1000) * c.speed);
-        setT(c.t);
+        c.t = Math.min(total, c.t + (Math.max(0, now - last) / 1000) * c.speed); // first frame can predate `last`
+        const k = stepAt(c.t);
+        const st = steps[k], local = c.t - starts[k];
+        // Typing ends at the line's length (+8 for the web aside), the code at its length: no renders after that.
+        const typedN = Math.min(Math.floor(local * TYPE_CPS), st.say.length + 8);
+        const codeN = st.code ? Math.min(Math.floor(local * CODE_CPS), code[st.code].text.length) : 0;
+        const key = `${k}:${typedN}:${codeN}:${c.t >= total}`;
+        if (key !== shown) { shown = key; setT(c.t); }
       }
+      if (bar.current) bar.current.style.transform = `scaleX(${c.t / total})`;
       last = now;
       raf = requestAnimationFrame(loop);
     };
@@ -118,10 +128,12 @@ export default function Tour({ code, onStep, onClose }: {
 
   useEffect(() => {
     let raf = 0;
+    let el: HTMLElement | null = null;
     const frame = () => {
-      const el = findTarget(step.target);
-      if (el) {
-        const r = el.getBoundingClientRect();
+      // Look the target up once per step, again only if it went away (re-render, layout switch).
+      let r = el?.isConnected ? el.getBoundingClientRect() : null;
+      if (!r || !r.width || !r.height) { el = findTarget(step.target); r = el?.getBoundingClientRect() ?? null; }
+      if (el && r) {
         const vw = innerWidth, vh = innerHeight;
         const top = Math.max(r.top, 70), bottom = Math.min(r.bottom, vh - 90);
         const px = Math.min(Math.max(r.left + Math.min(r.width * 0.72, r.width - 12), 10), vw - 30);
@@ -204,7 +216,7 @@ export default function Tour({ code, onStep, onClose }: {
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.4" strokeLinecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" /></svg>
           </button>
         </div>
-        <span className={s.progress}><span style={{ transform: `scaleX(${t / total})` }} /></span>
+        <span className={s.progress}><span ref={bar} style={{ transform: `scaleX(${t / total})` }} /></span>
       </motion.div>
     </div>
   );

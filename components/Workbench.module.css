@@ -3,10 +3,10 @@
 .card:global(.card-spotlight) > * { position: relative; z-index: 1; }
 
 /* Mode tabs: same sliding pill as the payment methods */
-.modes { display: grid; grid-template-columns: repeat(4, auto); gap: 4px; padding: 4px; border-radius: 999px; background: var(--line); }
-.mode { position: relative; height: 34px; border: 0; border-radius: 999px; background: transparent; font-size: 13px; font-weight: 700; color: var(--steam); cursor: pointer; }
+.modes { display: grid; grid-template-columns: repeat(4, minmax(0, auto)); gap: 4px; padding: 4px; border-radius: 999px; background: var(--line); }
+.mode { position: relative; height: 34px; padding: 0 6px; border: 0; border-radius: 999px; background: transparent; font-size: 13px; font-weight: 700; color: var(--steam); cursor: pointer; }
 .mode span { position: relative; transition: color 0.3s var(--ease); }
-.mode[aria-selected="true"] span { color: var(--on-night); }
+.mode[aria-pressed="true"] span { color: var(--on-night); }
 .mode .modeBg { position: absolute; inset: 0; border-radius: 999px; background: var(--night); }
 
 /* Same height for every mode, so the hero doesn't jump when switching */

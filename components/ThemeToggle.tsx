@@ -7,25 +7,28 @@ const KEY = "cv-theme-v2";
 // Light or dark. The choice is set on <html> before first paint (layout's GATE script) and remembered.
 export default function ThemeToggle({ className }: { className?: string }) {
   const [dark, setDark] = useState(false);
+  const [touched, setTouched] = useState(false); // the nudge goes once it has done its job
   useEffect(() => setDark(document.documentElement.dataset.theme === "dark"), []);
 
   const toggle = () => {
     const next = !dark;
     setDark(next);
+    setTouched(true);
     document.documentElement.dataset.theme = next ? "dark" : "light";
     try { localStorage.setItem(KEY, next ? "dark" : "light"); } catch { }
   };
 
   return (
     <span className={s.wrap}>
-      {/* Hand-drawn nudge, like the sound button's: a joke below, arrow curving up to the button */}
-      <span className={s.nudge} aria-hidden="true">
-        <span className={s.nudgeText}>{dark ? "too emo? lights on" : "reading this at 2am?"}</span>
+      {/* Hand-drawn nudge, like the sound button's: a joke below, arrow curving up to the button.
+          CSS picks the joke from <html data-theme>, so it's right on first paint. */}
+      {!touched && <span className={s.nudge} aria-hidden="true">
+        <span className={s.nudgeText}><span className={s.light}>reading this at 2am?</span><span className={s.dark}>too emo? lights on</span></span>
         <svg className={s.nudgeArrow} width="46" height="40" viewBox="0 0 46 40" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
           <path d="M6 4c14 2 26 10 30 26" />
           <path d="M28 26l8 6 3-10" />
         </svg>
-      </span>
+      </span>}
     <button type="button" className={className} onClick={toggle} aria-label={dark ? "Switch to light mode" : "Switch to dark mode"} aria-pressed={dark}>
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
         {dark
