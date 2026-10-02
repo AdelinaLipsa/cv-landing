@@ -244,7 +244,7 @@ export default function Shell({ code, character }: { code: Snippets; character: 
         </span>
         <button type="button" className={`${s.game} water`} onClick={() => setArcade(true)} aria-label="Open the arcade: three tiny games" title="Arcade: three tiny games">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-            <path d="M7 8h10a4 4 0 0 1 3.9 4.9l-1 4.3a2 2 0 0 1-3.4.9L14 16h-4l-2.5 2.1a2 2 0 0 1-3.4-.9l-1-4.3A4 4 0 0 1 7 8z" /><path d="M8 11v3M6.5 12.5h3" /><circle cx="15.5" cy="12" r=".6" fill="currentColor" /><circle cx="17.5" cy="13.5" r=".6" fill="currentColor" />
+            <path d="M7 8h10a4 4 0 0 1 3.9 4.9l-1 4.3a2 2 0 0 1-3.4.9L14 16h-4l-2.5 2.1a2 2 0 0 1-3.4-.9l-1-4.3A4 4 0 0 1 7 8z" /><g className={s.gameKeys}><path d="M8 11v3M6.5 12.5h3" /><circle cx="15.5" cy="12" r=".6" /><circle cx="17.5" cy="13.5" r=".6" /></g>
           </svg>
         </button>
         </span>

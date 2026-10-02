@@ -95,5 +95,8 @@ html[data-built] .gate-boot, html:not([data-built]) .gate-shell { display: none;
 .water:hover, .water:focus-visible { --fill: 100%; color: var(--water-ink, #fff); border-color: var(--water, var(--blueprint)); }
 .water:hover::after, .water:focus-visible::after { opacity: 1; }
 .water svg, .water span, .water b { position: relative; }
+/* Icons fill in solid white with the water (outline at rest). Paths with their own fill keep it. */
+.water svg { transition: fill 0.25s 0.25s; }
+.water:hover svg, .water:focus-visible svg { fill: currentColor; }
 @keyframes water-wave { to { transform: translateX(12px); } }
 @media (prefers-reduced-motion: reduce) { .water::after { animation: none; } }

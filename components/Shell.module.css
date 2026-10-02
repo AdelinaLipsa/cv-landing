@@ -97,6 +97,9 @@
 
 /* Gamepad: same glass circle as the sound button */
 .game { composes: btn from "./SoundToggle.module.css"; color: var(--ink); }
+.gameKeys { fill: currentColor; transition: stroke 0.25s 0.25s, fill 0.25s 0.25s; }
+/* When the pad fills in white, its d-pad and buttons show through in the water's blue */
+.game:hover .gameKeys, .game:focus-visible .gameKeys { stroke: var(--blueprint); fill: var(--blueprint); }
 @media (max-width: 420px) {
   .tab { font-size: 13px; }
   .game { width: 46px; height: 46px; }
