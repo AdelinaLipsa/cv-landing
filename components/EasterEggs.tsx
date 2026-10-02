@@ -19,9 +19,9 @@ const BANNER = String.raw`
 /_/   \_\_____|
 `;
 
-export default function EasterEggs({ contact, terminal }: { contact: () => void; terminal: () => void }) {
-  const act = useRef({ contact, terminal });
-  act.current = { contact, terminal }; // Shell's actions change every render; the eggs are set up once
+export default function EasterEggs({ contact, terminal, arcade }: { contact: () => void; terminal: () => void; arcade: () => void }) {
+  const act = useRef({ contact, terminal, arcade });
+  act.current = { contact, terminal, arcade }; // Shell's actions change every render; the eggs are set up once
 
   useEffect(() => {
     const calm = matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -42,7 +42,7 @@ export default function EasterEggs({ contact, terminal }: { contact: () => void;
       ramen,
       milk,
       terminal: () => { act.current.terminal(); return "Terminal open. Type help."; },
-      play: () => { act.current.terminal(); return "Terminal open. Type play. Arrow keys, and good luck."; },
+      play: () => { act.current.arcade(); return "Arcade open. Pick a game, and good luck."; },
       secrets: () => "Psst: click anywhere on the page first (keys typed here stay in the console). Then: ↑ ↑ ↓ ↓ ← → ← → B A. Or type ramen, hire, milk, or sudo. Or press ` and type play. Switch tabs and come back. /api/cv is the whole CV as JSON. /humans.txt says hi.",
       coffee: () => "418: I’m a teapot. Try ramen().",
       achievements: () => {
@@ -55,7 +55,7 @@ export default function EasterEggs({ contact, terminal }: { contact: () => void;
     for (const [k, fn] of Object.entries(cmds)) w[k] = () => { unlock("console"); return fn(); };
 
     if (!greeted) console.log(
-      `%c${BANNER}%c\nThe console takes requests:\n  hire()      the fastest way to reach me\n  ramen()     try it\n  milk()      a public service announcement\n  terminal()  a real one, sort of\n  play()      a tiny space shooter\n  secrets()   everything else hidden here\n  achievements()  what you’ve found so far\n\nThe whole CV is JSON at /api/cv.`,
+      `%c${BANNER}%c\nThe console takes requests:\n  hire()      the fastest way to reach me\n  ramen()     try it\n  milk()      a public service announcement\n  terminal()  a real one, sort of\n  play()      the arcade: three tiny games\n  secrets()   everything else hidden here\n  achievements()  what you’ve found so far\n\nThe whole CV is JSON at /api/cv.`,
       "font: 700 18px/1.25 ui-monospace, monospace; color: #3355FF",
       "font: 16px/1.6 ui-monospace, monospace; color: #6B6990"
     );
