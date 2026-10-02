@@ -30,7 +30,10 @@ export default function Cat() {
       }, ms);
     };
     next(15000);
-    return () => clearTimeout(id);
+    // Summoned (the Konami code): come running now, unless already here.
+    const summon = () => setVisit((v) => v ?? { from: -60, to: innerWidth * 0.5, dir: 1 });
+    window.addEventListener("cv:cat", summon);
+    return () => { clearTimeout(id); window.removeEventListener("cv:cat", summon); };
   }, []);
 
   // Walk in, sit for a while, walk out.
@@ -51,7 +54,7 @@ export default function Cat() {
       if (hat === "christmas") { ctx.fillStyle = "#ff5a5a"; ctx.fillRect(hx, 1, 4, 2); ctx.fillRect(hx + (flip ? -1 : 4), 0, 1, 1); ctx.fillStyle = "#ffffff"; ctx.fillRect(hx, 2, 4, 1); }
     };
     const frame = (now: number) => {
-      const t = (now - t0) / 1000;
+      const t = Math.max(0, (now - t0) / 1000); // the first frame can predate t0: never negative
       let x: number, rows: string[], flip = visit.dir < 0;
       if (t < walk) { x = visit.from + (visit.to - visit.from) * (t / walk); rows = WALK[Math.floor(t * 6) % 2]; }
       else if (t < walk + 7) { x = visit.to; rows = SIT; }

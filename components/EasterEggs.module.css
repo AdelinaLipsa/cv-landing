@@ -1,6 +1,0 @@
-/* Ramen rain: bowls fall past everything, then remove themselves */
-.layer { position: fixed; inset: 0; z-index: 60; pointer-events: none; overflow: hidden; }
-.bowl { position: absolute; top: -60px; animation: fall 2.6s cubic-bezier(0.4, 0, 0.9, 0.6) forwards; }
-@keyframes fall {
-  to { transform: translateY(calc(100vh + 120px)) rotate(540deg); }
-}

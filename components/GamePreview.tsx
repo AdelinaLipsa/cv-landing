@@ -49,7 +49,7 @@ export default function GamePreview({ id, className }: { id: string; className?:
     const calm = matchMedia("(prefers-reduced-motion: reduce)").matches;
     let raf = 0;
     const t0 = performance.now();
-    const frame = (now: number) => { draw(c, (now - t0) / 1000); if (!calm) raf = requestAnimationFrame(frame); };
+    const frame = (now: number) => { draw(c, Math.max(0, (now - t0) / 1000)); if (!calm) raf = requestAnimationFrame(frame); };
     raf = requestAnimationFrame(frame);
     return () => cancelAnimationFrame(raf);
   }, [id]);

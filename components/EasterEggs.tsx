@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useRef } from "react";
 import { ACHIEVEMENTS, unlock, unlocked } from "@/lib/achievements";
-import s from "./EasterEggs.module.css";
+import { cheatCode, ramenStorm } from "@/lib/ramenStorm";
 
 // Hidden things for the curious: a devtools welcome with commands, the Konami code,
 // secret words typed anywhere, and a tab title that misses you. ` (the terminal) lives in Shell.
@@ -20,29 +20,18 @@ const BANNER = String.raw`
 `;
 
 export default function EasterEggs({ contact, terminal }: { contact: () => void; terminal: () => void }) {
-  const layer = useRef<HTMLDivElement>(null);
   const act = useRef({ contact, terminal });
   act.current = { contact, terminal }; // Shell's actions change every render; the eggs are set up once
 
   useEffect(() => {
     const calm = matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-    // Ramen falls from the sky. Calm visitors get one bowl in the console instead.
+    // A ramen storm: food tumbles down, bounces, piles up; tap it to slurp. Calm visitors get one bowl in the console.
     const ramen = () => {
-      const root = layer.current;
       unlock("ramen");
-      if (calm || !root) return "🍜";
-      for (let i = 0; i < 28; i++) {
-        const b = document.createElement("span");
-        b.className = s.bowl;
-        b.textContent = "🍜";
-        b.style.left = `${Math.random() * 100}vw`;
-        b.style.animationDelay = `${Math.random() * 1.2}s`;
-        b.style.fontSize = `${18 + Math.random() * 22}px`;
-        setTimeout(() => b.remove(), 4000); // fall is 2.6s + up to 1.2s delay
-        root.appendChild(b);
-      }
-      return "🍜 x 28. Eat responsibly.";
+      if (calm) return "🍜";
+      ramenStorm();
+      return "🍜 Ramen storm. Tap the bowls to slurp them.";
     };
     const hire = () => { act.current.contact(); return "Contact sheet open. Excellent decision."; };
     const milk = () => "🚨 Milk before cereal detected. This incident has been reported to the Oxford comma police.";
@@ -54,7 +43,7 @@ export default function EasterEggs({ contact, terminal }: { contact: () => void;
       milk,
       terminal: () => { act.current.terminal(); return "Terminal open. Type help."; },
       play: () => { act.current.terminal(); return "Terminal open. Type play. Arrow keys, and good luck."; },
-      secrets: () => "Psst: ↑ ↑ ↓ ↓ ← → ← → B A. Type ramen, hire, milk, or sudo anywhere on the page. Press ` and type play. Switch tabs and come back. /api/cv is the whole CV as JSON. /humans.txt says hi.",
+      secrets: () => "Psst: click anywhere on the page first (keys typed here stay in the console). Then: ↑ ↑ ↓ ↓ ← → ← → B A. Or type ramen, hire, milk, or sudo. Or press ` and type play. Switch tabs and come back. /api/cv is the whole CV as JSON. /humans.txt says hi.",
       coffee: () => "418: I’m a teapot. Try ramen().",
       achievements: () => {
         const got = unlocked();
@@ -67,8 +56,8 @@ export default function EasterEggs({ contact, terminal }: { contact: () => void;
 
     if (!greeted) console.log(
       `%c${BANNER}%c\nThe console takes requests:\n  hire()      the fastest way to reach me\n  ramen()     try it\n  milk()      a public service announcement\n  terminal()  a real one, sort of\n  play()      a tiny space shooter\n  secrets()   everything else hidden here\n  achievements()  what you’ve found so far\n\nThe whole CV is JSON at /api/cv.`,
-      "font: 700 12px/1.25 ui-monospace, monospace; color: #3355FF",
-      "font: 13px/1.6 ui-monospace, monospace; color: #6B6990"
+      "font: 700 18px/1.25 ui-monospace, monospace; color: #3355FF",
+      "font: 16px/1.6 ui-monospace, monospace; color: #6B6990"
     );
     greeted = true;
 
@@ -77,8 +66,10 @@ export default function EasterEggs({ contact, terminal }: { contact: () => void;
     let typed = "";
     const onKey = (e: KeyboardEvent) => {
       if ((e.target as Element).closest?.("input, textarea, [contenteditable]")) return;
-      keys = [...keys, e.key].slice(-KONAMI.length);
-      if (keys.join() === KONAMI.join()) { keys = []; unlock("konami"); ramen(); console.log("%c+30 lives. Also, ramen.", "font: 700 14px sans-serif; color: #F5B53F"); return; }
+      // Forgiving: only arrows, A and B count (spaces, Shift, Caps Lock are ignored), matched by physical key so any layout works.
+      const k = e.key.startsWith("Arrow") ? e.key : e.code === "KeyA" ? "a" : e.code === "KeyB" ? "b" : null;
+      if (k) keys = [...keys, k].slice(-KONAMI.length);
+      if (keys.join() === KONAMI.join()) { keys = []; unlock("konami"); unlock("ramen"); if (calm) console.log("%c+30 lives. Also, ramen.", "font: 700 18px sans-serif; color: #F5B53F"); else cheatCode(); return; }
       if (e.key.length !== 1) return;
       typed = (typed + e.key.toLowerCase()).slice(-8);
       const word = WORDS.find((w) => typed.endsWith(w));
@@ -87,7 +78,7 @@ export default function EasterEggs({ contact, terminal }: { contact: () => void;
       if (word === "ramen") ramen();
       else if (word === "hire") hire();
       else if (word === "milk") console.log(milk());
-      else console.log("%cadelina is not in the sudoers file. This incident will be reported.", "font: 13px ui-monospace, monospace; color: #E5484D");
+      else console.log("%cadelina is not in the sudoers file. This incident will be reported.", "font: 16px ui-monospace, monospace; color: #E5484D");
     };
 
     // The tab misses you.
@@ -103,5 +94,5 @@ export default function EasterEggs({ contact, terminal }: { contact: () => void;
     };
   }, []);
 
-  return <div ref={layer} className={s.layer} aria-hidden="true" />;
+  return null;
 }
