@@ -2,6 +2,7 @@
 import { useEffect, useRef } from "react";
 import { ACHIEVEMENTS, unlock, unlocked } from "@/lib/achievements";
 import { cheatCode, ramenStorm } from "@/lib/ramenStorm";
+import { sudo } from "@/lib/sudo";
 
 // Hidden things for the curious: a devtools welcome with commands, the Konami code,
 // secret words typed anywhere, and a tab title that misses you. ` (the terminal) lives in Shell.
@@ -41,6 +42,7 @@ export default function EasterEggs({ contact, terminal, arcade }: { contact: () 
       hire,
       ramen,
       milk,
+      sudo: () => { sudo(); return "adelina is not in the sudoers file. This incident will be reported."; },
       terminal: () => { act.current.terminal(); return "Terminal open. Type help."; },
       play: () => { act.current.arcade(); return "Arcade open. Pick a game, and good luck."; },
       secrets: () => "Psst: click anywhere on the page first (keys typed here stay in the console). Then: ↑ ↑ ↓ ↓ ← → ← → B A. Or type ramen, hire, milk, or sudo. Or press ` and type play. Switch tabs and come back. /api/cv is the whole CV as JSON. /humans.txt says hi.",
@@ -78,7 +80,7 @@ export default function EasterEggs({ contact, terminal, arcade }: { contact: () 
       if (word === "ramen") ramen();
       else if (word === "hire") hire();
       else if (word === "milk") console.log(milk());
-      else console.log("%cadelina is not in the sudoers file. This incident will be reported.", "font: 16px ui-monospace, monospace; color: #E5484D");
+      else sudo();
     };
 
     // The tab misses you.

@@ -19,6 +19,7 @@ export const ACHIEVEMENTS = {
   explorer: { name: "Explorer", hint: "Visit all four tabs" },
   roles: { name: "Four hats", hint: "Open all four roles in the hero card" },
   lost: { name: "Lost and found", hint: "Find the 404 page" },
+  sudo: { name: "Incident reported", hint: "Try to sudo the page" },
 } as const;
 export type AchievementId = keyof typeof ACHIEVEMENTS;
 
