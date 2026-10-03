@@ -76,7 +76,7 @@ export async function mountFighter(canvas: HTMLCanvasElement, W: number, H: numb
     for (let i = 0; i < 900; i++) { g.fillStyle = `rgba(255,255,255,${Math.random() * 0.04})`; g.fillRect(Math.random() * 256, Math.random() * 64, 1, 1); }
   });
   seams.wrapS = seams.wrapT = THREE.RepeatWrapping; seams.repeat.set(4, 2);
-  const floor = new THREE.Mesh(new THREE.PlaneGeometry(W + 240, 140), new THREE.MeshPhysicalMaterial({ map: seams, color: 0xb08ad8, envMapIntensity: 0.35, roughness: 0.35, metalness: 0.15, clearcoat: 0.8, clearcoatRoughness: 0.12 }));
+  const floor = new THREE.Mesh(new THREE.PlaneGeometry(W + 240, 140), new THREE.MeshPhysicalMaterial({ map: seams, color: 0x9b6fd6, envMapIntensity: 0.2, roughness: 0.35, metalness: 0.15, clearcoat: 0.8, clearcoatRoughness: 0.12 }));
   floor.rotation.x = -Math.PI / 2; floor.position.set(W / 2, Y(GROUND), -30); floor.receiveShadow = true;
   scene.add(floor);
   const rail = new THREE.Mesh(new THREE.BoxGeometry(W + 240, 1.6, 1.2), new THREE.MeshStandardMaterial({ color: 0x3a2350, metalness: 0.8, roughness: 0.35 }));
@@ -253,13 +253,13 @@ export async function mountFighter(canvas: HTMLCanvasElement, W: number, H: numb
       const k = Math.min(1, Math.max(f.dt, 1 / 120) * 4);
       cam.x += (fr.x - cam.x) * k; cam.y += (fr.y - cam.y) * k; cam.zoom += (fr.zoom - cam.zoom) * k;
       const sx = f.shake > 0 ? (Math.random() - 0.5) * 3 : 0, sy = f.shake > 0 ? (Math.random() - 0.5) * 2 : 0;
-      // On a KO the camera circles the fallen fighter a little; reduced motion keeps it still.
+      // On a KO the camera circles the fight's midpoint a little; reduced motion keeps it still.
       const loser = f.fighters.find((s) => s.act === "ko");
       const orbit = !st.calm && f.state === "ko" && loser ? Math.min(0.35, (3 - f.stateT) * 0.12) : 0;
-      const dist = D / cam.zoom, lx = loser ? X(loser.x) : cam.x;
-      const px = orbit ? lx + Math.sin(orbit) * dist : cam.x + sx, pz = orbit ? Math.cos(orbit) * dist : dist;
+      const dist = D / cam.zoom;
+      const px = orbit ? cam.x + Math.sin(orbit) * dist : cam.x + sx, pz = orbit ? Math.cos(orbit) * dist : dist;
       camera.position.set(px, cam.y + sy, pz);
-      camera.lookAt(orbit ? lx : cam.x + sx, cam.y + sy, 0);
+      camera.lookAt(orbit ? cam.x : cam.x + sx, cam.y + sy, 0);
 
       st.render(dt);
     },
