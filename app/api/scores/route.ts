@@ -1,9 +1,9 @@
 import { allowed, clientIp, kv, kvReady } from "@/lib/kv";
+import { CEILING as GAMES } from "@/lib/challenge";
 
 // Arcade high scores, one table per game: three-letter initials, like the old cabinets.
 // Scores above a game's ceiling are rejected; one submission every 10s per visitor. Top 100 kept.
 export const dynamic = "force-dynamic";
-const GAMES = { space: 20000, shipit: 30000, fighter: 15000 } as const;
 type Game = keyof typeof GAMES;
 
 const top = async (game: Game) => {

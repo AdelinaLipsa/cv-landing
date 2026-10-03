@@ -40,6 +40,11 @@
 .initials input { width: 56px; height: 30px; border: 1px solid #3a3670; border-radius: 8px; background: #07061a; color: #fff1a8; font: 700 15px var(--font-mono), monospace; text-align: center; letter-spacing: 0.15em; }
 .initials button { height: 30px; padding: 0 12px; border: 0; border-radius: 8px; background: #3355FF; color: #fff; font-weight: 700; cursor: pointer; }
 .initials em { width: 100%; font-style: normal; color: #ff8a8a; }
+.challenge { margin: 8px 0 0; padding: 12px 14px; border: 1px dashed #ff7ac6; border-radius: 14px; font-family: var(--font-mono), monospace; font-size: 12.5px; color: #e8e6ff; }
+.challenge button { background: #ff7ac6; color: #17153a; }
+.versus { margin: 0; padding: 10px 14px; border-radius: 12px; background: #1a0f2e; border: 1px solid #ff7ac6; font: 700 14px var(--font-mono), monospace; color: #ff7ac6; letter-spacing: 0.04em; }
+.versus[data-beaten] { border-color: #F5B53F; color: #F5B53F; background: #1f1806; }
+.cardFoot .topScore { color: #ff7ac6; }
 
 /* Full-screen arcade: its own dark room. Touches go to the game, the page behind stays still. */
 .overlay { position: fixed; inset: 0; z-index: 65; display: flex; flex-direction: column; background: #07061a; color: #e8e6ff; overscroll-behavior: contain; padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); }

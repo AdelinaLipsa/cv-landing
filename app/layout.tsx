@@ -7,8 +7,8 @@ const figtree = Figtree({ subsets: ["latin"], weight: ["400", "600"], variable: 
 const mono = JetBrains_Mono({ subsets: ["latin"], variable: "--font-mono", preload: false });
 const tinos = Tinos({ subsets: ["latin", "latin-ext"], weight: ["400", "700"], variable: "--font-2003", preload: false });
 
-// Skip the intro if it was seen in the last day (cv-built holds when), or on a deep link to a page.
-const GATE = `try{var m=localStorage.getItem("cv-theme-v2");var h=new Date().getHours();document.documentElement.dataset.theme=m||(h<5?"dark":"light")}catch(e){}try{var t=+localStorage.getItem("cv-built");if(Date.now()-t<864e5||/^#(home|work|career|skills|contact)$/.test(location.hash))document.documentElement.dataset.built="1"}catch(e){}`;
+// Skip the intro if it was seen in the last day (cv-built holds when), on a deep link to a page, or on an arcade challenge.
+const GATE = `try{var m=localStorage.getItem("cv-theme-v2");var h=new Date().getHours();document.documentElement.dataset.theme=m||(h<5?"dark":"light")}catch(e){}try{var t=+localStorage.getItem("cv-built");if(Date.now()-t<864e5||/^#(home|work|career|skills|contact)$/.test(location.hash)||/[?&]challenge=/.test(location.search))document.documentElement.dataset.built="1"}catch(e){}`;
 
 export const metadata: Metadata = {
   title: "Adelina Lipșa, Technical Product Owner",

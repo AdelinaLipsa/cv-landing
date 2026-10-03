@@ -1,22 +1,12 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { ImageResponse } from "next/og";
+import { font } from "@/lib/ogFont";
 
 // The link preview for WhatsApp, LinkedIn, Slack. Rendered once at build time.
 export const alt = "Adelina Lipșa, Technical Product Owner. It didn’t exist, so I built it.";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
-
-// Satori needs TTF/OTF: ask Google Fonts for exactly the glyphs we draw.
-async function font(family: string, axes: string, text: string) {
-  try {
-    const css = await (await fetch(`https://fonts.googleapis.com/css2?family=${family}:${axes}&text=${encodeURIComponent(text)}`)).text();
-    const url = css.match(/src: url\((.+?)\) format\('(opentype|truetype)'\)/)?.[1];
-    return url ? await (await fetch(url)).arrayBuffer() : null;
-  } catch {
-    return null; // no network at build: fall back to the default font
-  }
-}
 
 export default async function Image() {
   const name = "Adelina Lipșa";

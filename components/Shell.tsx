@@ -10,6 +10,7 @@ import Toasts from "./Toasts";
 import Clock from "./Clock";
 import Cat from "./Cat";
 import { unlock } from "@/lib/achievements";
+import { fromQuery, type Challenge } from "@/lib/challenge";
 import Arcade from "./Arcade";
 import Sheet from "./Sheet";
 import Contact from "./Contact";
@@ -84,6 +85,8 @@ export default function Shell({ code, character }: { code: Snippets; character: 
     setBuilt(document.documentElement.dataset.built === "1");
     if (i > 0) setPane(i);
     if (location.hash === "#contact") setSheet({ label: "Contact", body: <Contact /> });
+    const c = fromQuery(new URLSearchParams(location.search).get("challenge"));
+    if (c) { setChallenge(c); setArcade(true); history.replaceState(null, "", location.pathname + location.hash); }
   }, []);
 
   // Easter egg: ` opens a terminal. The rest live in EasterEggs.
@@ -99,6 +102,7 @@ export default function Shell({ code, character }: { code: Snippets; character: 
   }, []);
 
   const [arcade, setArcade] = useState(false);
+  const [challenge, setChallenge] = useState<Challenge | null>(null); // from a shared /c/… link: open the arcade at that game
   const [dir, setDir] = useState(1); // which side the next page's blocks slide in from
   const go = useCallback((i: number, how: Transition = track) => {
     if (i !== at.current.pane) setDir(i > at.current.pane ? 1 : -1);
@@ -255,7 +259,7 @@ export default function Shell({ code, character }: { code: Snippets; character: 
 
       {touring && <Tour code={code} onStep={onStep} onClose={endTour} />}
       <EasterEggs contact={ui.contact} terminal={ui.terminal} arcade={() => setArcade(true)} />
-      {arcade && <Arcade onClose={() => setArcade(false)} contact={() => { setArcade(false); ui.contact(); }} />}
+      {arcade && <Arcade onClose={() => { setArcade(false); setChallenge(null); }} contact={() => { setArcade(false); ui.contact(); }} challenge={challenge} />}
       <Toasts />
       <Clock />
       {!touring && <Cat />}

@@ -16,6 +16,8 @@ import ShipIt from "./ShipIt";
 import SprintFighter from "./SprintFighter";
 import HighScores from "./HighScores";
 import TrophyCase from "./TrophyCase";
+import ChallengeShare from "./ChallengeShare";
+import type { Challenge, GameId } from "@/lib/challenge";
 import s from "./Arcade.module.css";
 
 // The nav's gamepad opens this: a full-screen arcade of its own (not a sheet, so touches go to the game,
@@ -41,8 +43,8 @@ const GAMES = [
   },
 ];
 
-export default function Arcade({ onClose, contact }: { onClose: () => void; contact: () => void }) {
-  const [on, setOn] = useState<string | null>(null);
+export default function Arcade({ onClose, contact, challenge }: { onClose: () => void; contact: () => void; challenge?: Challenge | null }) {
+  const [on, setOn] = useState<string | null>(challenge?.game ?? null); // a challenge link opens straight into its game
   const [last, setLast] = useState<number | null>(null); // the latest final score, for the leaderboard
   const [quiet, setQuiet] = useState(false);
   const [found, setFound] = useState(0);
@@ -53,6 +55,14 @@ export default function Arcade({ onClose, contact }: { onClose: () => void; cont
     try { setBest(Object.fromEntries(GAMES.filter((g) => g.best).map((g) => [g.id, Number(localStorage.getItem(g.best)) || 0]))); } catch { }
   }, [on]);
   const total = Object.keys(ACHIEVEMENTS).length;
+  // Each game's #1 from the global leaderboard, shown on its card as the score to beat. Hidden without the database.
+  const [tops, setTops] = useState<Record<string, { name: string; score: number }>>({});
+  useEffect(() => {
+    for (const g of GAMES) fetch(`/api/scores?game=${g.id}`).then((r) => r.json()).then((d) => { if (d?.ready && d.top[0]) setTops((t) => ({ ...t, [g.id]: d.top[0] })); }).catch(() => {});
+  }, []);
+  const facing = challenge && on === challenge.game ? challenge : null; // the challenge in play, if this is its game
+  const beaten = !!facing && last != null && last > facing.score;
+  useEffect(() => { if (beaten) toast({ icon: "🥇", title: `You beat ${facing!.by}!`, body: `${last} to ${facing!.score}. Send it back to them.` }); }, [beaten]); // eslint-disable-line react-hooks/exhaustive-deps
   const toggle = () => setQuiet((q) => { setMuted(!q); return !q; });
   // M toggles sound mid-game; Esc closes. The page behind doesn't scroll while you play.
   useEffect(() => {
@@ -83,11 +93,13 @@ export default function Arcade({ onClose, contact }: { onClose: () => void; cont
       <div className={s.body}>
         {game ? (
           <div className={s.playing}>
+            {facing && <p className={s.versus} data-beaten={beaten || undefined}>{beaten ? `You beat ${facing.by}’s ${facing.score.toLocaleString("en")}. ` : `${facing.by} scored ${facing.score.toLocaleString("en")}. Beat it.`}</p>}
             <game.Game onEnd={setLast} />
             {/* The controls, always visible: keyboard on desktop, touch on phones */}
             <dl className={`${s.controls} ${s.keys}`}>{game.keys.map(([k, v]) => <div key={k}><dt>{k}</dt><dd>{v}</dd></div>)}</dl>
             <dl className={`${s.controls} ${s.touch}`}>{game.touch.map(([k, v]) => <div key={k}><dt>{k}</dt><dd>{v}</dd></div>)}</dl>
             <p className={s.tips}>{game.tips}</p>
+            {last != null && last > 0 && <ChallengeShare game={game.id as GameId} score={last} />}
             <HighScores game={game.id} score={last} />
           </div>
         ) : on === "trophies" ? (
@@ -115,6 +127,7 @@ export default function Arcade({ onClose, contact }: { onClose: () => void; cont
                         <span className={s.cardFoot}>
                           <em className={s.start}>PRESS START ▶</em>
                           {best[g.id] ? <small>BEST {best[g.id]}</small> : null}
+                          {tops[g.id] ? <small className={s.topScore}>TOP {tops[g.id].score} {tops[g.id].name}</small> : null}
                         </span>
                       </button>
                     </GlareHover>
