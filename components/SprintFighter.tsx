@@ -4,6 +4,7 @@ import type { Mode } from "@/lib/arcadePrefs";
 import { sfx } from "@/lib/sfx";
 import { unlock } from "@/lib/achievements";
 import { drawSnow, season } from "@/lib/season";
+import { POSES, PO, SH, type Look } from "@/lib/fighterMotion";
 import crt from "./SpaceGame.module.css";
 import s from "./Arcade.module.css";
 
@@ -15,7 +16,6 @@ const W = 192, H = 120, GROUND = 104, ROUND_TIME = 45;
 
 type Act = "idle" | "walk" | "crouch" | "jump" | "punch" | "kick" | "special" | "hit" | "block" | "ko" | "win";
 type Input = { left: boolean; right: boolean; up: boolean; down: boolean; p: boolean; k: boolean; s: boolean };
-type Look = { skin: string; top: string; sleeve: string; legs: string; hair: string; extra: string; name: string; move: string };
 type F = {
   x: number; y: number; vy: number; vx: number; face: number; hp: number; shown: number; meter: number;
   act: Act; actT: number; low: boolean; hitDone: boolean; stun: number; knock: number; cool: number; wins: number; combo: number;
@@ -24,27 +24,6 @@ type F = {
 type Ball = { x: number; y: number; vx: number; owner: F; big: boolean };
 type Spark = { x: number; y: number; vx: number; vy: number; life: number; color: string };
 
-const PO: Look = { skin: "#f2c29b", top: "#3f7cff", sleeve: "#2f5fd0", legs: "#2a4fb8", hair: "#17153a", extra: "#ff5a5a", name: "THE PO", move: "SHIP-O-KEN!" };
-const SH: Look = { skin: "#e8b48f", top: "#5a5f7a", sleeve: "#4a4e66", legs: "#33364a", hair: "#b9b6c8", extra: "#ff5a5a", name: "STAKEHOLDER", move: "SCOPE CHANGE!" };
-
-// Poses: [lean, front arm (upper, lower), back arm, front leg (thigh, shin), back leg, hip drop]. Angles from straight down, + is forward.
-type Pose = [number, [number, number], [number, number], [number, number], [number, number], number];
-const POSES: Record<string, Pose> = {
-  idle: [0.1, [1.1, 2.3], [0.7, 2.5], [0.35, 0.05], [-0.35, -0.05], 0],
-  idle2: [0.1, [1.15, 2.35], [0.7, 2.55], [0.38, 0.0], [-0.38, -0.1], 1],
-  walk1: [0.12, [1.1, 2.3], [0.7, 2.5], [0.5, 0.2], [-0.2, -0.45], 0],
-  walk2: [0.12, [1.1, 2.3], [0.7, 2.5], [-0.1, -0.4], [0.4, 0.1], 0],
-  punch: [0.25, [1.57, 1.57], [0.5, 2.6], [0.45, 0.05], [-0.5, -0.1], 0],
-  lowpunch: [0.3, [1.4, 1.5], [0.6, 2.5], [1.2, -0.2], [0.3, -1.2], 5],
-  kick: [-0.35, [1.0, 2.4], [0.4, 2.4], [1.6, 1.6], [-0.15, 0], 0],
-  crouch: [0.15, [1.1, 2.3], [0.7, 2.5], [1.2, -0.2], [0.3, -1.2], 5],
-  jump: [0.1, [1.6, 2.6], [1.0, 2.6], [1.3, -0.6], [0.6, -1.1], 0],
-  airkick: [-0.2, [1.4, 2.6], [0.8, 2.6], [1.4, 1.5], [0.3, -1.2], 0],
-  special: [0.3, [1.5, 1.6], [1.4, 1.7], [0.6, 0.1], [-0.6, -0.1], 1],
-  hit: [-0.45, [-0.3, 0.4], [0.3, 1.0], [0.25, 0.05], [-0.25, 0], 0],
-  block: [-0.1, [1.3, 2.9], [1.1, 2.9], [0.3, 0.05], [-0.4, -0.05], 0],
-  win: [0, [3.0, 3.1], [0.3, 0.2], [0.2, 0], [-0.2, 0], 0],
-};
 const MOVES = {
   punch: { time: 0.28, from: 0.07, to: 0.15, reach: 16, lo: 17, hi: 22, dmg: 6, sound: "punch" },
   lowpunch: { time: 0.28, from: 0.07, to: 0.15, reach: 15, lo: 4, hi: 9, dmg: 5, sound: "punch" },
