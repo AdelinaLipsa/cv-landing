@@ -213,7 +213,7 @@ export async function mountSpace(canvas: HTMLCanvasElement, W: number, H: number
     fragmentShader: "uniform sampler2D map; varying float vA; void main() { gl_FragColor = vec4(vec3(0.42, 0.4, 0.5), texture2D(map, gl_PointCoord).a * vA * 0.5); }",
   }));
   puffs.frustumCulled = false; scene.add(puffs);
-  const puffState = Array.from({ length: PUFFS }, () => ({ x: 0, y: 0, vx: 0, vy: 0, life: 0, max: 1, size: 1 }));
+  const puffState = Array.from({ length: PUFFS }, () => ({ x: 0, y: 0, vx: 0, vy: 0, life: 99, max: 1, size: 1 }));
   let puffNext = 0;
   const waves = Array.from({ length: 6 }, () => {
     const m = new THREE.Mesh(new THREE.TorusGeometry(1, 0.18, 8, 48), glowMat(new THREE.Color(), 0.9));
