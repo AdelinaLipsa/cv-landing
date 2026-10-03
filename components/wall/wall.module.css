@@ -28,6 +28,7 @@
 .caption { display: flex; flex-direction: column; gap: 4px; padding: 0 2px; text-align: left; }
 .ctitle { font-size: 16px; font-weight: 700; color: var(--ink); }
 .blurb { font-size: 14px; line-height: 1.45; color: var(--body-2); }
+.outcome { font-size: 14px; line-height: 1.45; font-weight: 600; color: var(--ink); } /* what happened because of it */
 
 /* The page: two sections, one grid each, one card size */
 .section { display: flex; flex-direction: column; gap: 18px; margin-top: 40px; }

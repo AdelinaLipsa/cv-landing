@@ -7,6 +7,7 @@ export type Tile = {
   id: string;
   title: string;
   blurb: string; // one plain sentence: what it is
+  outcome?: string; // one plain sentence: what happened because of it. Only sourced facts.
   section: Section;
   more?: string[]; // the viewer's details
   href?: string;
@@ -25,7 +26,8 @@ export const sections: { id: Section; title: string; lede: string }[] = [
 export const tiles: Tile[] = [
   {
     id: "bite", form: "popup", title: "BITE", section: "built",
-    blurb: "A Chrome extension the whole affiliate managers team uses every day.",
+    blurb: "A Chrome extension that checks BuyGoods tracking on any page and skips sales videos to the checkout links.",
+    outcome: "The whole affiliate managers team uses it every day.",
     more: [
       "BITE is BuyGoods Internal Tools: one Chrome extension, two tools. The Tracking Checker says whether BuyGoods tracking is on the page you’re viewing: present, missing or uncertain.",
       "It catches what DevTools makes you hunt for: scripts injected after load, trackers that remove themselves, pixels and beacons that never touch the DOM, even obfuscated inline code. Read-only, and nothing leaves the browser.",
@@ -74,7 +76,8 @@ export const tiles: Tile[] = [
 
   {
     id: "gateways", title: "Gateway routing", section: "owned",
-    blurb: "Chase Paymentech, NMI, Braintree, PayPal and Stripe, plus the 3DS/SCA rollout.",
+    blurb: "Chase Paymentech, NMI, Braintree, PayPal and Stripe, plus 3DS/SCA.",
+    outcome: "The 3DS/SCA rollout spans thousands of accounts, with tracking I built in ClickUp.",
     more: ["Product owner for the gateway and acquirer integrations: Chase Paymentech, NMI, Braintree, PayPal and Stripe. I decide what ships, spec it, deliver it, and track approval rates and declines across them.", "I own the 3DS/SCA rollout across thousands of accounts, and analysed a 25-account sample to separate its effect."],
   },
   {
@@ -84,7 +87,8 @@ export const tiles: Tile[] = [
   },
   {
     id: "change-log", form: "window", chrome: "change log", title: "Change log", section: "owned",
-    blurb: "What changed and when, in one place for leadership, run in ClickUp.",
+    blurb: "What changed and when, in one place, run in ClickUp.",
+    outcome: "Leadership gets one view of dependencies, risks and timelines.",
     more: ["Part of running PRDs, standups and weekly reporting end-to-end in ClickUp.", "Gives leadership one view of dependencies, risks and timelines."],
   },
   {

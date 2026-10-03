@@ -46,7 +46,7 @@ export function Card({ tile, h }: { tile: Tile; h: number }) {
           <SpotlightCard className={s.spot} spotlightColor="rgba(51, 85, 255, 0.18)">
             <div className={`${s.media} ${tile.form ? s.bare : ""}`} style={{ height: h }}><Frame tile={tile}><Media tile={tile} /></Frame></div>
           </SpotlightCard>
-          <div className={s.caption}><b className={s.ctitle}>{tile.title}</b><span className={s.blurb}>{tile.blurb}</span></div>
+          <div className={s.caption}><b className={s.ctitle}>{tile.title}</b><span className={s.blurb}>{tile.blurb}</span>{tile.outcome && <span className={s.outcome}>{tile.outcome}</span>}</div>
         </div>
       </Tilt>
     </Play.Provider>
