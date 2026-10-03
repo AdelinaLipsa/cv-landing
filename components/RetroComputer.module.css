@@ -30,3 +30,21 @@
   50% { translate: 3px -5px; }
 }
 @media (prefers-reduced-motion: reduce) { .noteText { animation: none; } }
+
+/* How to zoom: shown once, the first time someone reaches for the room, then fades */
+.zoomHint {
+  position: absolute;
+  left: 12px;
+  top: 10px;
+  z-index: 2;
+  padding: 5px 11px;
+  border-radius: 999px;
+  background: var(--night);
+  color: var(--on-night);
+  font: 700 12px var(--font-mono), monospace;
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(-4px);
+  transition: opacity 0.4s var(--ease), transform 0.4s var(--ease);
+}
+.zoomHint[data-on] { opacity: 1; transform: none; }

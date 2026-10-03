@@ -548,9 +548,18 @@ async function mount(el: HTMLElement, character: boolean, onScreen: () => void) 
 
   // Sways slowly by itself; drag it to turn it. The turn is clamped so the room stays in frame.
   let yaw = 0, sway = 0, turn = 0, drag: { x: number; y: number; yaw: number; px: number; py: number } | null = null;
+  // Two fingers on a touch screen pinch-zoom, like the trackpad pinch below; one finger turns or pans.
+  const touches = new Map<number, { x: number; y: number }>();
+  let pinch: { d: number; z: number } | null = null;
+  const spread = () => { const [a, b] = [...touches.values()]; return Math.hypot(a.x - b.x, a.y - b.y); };
   const onDown = (e: PointerEvent) => {
     e.stopPropagation(); // the pages are draggable too: this drag turns the room, not the page
     el.setPointerCapture(e.pointerId);
+    hint();
+    if (e.pointerType === "touch") {
+      touches.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      if (touches.size === 2) { pinch = { d: spread(), z: zoomTo }; drag = null; return; }
+    }
     drag = { x: e.clientX, y: e.clientY, yaw, px: pan.x, py: pan.y };
     el.style.cursor = "grabbing";
   };
@@ -563,6 +572,8 @@ async function mount(el: HTMLElement, character: boolean, onScreen: () => void) 
     return ray.intersectObject(screen).length > 0;
   };
   const onMove = (e: PointerEvent) => {
+    if (touches.has(e.pointerId)) touches.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (pinch && touches.size === 2) { zoomTo = Math.max(0.7, Math.min(2.2, pinch.z * (spread() / pinch.d))); return; }
     if (!drag) { el.style.cursor = onScreenAt(e) ? "pointer" : "grab"; return; }
     const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
     if (zoom > 1.05) {
@@ -571,20 +582,52 @@ async function mount(el: HTMLElement, character: boolean, onScreen: () => void) 
       pan.set(Math.max(-lim, Math.min(lim, drag.px - dx * k)), Math.max(-lim, Math.min(lim, drag.py + dy * k)));
     } else yaw = Math.max(-0.9, Math.min(0.9, drag.yaw + (dx / el.clientWidth) * 2.5));
   };
+  let lastTap = 0;
   const onUp = (e: PointerEvent) => {
+    touches.delete(e.pointerId);
+    if (pinch) { if (touches.size < 2) pinch = null; drag = null; return; } // lifting a pinch finger never taps
     const tap = drag && Math.hypot(e.clientX - drag.x, e.clientY - drag.y) < 6;
     drag = null;
     el.style.cursor = "grab";
-    if (tap && e.type === "pointerup" && onScreenAt(e)) onScreen();
+    if (!tap || e.type !== "pointerup") return;
+    if (onScreenAt(e)) { onScreen(); return; }
+    // A double tap on a touch screen zooms, like a double-click with a mouse.
+    if (e.pointerType === "touch") {
+      if (e.timeStamp - lastTap < 320) { zoomAt(e.clientX, e.clientY); lastTap = 0; } else lastTap = e.timeStamp;
+    }
+  };
+  // Double-click (or double-tap): zoom in on that spot, or back out to the whole room.
+  const zoomAt = (x: number, y: number) => {
+    if (zoomTo > 1.3) { zoomTo = 1; return; }
+    zoomTo = 2;
+    const r = el.getBoundingClientRect(), k = (sphere.radius * 2) / r.width, lim = sphere.radius * (1 - 1 / zoomTo);
+    pan.set(Math.max(-lim, Math.min(lim, (x - r.left - r.width / 2) * k)), Math.max(-lim, Math.min(lim, -(y - r.top - r.height / 2) * k)));
+  };
+  const onDbl = (e: MouseEvent) => { if (!onScreenAt(e as PointerEvent)) zoomAt(e.clientX, e.clientY); };
+  // The first time someone reaches for the room, a small note says how to zoom, then fades.
+  const tip = document.createElement("div");
+  tip.className = s.zoomHint;
+  tip.setAttribute("aria-hidden", "true");
+  tip.textContent = touch ? "Pinch or double-tap to zoom in" : "Double-click or pinch to zoom in";
+  el.append(tip);
+  let hinted = false;
+  const hint = () => {
+    if (hinted) return;
+    hinted = true;
+    tip.dataset.on = "";
+    setTimeout(() => delete tip.dataset.on, 3200);
   };
   el.style.cursor = "grab";
   // Pinch on a trackpad (or ctrl + scroll) zooms. A plain scroll still scrolls the page.
   const onWheel = (e: WheelEvent) => {
     if (!e.ctrlKey) return;
     e.preventDefault(); // otherwise the browser zooms the whole page
+    hinted = true; delete tip.dataset.on; // found it already
     zoomTo = Math.max(0.7, Math.min(2.2, zoomTo * Math.exp(-e.deltaY * 0.01)));
   };
   el.addEventListener("wheel", onWheel, { passive: false });
+  el.addEventListener("dblclick", onDbl);
+  el.addEventListener("pointerenter", hint);
   el.style.touchAction = "pan-y"; // vertical swipes still scroll the page on phones
   el.addEventListener("pointerdown", onDown);
   el.addEventListener("pointermove", onMove);
@@ -614,7 +657,9 @@ async function mount(el: HTMLElement, character: boolean, onScreen: () => void) 
     if (!drag) sway += dt / 1000;
     turn += (yaw + Math.sin(sway * 0.26) * 0.3 - turn) * 0.08; // one sway every ~24 s
     zoom += (zoomTo - zoom) * 0.12;
-    if (zoom <= 1.05) pan.multiplyScalar(0.9); // zoomed back out: drift back to the whole room
+    if (zoomTo <= 1.05 && zoom <= 1.05) pan.multiplyScalar(0.9); // zoomed back out: drift back to the whole room
+    const ta = zoomTo > 1.05 ? "none" : "pan-y"; // zoomed in, a finger pans the room; zoomed out, it scrolls the page
+    if (el.style.touchAction !== ta) el.style.touchAction = ta;
     aim(turn);
     renderer.render(scene, camera);
     placeNote();
@@ -639,6 +684,9 @@ async function mount(el: HTMLElement, character: boolean, onScreen: () => void) 
     vis.disconnect();
     ro.disconnect();
     el.removeEventListener("wheel", onWheel);
+    el.removeEventListener("dblclick", onDbl);
+    el.removeEventListener("pointerenter", hint);
+    tip.remove();
     el.removeEventListener("pointerdown", onDown);
     el.removeEventListener("pointermove", onMove);
     el.removeEventListener("pointerup", onUp);
