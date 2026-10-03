@@ -17,7 +17,7 @@
 .pay { width: 100%; height: 54px; border: 0; border-radius: 16px; background: var(--blueprint); color: #fff; font-size: 16px; font-weight: 700; cursor: pointer; box-shadow: 0 14px 30px rgba(51, 85, 255, 0.35); transition: transform 0.3s var(--ease), box-shadow 0.3s var(--ease), background-color 0.4s var(--ease); }
 .pay:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 18px 36px rgba(51, 85, 255, 0.45); }
 .pay:disabled { cursor: progress; background: #6f86ff; }
-.pay[data-done] { background: var(--night); box-shadow: 0 14px 30px rgba(23, 21, 58, 0.28); }
+.pay[data-done], .pay[data-stopped] { background: var(--night); box-shadow: 0 14px 30px rgba(23, 21, 58, 0.28); }
 
 /* The journey: grey until the payment reaches each step */
 .steps { position: relative; list-style: none; margin: 4px 0 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
@@ -25,16 +25,28 @@
 .steps li { position: relative; display: flex; gap: 12px; align-items: flex-start; }
 .dot { flex-shrink: 0; width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; background: var(--surface); border: 2px solid var(--line); font-size: 11px; font-weight: 800; color: #fff; transition: background-color 0.4s var(--ease), border-color 0.4s var(--ease); }
 li[data-state="now"] .dot { border-color: var(--blueprint); box-shadow: 0 0 0 5px rgba(51, 85, 255, 0.15); animation: pulse 0.9s ease-in-out infinite; }
-li[data-state="done"] .dot { background: var(--blueprint); border-color: var(--blueprint); }
+li:is([data-state="done"], [data-state="recovered"]) .dot { background: var(--blueprint); border-color: var(--blueprint); }
+li[data-state="failed"] .dot { background: #e5484d; border-color: #e5484d; animation: shake 0.4s var(--ease); }
+@keyframes shake { 25% { transform: translateX(-3px); } 75% { transform: translateX(3px); } }
 @keyframes pulse { 50% { box-shadow: 0 0 0 9px rgba(51, 85, 255, 0.05); } }
 .stepText { display: flex; flex-direction: column; gap: 2px; padding-top: 1px; min-width: 0; }
 .stepTitle { font-size: 14px; font-weight: 600; color: var(--steam); transition: color 0.4s var(--ease); }
-li[data-state="now"] .stepTitle, li[data-state="done"] .stepTitle { color: var(--ink); }
+li:not([data-state="todo"]) .stepTitle { color: var(--ink); }
 .ok { margin-left: 8px; padding: 1px 8px; border-radius: 999px; background: rgba(47, 191, 113, 0.14); color: #1d8a52; font-size: 11px; font-style: normal; font-weight: 700; }
+.err { margin-left: 8px; padding: 1px 8px; border-radius: 999px; background: rgba(229, 72, 77, 0.13); color: #c0282d; font-family: var(--font-mono), monospace; font-size: 11px; font-style: normal; font-weight: 700; }
 .mine { display: block; overflow: hidden; font-size: 13px; line-height: 1.4; color: var(--body-2); }
 
 .hint, .outro { margin: 2px 0 0; font-size: 14px; color: var(--steam); }
 .outro { font-weight: 700; color: #1d8a52; }
 .outro span { color: var(--ink); }
+.outro.safe { color: #c0282d; }
 
-@media (prefers-reduced-motion: reduce) { li[data-state="now"] .dot { animation: none; } }
+/* Break it: one thing goes wrong on purpose */
+.breaks { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding-top: 12px; border-top: 1px dashed var(--line); }
+.breakLabel { margin-right: 2px; font-size: 12px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--steam); }
+.break { height: 28px; padding: 0 10px; border: 1px dashed color-mix(in srgb, #e5484d 45%, var(--line)); border-radius: 999px; background: transparent; font-size: 12px; font-weight: 600; color: var(--ink); cursor: pointer; transition: color 0.25s var(--ease), border-color 0.25s var(--ease), background-color 0.25s var(--ease); }
+.break:hover:not(:disabled), .break:focus-visible { color: #c0282d; border-color: #e5484d; border-style: solid; }
+.break[aria-pressed="true"] { background: #e5484d; border-color: #e5484d; border-style: solid; color: #fff; }
+.break:disabled { cursor: default; opacity: 0.55; }
+
+@media (prefers-reduced-motion: reduce) { li[data-state="now"] .dot, li[data-state="failed"] .dot { animation: none; } }
