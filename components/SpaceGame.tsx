@@ -52,9 +52,10 @@ export default function SpaceGame({ mode: want, onLost, onEnd }: { mode: Mode; o
     const SEASON = season();
     const tint = SEASON === "halloween" ? ["#ff8c1a", "#b46bff", "#7dff6b"] : SEASON === "christmas" ? ["#ff5a5a", "#5fd897", "#ffffff"] : KINDS.map((k) => k.color);
     const bossColor = SEASON === "halloween" ? "#7dff6b" : "#ff5a5a";
-    let view: SpaceView | null = null, gone = false;
+    let view: SpaceView | null = null, gone = false, dropped = false;
     const drop = () => {
-      if (gone) return;
+      if (gone || dropped) return;
+      dropped = true;
       view?.dispose();
       view = retroSpace(ctx, W, H, tint, bossColor);
       setShown("retro");
@@ -62,8 +63,8 @@ export default function SpaceGame({ mode: want, onLost, onEnd }: { mode: Mode; o
     };
     if (want === "retro") view = retroSpace(ctx, W, H, tint, bossColor);
     else import("@/lib/space3d")
-      .then((m) => m.mountSpace(stage.current!, W, H, tint, bossColor, drop))
-      .then((v) => { if (gone) v.dispose(); else view = v; })
+      .then((m) => (gone ? null : m.mountSpace(stage.current!, W, H, tint, bossColor, drop)))
+      .then((v) => { if (!v) return; if (gone || dropped) v.dispose(); else view = v; })
       .catch(drop); // no WebGL: drop to Retro
     let hi = 0;
     try { hi = Number(localStorage.getItem(HI_KEY)) || 0; } catch { }
