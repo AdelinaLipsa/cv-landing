@@ -511,6 +511,19 @@ async function mount(el: HTMLElement, character: boolean, onScreen: () => void) 
       return;
     }
     draw(ctx, battle);
+    bootLine(Math.floor(t * 2) % 2 === 0);
+  };
+  // An old "PRESS START" along the bottom of the screen: clicking the screen boots Windows 98.
+  const bootLine = (on: boolean) => {
+    ctx.fillStyle = "rgba(7, 6, 26, 0.85)";
+    ctx.fillRect(0, H - 13, W, 13);
+    if (!on) return;
+    ctx.font = "bold 8px monospace";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillStyle = "#F5B53F";
+    ctx.fillText("CLICK TO BOOT ▶", W / 2, H - 6);
+    ctx.textAlign = "left";
   };
 
   let camDist = 1;
@@ -621,6 +634,7 @@ async function mount(el: HTMLElement, character: boolean, onScreen: () => void) 
     poseKid(LOOP - 0.01);
     kid.rotation.y = Math.PI;
     draw(ctx, battle);
+    bootLine(true); // steady, no blinking
     tex.needsUpdate = true;
     renderer.render(scene, camera);
     placeNote();
