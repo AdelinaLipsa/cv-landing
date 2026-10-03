@@ -19,6 +19,7 @@ export const ACHIEVEMENTS = {
   explorer: { name: "Explorer", hint: "Visit all four tabs" },
   roles: { name: "Four hats", hint: "Open all four roles in the hero card" },
   chaos: { name: "Chaos engineer", hint: "Break the checkout all five ways" },
+  voter: { name: "Stakeholder input", hint: "Vote on the roadmap" },
   lost: { name: "Lost and found", hint: "Find the 404 page" },
   sudo: { name: "Incident reported", hint: "Try to sudo the page" },
   boo: { name: "Spooked", hint: "Type boo" },
