@@ -136,11 +136,12 @@ export async function mountSpace(canvas: HTMLCanvasElement, W: number, H: number
     return Object.assign(g, { flame });
   });
   const shieldMat = new THREE.ShaderMaterial({
-    uniforms: { c: { value: hot("#5fd0ff", 1.6) }, t: { value: 0 } },
+    uniforms: { c: { value: hot("#5fd0ff", 1.6) }, t: { value: 0 }, hit: { value: 0 } },
     transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
     vertexShader: "varying vec3 vN, vV; void main() { vec4 mv = modelViewMatrix * vec4(position, 1.0); vN = normalize(normalMatrix * normal); vV = normalize(-mv.xyz); gl_Position = projectionMatrix * mv; }",
-    fragmentShader: "varying vec3 vN, vV; uniform vec3 c; uniform float t; void main() { float f = pow(1.0 - abs(dot(vN, vV)), 2.2); gl_FragColor = vec4(c * (f + 0.06 + 0.05 * sin(t * 6.0)), 1.0); }",
+    fragmentShader: "varying vec3 vN, vV; uniform vec3 c; uniform float t; uniform float hit; void main() { float f = pow(1.0 - abs(dot(vN, vV)), 2.2); float ring = hit > 0.0 ? smoothstep(0.12, 0.0, abs(f - (1.0 - hit))) * hit : 0.0; gl_FragColor = vec4(c * (f + 0.06 + 0.05 * sin(t * 6.0) + ring * 2.5), 1.0); }",
   });
+  let hadShield = false, ripple = 0;
   const shield = new THREE.Mesh(new THREE.SphereGeometry(7, 32, 20), shieldMat);
   player.add(fuselage, wings, canopy, ...tips, ...engines, shield);
   player.scale.setScalar(1);
@@ -332,7 +333,11 @@ export async function mountSpace(canvas: HTMLCanvasElement, W: number, H: number
       trailGeo.attributes.position.needsUpdate = trailGeo.attributes.color.needsUpdate = true;
       trim.color.set(f.ship.trim); trim.emissive.set(f.ship.trim);
       for (const e of engines) e.flame.scale.set(1, 0.8 + Math.random() * 0.45 + (f.warp > 1 ? 0.8 : 0), 1);
-      shield.visible = f.ship.shield;
+      if (hadShield && !f.ship.shield) ripple = 1;
+      hadShield = f.ship.shield;
+      ripple = Math.max(0, ripple - dt * 2.5);
+      shield.visible = f.ship.shield || ripple > 0;
+      shieldMat.uniforms.hit.value = ripple;
       shieldMat.uniforms.t.value = t;
 
       if (alienKind !== f.kind || alienPool.length < f.aliens.length) {
