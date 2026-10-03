@@ -1,10 +1,11 @@
 "use client";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { Mode } from "@/lib/arcadePrefs";
 import { sfx } from "@/lib/sfx";
 import { unlock } from "@/lib/achievements";
 import { drawSnow, season } from "@/lib/season";
-import { POSES, PO, SH, type Look } from "@/lib/fighterMotion";
+import { PO, SH, type Look } from "@/lib/fighterMotion";
+import { retroFighter, type FighterView } from "@/lib/retro/fighter";
 import crt from "./SpaceGame.module.css";
 import s from "./Arcade.module.css";
 
@@ -13,6 +14,7 @@ import s from "./Arcade.module.css";
 // ← → walk (hold back to block), ↑ jump, ↓ crouch, Z punch, X kick, C special (Ship-o-ken).
 // Landing hits fills your meter; a full meter makes the special a super.
 const W = 192, H = 120, GROUND = 104, ROUND_TIME = 45;
+const S = 4; // the 2D layer draws at 4× the grid, so text is sharp
 
 type Act = "idle" | "walk" | "crouch" | "jump" | "punch" | "kick" | "special" | "hit" | "block" | "ko" | "win";
 type Input = { left: boolean; right: boolean; up: boolean; down: boolean; p: boolean; k: boolean; s: boolean };
@@ -31,19 +33,38 @@ const MOVES = {
   airkick: { time: 0.35, from: 0.05, to: 0.3, reach: 15, lo: 4, hi: 14, dmg: 8, sound: "kick" },
 } as const;
 
-export default function SprintFighter({ onEnd }: { mode?: Mode; onLost?: () => void; onEnd?: (score: number) => void }) {
+export default function SprintFighter({ mode: want = "hd", onLost, onEnd }: { mode?: Mode; onLost?: () => void; onEnd?: (score: number) => void }) {
   // The final score goes to the arcade's leaderboard. A ref, so the game loop never restarts for it.
   const report = useRef(onEnd);
   report.current = onEnd;
+  // Owns its fallback like Ship It!: no WebGL or a lost GPU swaps to Retro in place (the match goes on), then tells the parent.
+  const [shown, setShown] = useState(want);
+  const lost = useRef(onLost);
+  lost.current = onLost;
   const canvas = useRef<HTMLCanvasElement>(null);
-  const glow = useRef<HTMLCanvasElement>(null);
+  const stage = useRef<HTMLCanvasElement>(null);
   const keys = useRef<Input>({ left: false, right: false, up: false, down: false, p: false, k: false, s: false });
 
   useEffect(() => {
+    setShown(want);
+    const calm = matchMedia("(prefers-reduced-motion: reduce)").matches;
     const ctx = canvas.current!.getContext("2d")!;
+    ctx.setTransform(S, 0, 0, S, 0, 0);
     const SEASON = season();
-    const bloom = glow.current!.getContext("2d")!;
-    const crowd = Array.from({ length: 34 }, (_, i) => ({ x: i * 6 - 4, h: 5 + ((i * 7) % 4), c: ["#2a1f4f", "#33255e", "#241a45"][i % 3], ph: i * 0.7 }));
+    let view: FighterView | null = null, gone = false, dropped = false;
+    const drop = () => {
+      if (gone || dropped) return;
+      dropped = true;
+      view?.dispose();
+      view = retroFighter(ctx, W, H, GROUND);
+      setShown("retro");
+      lost.current?.();
+    };
+    if (want === "retro") view = retroFighter(ctx, W, H, GROUND);
+    else import("@/lib/fighter3d")
+      .then((m) => (gone ? null : m.mountFighter(stage.current!, W, H, GROUND, drop)))
+      .then((v) => { if (!v) return; if (gone || dropped) v.dispose(); else view = v; })
+      .catch(drop);
 
     const fighter = (x: number, face: number, look: Look, wins = 0): F => ({
       x, y: 0, vy: 0, vx: 0, face, hp: 100, shown: 100, meter: 0, act: "idle", actT: 0, low: false, hitDone: false,
@@ -176,51 +197,6 @@ export default function SprintFighter({ onEnd }: { mode?: Mode; onLost?: () => v
       else if (r < 0.9) { ai.down = true; ai.p = true; }
     };
 
-    // Draw a fighter from a pose: thick pixel limbs, a head with hair and the look's extra (headband or tie).
-    const limb = (x: number, y: number, a: number, len: number, face: number, color: string, th = 2) => {
-      ctx.fillStyle = color;
-      const ex = x + Math.sin(a) * len * face, ey = y + Math.cos(a) * len;
-      for (let i = 0; i <= len; i++) { const k = i / len; ctx.fillRect(Math.round(x + (ex - x) * k - th / 2), Math.round(y + (ey - y) * k - th / 2), th, th); }
-      return [ex, ey] as const;
-    };
-    const draw = (f: F) => {
-      const L = f.look, face = f.face;
-      const gx = Math.round(f.x), gy = GROUND + Math.round(f.y);
-      ctx.fillStyle = "rgba(0,0,0,0.35)"; ctx.fillRect(gx - 7, GROUND, 14, 2); // shadow
-      if (f.act === "ko" && f.y === 0) {
-        // Flat on the floor, head away from the hit: legs, body, head along one line.
-        const d = -face;
-        ctx.fillStyle = L.legs; ctx.fillRect(gx + (d > 0 ? -12 : 0), GROUND - 3, 12, 3);
-        ctx.fillStyle = L.top; ctx.fillRect(gx + (d > 0 ? 0 : -12), GROUND - 4, 12, 4);
-        ctx.fillStyle = L.skin; ctx.fillRect(gx + (d > 0 ? 12 : -17), GROUND - 5, 5, 5);
-        return;
-      }
-      const name = f.act === "walk" ? (Math.floor(t * 6) % 2 ? "walk1" : "walk2") : f.act === "idle" ? (Math.floor(t * 2.5) % 2 ? "idle" : "idle2")
-        : f.act === "punch" && f.low ? "lowpunch" : f.act === "kick" && f.y < 0 ? "airkick" : f.act === "ko" ? "hit" : f.act;
-      const [lean, fa, ba, fl, bl, drop] = POSES[name] ?? POSES.idle;
-      const hip = [gx, gy - 13 + drop] as const;
-      if (SEASON === "halloween" && L === SH) { ctx.fillStyle = "#2a0a1a"; ctx.fillRect(gx - face * 7 - 2, gy - 25 + drop, 6, 22); ctx.fillStyle = "#b8335f"; ctx.fillRect(gx - face * 7 - 2, gy - 25 + drop, 6, 2); } // the cape
-      const [bkx, bky] = limb(hip[0], hip[1], bl[0], 7, face, L.legs, 3); limb(bkx, bky, bl[1], 7, face, L.legs, 3);
-      const neckX = hip[0] + Math.sin(lean) * 10 * face, neckY = hip[1] - Math.cos(lean) * 10;
-      const sh = [hip[0] + Math.sin(lean) * 8 * face, hip[1] - Math.cos(lean) * 8] as const;
-      const [bex, bey] = limb(sh[0], sh[1], ba[0], 6, face, L.sleeve); limb(bex, bey, ba[1], 6, face, L.skin);
-      // torso
-      ctx.fillStyle = L.top;
-      for (let i = 0; i <= 10; i++) ctx.fillRect(Math.round(hip[0] + Math.sin(lean) * i * face) - 2, Math.round(hip[1] - Math.cos(lean) * i) - 1, 5, 2);
-      if (L === SH) { ctx.fillStyle = "#ffffff"; ctx.fillRect(Math.round(neckX) - 1, Math.round(neckY) + 1, 2, 4); ctx.fillStyle = L.extra; ctx.fillRect(Math.round(neckX), Math.round(neckY) + 2, 1, 5); }
-      else { ctx.fillStyle = "#17153a"; ctx.fillRect(Math.round(hip[0]) - 3, Math.round(hip[1]) - 2, 6, 1); } // the belt
-      const [fx, fy] = limb(hip[0], hip[1], fl[0], 7, face, L.legs, 3); limb(fx, fy, fl[1], 7, face, L.legs, 3);
-      // head
-      const hx = Math.round(neckX + Math.sin(lean) * 3 * face), hy = Math.round(neckY - 3);
-      ctx.fillStyle = L.skin; ctx.fillRect(hx - 2, hy - 2, 5, 5);
-      ctx.fillStyle = L.hair; ctx.fillRect(hx - 3, hy - 3, 6, 2); ctx.fillRect(face > 0 ? hx - 3 : hx + 2, hy - 2, 1, 3);
-      if (L === PO) { ctx.fillStyle = L.extra; ctx.fillRect(hx - 3, hy - 1, 6, 1); ctx.fillRect(face > 0 ? hx - 5 : hx + 3, hy - 1 + (Math.floor(t * 8) % 2), 2, 1); } // headband tails
-      if (L === PO && SEASON === "christmas") { ctx.fillStyle = "#ff5a5a"; ctx.fillRect(hx - 3, hy - 6, 6, 3); ctx.fillRect(hx - 3 - face * 2, hy - 7, 3, 2); ctx.fillStyle = "#ffffff"; ctx.fillRect(hx - 3, hy - 3, 6, 1); ctx.fillRect(hx - 4 - face * 3, hy - 7, 2, 2); } // Santa hat
-      ctx.fillStyle = "#17153a"; ctx.fillRect(hx + face, hy, 1, 1); // eye
-      const [fex, fey] = limb(sh[0], sh[1], fa[0], 6, face, L.sleeve); limb(fex, fey, fa[1], 6, face, L.skin);
-      if (f.act === "hit" && Math.floor(t * 20) % 2) { ctx.globalAlpha = 0.5; ctx.fillStyle = "#ff5a5a"; ctx.fillRect(gx - 8, gy - 28, 16, 28); ctx.globalAlpha = 1; }
-    };
-
     let raf = 0, last = performance.now();
     const frame = (now: number) => {
       // The first frame's timestamp can be earlier than `last`: never let time run backwards.
@@ -278,42 +254,16 @@ export default function SprintFighter({ onEnd }: { mode?: Mode; onLost?: () => v
       sparks = sparks.filter((sp) => ((sp.x += sp.vx * dt), (sp.y += sp.vy * dt), (sp.vy += 80 * dt), (sp.life -= dt) > 0));
       for (const f of [me, cpu]) f.shown += (f.hp - f.shown) * Math.min(1, dt * (f.shown > f.hp ? 2.5 : 10)); // the red part drains behind
 
-      // Draw: a rooftop at sunset, the crowd, the fighters, fireballs, sparks.
-      ctx.save();
-      if (shake > 0) ctx.translate(Math.round((Math.random() - 0.5) * 4), Math.round((Math.random() - 0.5) * 3));
-      const sky = ctx.createLinearGradient(0, 0, 0, GROUND);
-      const spooky = SEASON === "halloween";
-      sky.addColorStop(0, spooky ? "#07041a" : "#1b1040"); sky.addColorStop(0.55, spooky ? "#3b1a5a" : "#b8335f"); sky.addColorStop(1, spooky ? "#ff8c1a" : "#F5B53F");
-      ctx.fillStyle = sky; ctx.fillRect(-4, -4, W + 8, H + 8);
-      if (spooky) {
-        ctx.fillStyle = "#f3f0d0"; ctx.beginPath(); ctx.arc(W / 2 + 40, 34, 13, 0, Math.PI * 2); ctx.fill(); // full moon
-        ctx.fillStyle = "#07041a";
-        for (let i = 0; i < 4; i++) { const bx = ((t * 18 + i * 53) % (W + 20)) - 10, by = 18 + i * 9 + Math.sin(t * 3 + i) * 3, wing = Math.floor(t * 8 + i) % 2 ? 2 : -1; ctx.fillRect(Math.round(bx) - 3, Math.round(by + wing), 3, 1); ctx.fillRect(Math.round(bx), Math.round(by), 2, 2); ctx.fillRect(Math.round(bx) + 2, Math.round(by + wing), 3, 1); }
-      } else {
-        ctx.fillStyle = "#ffd27a"; ctx.beginPath(); ctx.arc(W / 2, 74, 16, 0, Math.PI * 2); ctx.fill();
-        ctx.fillStyle = "#b8335f"; for (let y = 64; y < 90; y += 4) ctx.fillRect(W / 2 - 18, y, 36, 1); // sun stripes
-      }
-      ctx.fillStyle = "#2a1640";
-      for (let i = 0; i < 16; i++) { const h = 14 + ((i * 37) % 19); ctx.fillRect(i * 13 - 4, 86 - h, 12, h + 4); }
-      ctx.fillStyle = "#ffd27a"; for (let i = 0; i < 16; i++) if ((i * 7) % 3 === 0) ctx.fillRect(i * 13 + 1, 76 - ((i * 37) % 19) / 2, 1, 1); // lit windows
-      for (const c of crowd) { const bob = Math.round(Math.sin(t * 6 + c.ph) * (state === "ko" ? 2 : 1)); ctx.fillStyle = c.c; ctx.fillRect(c.x, 92 - c.h + bob, 5, c.h + 4); ctx.fillRect(c.x + 1, 89 - c.h + bob, 3, 3); }
-      ctx.fillStyle = "#3a2350"; ctx.fillRect(-4, 94, W + 8, 2); // railing
-      ctx.fillStyle = "#4b2f66"; ctx.fillRect(-4, GROUND, W + 8, H - GROUND + 4);
-      ctx.fillStyle = "#5c3a7d"; for (let x = -4; x < W; x += 16) ctx.fillRect(x + ((t * 0) | 0), GROUND, 1, H - GROUND);
-      ctx.fillStyle = "#6e4a92"; ctx.fillRect(-4, GROUND, W + 8, 1);
-
-      for (const f of [cpu, me]) draw(f);
-      for (const b of balls) {
-        const r = b.big ? 5 : 3, x = Math.round(b.x), y = GROUND - 19;
-        ctx.fillStyle = b.owner === me ? "#5fd0ff" : "#ff7ac6"; ctx.fillRect(x - r, y - r + 1, r * 2, r * 2 - 2); ctx.fillRect(x - r + 1, y - r, r * 2 - 2, r * 2);
-        ctx.fillStyle = "#ffffff"; ctx.fillRect(x - 1, y - 1, 2, 2);
-        ctx.fillStyle = b.owner === me ? "#2f6bff" : "#b8335f"; ctx.fillRect(x - Math.sign(b.vx) * (r + 2), y - 1, 2, 2);
-      }
-      for (const sp of sparks) { ctx.globalAlpha = Math.min(1, sp.life * 3); ctx.fillStyle = sp.color; ctx.fillRect(Math.round(sp.x), Math.round(sp.y), 1, 1); }
-      ctx.globalAlpha = 1;
-      ctx.restore();
+      // Draw: the view (3D on the stage canvas, or Retro on this one), then snow, flash and the HUD on top.
+      ctx.clearRect(0, 0, W, H);
+      view?.draw({
+        t, dt, shake: calm ? 0 : shake, pause, halloween: SEASON === "halloween", christmas: SEASON === "christmas", state, stateT,
+        fighters: [me, cpu].map((f) => ({ x: f.x, y: f.y, face: f.face, act: f.act, actT: f.actT, low: f.low, look: f.look })),
+        balls: balls.map((b) => ({ x: b.x, y: GROUND - 19, vx: b.vx, mine: b.owner === me, big: b.big })),
+        sparks,
+      });
       if (SEASON === "christmas") drawSnow(ctx, t, W, H);
-      if (flash > 0) { ctx.fillStyle = `rgba(255,255,255,${flash})`; ctx.fillRect(0, 0, W, H); }
+      if (flash > 0 && !calm) { ctx.fillStyle = `rgba(255,255,255,${flash})`; ctx.fillRect(0, 0, W, H); }
 
       // HUD: health bars that drain red, names, round pips, clock, meters.
       const bar = (f: F, left: boolean) => {
@@ -351,8 +301,6 @@ export default function SprintFighter({ onEnd }: { mode?: Mode; onLost?: () => v
         ctx.fillStyle = "#8e8cae"; ctx.fillText("TAP OR PRESS ENTER FOR A REMATCH", W / 2, 74);
       }
 
-      bloom.clearRect(0, 0, W, H);
-      bloom.drawImage(ctx.canvas, 0, 0);
       raf = requestAnimationFrame(frame);
     };
     const again = () => { if (state === "end") reset(); };
@@ -374,12 +322,13 @@ export default function SprintFighter({ onEnd }: { mode?: Mode; onLost?: () => v
     window.addEventListener("keydown", kd);
     window.addEventListener("keyup", ku);
     return () => {
+      gone = true; view?.dispose();
       cancelAnimationFrame(raf);
       el.removeEventListener("pointerdown", again);
       window.removeEventListener("keydown", kd);
       window.removeEventListener("keyup", ku);
     };
-  }, []);
+  }, [want]);
 
   const hold = (name: keyof Input) => ({
     onPointerDown: (e: React.PointerEvent) => { e.preventDefault(); (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId); keys.current[name] = true; },
@@ -389,9 +338,9 @@ export default function SprintFighter({ onEnd }: { mode?: Mode; onLost?: () => v
 
   return (
     <>
-      <div className={crt.crt}>
-        <canvas ref={canvas} width={W} height={H} role="img" aria-label="Sprint Fighter, a one-on-one fighting game. Arrows to move, jump and crouch, hold back to block. Z punch, X kick, C special." />
-        <canvas ref={glow} width={W} height={H} className={crt.glow} aria-hidden="true" />
+      <div className={`${crt.crt} ${shown === "hd" ? crt.hd : crt.retro}`}>
+        {shown === "hd" && <canvas ref={stage} aria-hidden="true" />}
+        <canvas ref={canvas} width={W * S} height={H * S} className={crt.hud} role="img" aria-label="Sprint Fighter, a one-on-one fighting game. Arrows to move, jump and crouch, hold back to block. Z punch, X kick, C special." />
       </div>
       <div className={s.pad} aria-hidden="true">
         {/* A d-pad cross on the left, the three attack buttons on the right */}
