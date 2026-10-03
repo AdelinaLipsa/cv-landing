@@ -30,6 +30,7 @@ export async function mountShipIt(canvas: HTMLCanvasElement, W: number, H: numbe
   scene.background = new THREE.Color(0x0b0a24);
   scene.fog = new THREE.Fog(0x0b0a24, D + 20, D + 160);
   const X = (x: number) => x, Y = (y: number) => -y;
+  let disposed = false;
 
   // Canvas-painted textures: steel panels, hazard stripes, girder truss, the factory wall.
   const textures: T.Texture[] = [];
@@ -111,7 +112,19 @@ export async function mountShipIt(canvas: HTMLCanvasElement, W: number, H: numbe
     return m;
   };
   const blocks = cells("#");
-  instanced(new THREE.BoxGeometry(TS, TS, DEPTH), new THREE.MeshStandardMaterial({ map: steel, metalness: 0.7, roughness: 0.55 }), blocks.map(([c, r]) => [c * TS + TS / 2, -(r * TS + TS / 2), -DEPTH / 2]));
+  const blockMat = new THREE.MeshStandardMaterial({ map: steel, metalness: 0.7, roughness: 0.55 });
+  instanced(new THREE.BoxGeometry(TS, TS, DEPTH), blockMat, blocks.map(([c, r]) => [c * TS + TS / 2, -(r * TS + TS / 2), -DEPTH / 2]));
+  // Worn steel plates (Poly Haven, CC0): colour, normal and roughness maps, tinted to the site's indigo.
+  // Until they load, or if they don't, the painted steel above stays.
+  const tl = new THREE.TextureLoader();
+  Promise.all(["diff", "nor", "rough"].map((m) => tl.loadAsync(`/arcade/shipit/metal-plate-${m}.jpg`))).then(([diff, nor, rough]) => {
+    if (disposed) { [diff, nor, rough].forEach((x) => x.dispose()); return; }
+    diff.colorSpace = THREE.SRGBColorSpace;
+    for (const x of [diff, nor, rough]) { x.anisotropy = 4; textures.push(x); }
+    Object.assign(blockMat, { map: diff, normalMap: nor, roughnessMap: rough, color: new THREE.Color(0x9aa0d8), metalness: 0.8, roughness: 1 });
+    blockMat.normalScale.set(1.2, 1.2);
+    blockMat.needsUpdate = true;
+  }).catch(() => { });
   instanced(new THREE.BoxGeometry(TS, 1.2, DEPTH + 0.2), new THREE.MeshStandardMaterial({ map: hazard, metalness: 0.3, roughness: 0.5 }), blocks.filter(([c, r]) => !solid(c, r - 1)).map(([c, r]) => [c * TS + TS / 2, -(r * TS + 0.5), -DEPTH / 2]));
   instanced(new THREE.BoxGeometry(TS, 5, DEPTH * 0.7), new THREE.MeshStandardMaterial({ map: truss, metalness: 0.5, roughness: 0.5 }), cells("=").map(([c, r]) => [c * TS + TS / 2, -(r * TS + 2.5), -DEPTH / 2]));
   const spikeAt: [number, number, number][] = [];
@@ -191,7 +204,6 @@ export async function mountShipIt(canvas: HTMLCanvasElement, W: number, H: numbe
 
   // The real hero: a rigged CC0 robot with idle, run, jump, punch and thumbs-up clips, painted in the game's
   // blues, an arm cannon on its right hand. If it can't load, the procedural robot above stays.
-  let disposed = false;
   type Robot = { root: T.Group; mixer: T.AnimationMixer; actions: Partial<Record<Clip | "Punch", T.AnimationAction>>; current: Clip | "Punch"; muzzle: T.MeshBasicMaterial };
   let robot: Robot | null = null;
   loadModel("/arcade/shipit/robot.glb").then(({ scene: model, animations }) => {
