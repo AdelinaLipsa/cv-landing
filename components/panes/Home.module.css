@@ -250,5 +250,8 @@
 @media (hover: hover) and (pointer: fine) { .termHint { display: inline; } }
 
 /* "Busy? The 30-second version": a quiet link under the hero buttons */
-.quick { align-self: flex-start; margin-top: 14px; padding: 0; border: 0; background: none; font-size: 14px; font-weight: 600; color: var(--body-2); text-decoration: underline; text-underline-offset: 4px; text-decoration-color: var(--line); cursor: pointer; }
-.quick:hover, .quick:focus-visible { text-decoration-color: var(--blueprint); }
+/* The 30-second version: React Bits StarBorder, sized to sit with the pill buttons above it */
+.quick { align-self: flex-start; margin-top: 6px; border: 0; border-radius: 999px; background: none; font: inherit; cursor: pointer; transition: transform 0.3s var(--ease); }
+.quick:hover, .quick:focus-visible { transform: translateY(-1px); }
+.quick :global(.inner-content) { padding: 12px 20px; border-radius: 999px; font-size: 15px; font-weight: 600; }
+@media (prefers-reduced-motion: reduce) { .quick :global(.border-gradient-top), .quick :global(.border-gradient-bottom) { display: none; } }

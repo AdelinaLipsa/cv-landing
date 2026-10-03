@@ -24,6 +24,7 @@ import ThemeToggle from "../ThemeToggle";
 import Magnet from "../Magnet";
 import DecryptedText from "../DecryptedText";
 import ShinyText from "../ShinyText";
+import StarBorder from "../StarBorder";
 import QuickRead from "../QuickRead";
 import GuestbookButton from "../Guestbook";
 import p from "./pane.module.css";
@@ -169,7 +170,12 @@ export default function Home({ ui }: { ui: UI }) {
             <button type="button" className={`${s.messageBtn} water`} onClick={ui.contact}><WhatsAppIcon size={17} /><DecryptedText text="Message me" animateOn="hover" speed={40} maxIterations={8} /></button>
           </div>
           {/* Skip the cutscene: the whole CV in 30 seconds, for the busy */}
-          {!touring && <button type="button" className={s.quick} onClick={() => ui.sheet("The 30-second version", <QuickRead contact={ui.contact} />)}>{/* A light runs across it now and then, so the busy reader finds it */}<ShinyText text="Busy? Read the 30-second version →" color="var(--body-2)" shineColor="var(--blueprint)" disabled={!!reduce} className={reduce ? "disabled" : ""} /></button>}
+          {!touring && (
+            // React Bits: a star of light circles the border, and a shine runs across the label, so the busy reader finds it
+            <StarBorder type="button" className={s.quick} onClick={() => ui.sheet("The 30-second version", <QuickRead contact={ui.contact} />)} color="var(--blueprint)" speed="5s" thickness={1.5} backgroundColor="var(--surface)" textColor="var(--ink)" borderColor="var(--line)">
+              <ShinyText text="Busy? Read the 30-second version →" color="var(--ink)" shineColor="var(--blueprint)" disabled={!!reduce} className={reduce ? "disabled" : ""} />
+            </StarBorder>
+          )}
           {touring && era === 0 && <VisitorCounter />}
           <div className={`${s.dock} ${s.dropper}`} {...drop(STAGE.cards)}>
             <Dock items={dockItems(ui)} baseItemSize={60} magnification={92} distance={160} panelHeight={96} dockHeight={96} spring={{ stiffness: 120, damping: 26 }} />
