@@ -35,9 +35,9 @@ export default function SpaceGame({ mode: want, onLost, onEnd }: { mode: Mode; o
   // The final score goes to the arcade's leaderboard. A ref, so the game loop never restarts for it.
   const report = useRef(onEnd);
   report.current = onEnd;
-  // SpaceGame owns its fallback: no WebGL or a lost GPU drops it to Retro, then tells the parent.
-  const [mode, setMode] = useState(want);
-  useEffect(() => setMode(want), [want]);
+  // SpaceGame owns its fallback: no WebGL or a lost GPU swaps to Retro in place (the run goes on), then tells the parent.
+  // `shown` is presentation only; the game effect depends on the requested mode, never on it.
+  const [shown, setShown] = useState(want);
   const lost = useRef(onLost); // likewise: a ref, so a lost GPU never restarts the loop
   lost.current = onLost;
   const canvas = useRef<HTMLCanvasElement>(null);
@@ -45,14 +45,21 @@ export default function SpaceGame({ mode: want, onLost, onEnd }: { mode: Mode; o
   const strip = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    setShown(want);
     const ctx = canvas.current!.getContext("2d")!;
     ctx.setTransform(S, 0, 0, S, 0, 0);
     const SEASON = season();
     const tint = SEASON === "halloween" ? ["#ff8c1a", "#b46bff", "#7dff6b"] : SEASON === "christmas" ? ["#ff5a5a", "#5fd897", "#ffffff"] : KINDS.map((k) => k.color);
     const bossColor = SEASON === "halloween" ? "#7dff6b" : "#ff5a5a";
     let view: SpaceView | null = null, gone = false;
-    const drop = () => { if (gone) return; setMode("retro"); lost.current?.(); };
-    if (mode === "retro") view = retroSpace(ctx, W, H, tint, bossColor);
+    const drop = () => {
+      if (gone) return;
+      view?.dispose();
+      view = retroSpace(ctx, W, H, tint, bossColor);
+      setShown("retro");
+      lost.current?.();
+    };
+    if (want === "retro") view = retroSpace(ctx, W, H, tint, bossColor);
     else import("@/lib/space3d")
       .then((m) => m.mountSpace(stage.current!, W, H, tint, bossColor, drop))
       .then((v) => { if (gone) v.dispose(); else view = v; })
@@ -354,12 +361,12 @@ export default function SpaceGame({ mode: want, onLost, onEnd }: { mode: Mode; o
       window.removeEventListener("keyup", ku);
       for (const t of [el, pad] as HTMLElement[]) { t.removeEventListener("pointerdown", steer); t.removeEventListener("pointermove", steer); }
     };
-  }, [mode]);
+  }, [want]);
 
   return (
     <>
-    <div className={`${s.crt} ${mode === "hd" ? s.hd : s.retro}`}>
-      {mode === "hd" && <canvas ref={stage} aria-hidden="true" />}
+    <div className={`${s.crt} ${shown === "hd" ? s.hd : s.retro}`}>
+      {shown === "hd" && <canvas ref={stage} aria-hidden="true" />}
       <canvas
         ref={canvas}
         width={W * S}

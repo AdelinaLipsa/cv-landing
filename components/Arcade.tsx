@@ -45,11 +45,12 @@ export default function Arcade({ onClose }: { onClose: () => void }) {
   const [on, setOn] = useState<string | null>(null);
   const [last, setLast] = useState<number | null>(null); // the latest final score, for the leaderboard
   const [quiet, setQuiet] = useState(false);
-  const [mode, setModeState] = useState<Mode>("hd");
+  const [picked, setPicked] = useState<Mode>("hd"); // the user's choice: keys the game, persists
+  const [label, setLabel] = useState<Mode>("hd"); // what the header shows; a lost GPU changes only this
   const store = () => { try { return localStorage; } catch { return null; } };
-  useEffect(() => setModeState(getMode(store(), hasWebGL2())), []);
-  const pickMode = (m: Mode) => { setModeState(m); setMode(store(), m); };
-  const onLost = () => { setModeState("retro"); toast({ icon: "🕹️", title: "Switched to Retro", body: "The graphics card needed a break. HD is one tap away." }); };
+  useEffect(() => { const m = getMode(store(), hasWebGL2()); setPicked(m); setLabel(m); }, []);
+  const pickMode = (m: Mode) => { setPicked(m); setLabel(m); setMode(store(), m); };
+  const onLost = () => { setLabel("retro"); toast({ icon: "🕹️", title: "Switched to Retro", body: "The graphics card needed a break. HD is one tap away." }); };
   const [found, setFound] = useState(0);
   const [best, setBest] = useState<Record<string, number>>({});
   useEffect(() => {
@@ -79,8 +80,8 @@ export default function Arcade({ onClose }: { onClose: () => void }) {
       <header className={s.head}>
         {game ? <button type="button" className={s.back} onClick={() => { setOn(null); setLast(null); }}>← Arcade</button> : <b className={s.title}>Arcade</b>}
         <span className={s.headRight}>
-          <button type="button" className={s.sound} onClick={() => pickMode(mode === "hd" ? "retro" : "hd")} aria-pressed={mode === "hd"} title="Switch between HD graphics and the original pixels">
-            <span aria-hidden="true">{mode === "hd" ? "✨" : "👾"}</span> {mode === "hd" ? "HD" : "Retro"}
+          <button type="button" className={s.sound} onClick={() => pickMode(label === "hd" ? "retro" : "hd")} aria-pressed={label === "hd"} title="Switch between HD graphics and the original pixels">
+            <span aria-hidden="true">{label === "hd" ? "✨" : "👾"}</span> {label === "hd" ? "HD" : "Retro"}
           </button>
           <button type="button" className={s.sound} onClick={toggle} aria-pressed={!quiet} title="Sound and vibration (M)">
             <span aria-hidden="true">{quiet ? "🔇" : "🔊"}</span> {quiet ? "Sound off" : "Sound on"}
@@ -91,7 +92,7 @@ export default function Arcade({ onClose }: { onClose: () => void }) {
       <div className={s.body}>
         {game ? (
           <div className={s.playing}>
-            <game.Game key={mode} mode={mode} onLost={onLost} onEnd={setLast} />
+            <game.Game key={picked} mode={picked} onLost={onLost} onEnd={setLast} />
             {/* The controls, always visible: keyboard on desktop, touch on phones */}
             <dl className={`${s.controls} ${s.keys}`}>{game.keys.map(([k, v]) => <div key={k}><dt>{k}</dt><dd>{v}</dd></div>)}</dl>
             <dl className={`${s.controls} ${s.touch}`}>{game.touch.map(([k, v]) => <div key={k}><dt>{k}</dt><dd>{v}</dd></div>)}</dl>
