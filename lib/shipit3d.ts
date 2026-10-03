@@ -173,7 +173,7 @@ export async function mountShipIt(canvas: HTMLCanvasElement, W: number, H: numbe
   // Steam vents at the back of the floor: soft grey puffs that rise, swell and fade.
   const VENTS: number[] = [];
   for (let x = 72; x < span; x += 120) VENTS.push(x);
-  const PUFFS = 18, steamCount = VENTS.length * PUFFS;
+  const PUFFS = 36, steamCount = VENTS.length * PUFFS;
   const steamGeo = new THREE.BufferGeometry();
   const steamPos = new Float32Array(steamCount * 3), steamA = new Float32Array(steamCount), steamS = new Float32Array(steamCount);
   steamGeo.setAttribute("position", new THREE.BufferAttribute(steamPos, 3));
@@ -184,7 +184,7 @@ export async function mountShipIt(canvas: HTMLCanvasElement, W: number, H: numbe
     transparent: true, depthWrite: false,
     vertexShader: `attribute float alpha; attribute float size; varying float vA; uniform float scale;
       void main() { vA = alpha; vec4 mv = modelViewMatrix * vec4(position, 1.0); gl_PointSize = size * scale / -mv.z; gl_Position = projectionMatrix * mv; }`,
-    fragmentShader: "uniform sampler2D map; varying float vA; void main() { gl_FragColor = vec4(vec3(0.62, 0.62, 0.72), texture2D(map, gl_PointCoord).a * vA * 0.35); }",
+    fragmentShader: "uniform sampler2D map; varying float vA; void main() { gl_FragColor = vec4(vec3(0.62, 0.62, 0.72), texture2D(map, gl_PointCoord).a * vA * 0.16); }",
   }));
   steam.frustumCulled = false;
   scene.add(steam);
@@ -385,8 +385,8 @@ export async function mountShipIt(canvas: HTMLCanvasElement, W: number, H: numbe
       VENTS.forEach((vx, v) => {
         for (let k = 0; k < PUFFS; k++) {
           const i = v * PUFFS + k, life = ((t * 0.35 + k / PUFFS + v * 0.37) % 1);
-          steamPos[i * 3] = vx + Math.sin(life * 6 + k) * 3; steamPos[i * 3 + 1] = -(13 * TS) + life * 46; steamPos[i * 3 + 2] = -DEPTH + 2;
-          steamA[i] = Math.sin(life * Math.PI); steamS[i] = 4 + life * 12;
+          steamPos[i * 3] = vx + Math.sin(life * 4 + k * 1.7) * (2 + life * 6); steamPos[i * 3 + 1] = -(13 * TS) + life * 46; steamPos[i * 3 + 2] = -DEPTH + 2;
+          steamA[i] = Math.sin(life * Math.PI); steamS[i] = 10 + life * 30;
         }
       });
       steamGeo.attributes.position.needsUpdate = steamGeo.attributes.alpha.needsUpdate = steamGeo.attributes.size.needsUpdate = true;
