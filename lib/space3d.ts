@@ -16,8 +16,8 @@ export type SpaceFrame = {
 };
 export type SpaceView = { draw: (f: SpaceFrame) => void; boom: (x: number, y: number, color: string, power: number) => void; dispose: () => void };
 
-export async function mountSpace(canvas: HTMLCanvasElement, W: number, H: number, tint: string[], bossColor: string): Promise<SpaceView> {
-  const st = await stage(canvas, W, H);
+export async function mountSpace(canvas: HTMLCanvasElement, W: number, H: number, tint: string[], bossColor: string, onLost?: () => void): Promise<SpaceView> {
+  const st = await stage(canvas, W, H, { onLost });
   const { THREE, scene, camera, D, hot, glowMat, dot } = st;
   scene.background = new THREE.Color(0x05040f);
   const X = (x: number) => x - W / 2, Y = (y: number) => H / 2 - y;
@@ -279,8 +279,9 @@ export async function mountSpace(canvas: HTMLCanvasElement, W: number, H: number
 
       flashPower = Math.max(0, flashPower - dt * 4);
       flashLight.intensity = flashPower * 6;
-      camera.position.set(f.shake > 0 ? (Math.random() - 0.5) * 3 : 0, f.shake > 0 ? (Math.random() - 0.5) * 3 : 0, D);
-      st.render();
+      const k = f.shake > 0 && !st.calm ? 3 : 0;
+      camera.position.set((Math.random() - 0.5) * k, (Math.random() - 0.5) * k, D);
+      st.render(dt);
     },
     dispose: () => st.dispose(),
   };

@@ -2,28 +2,34 @@
 // bloom that only catches lights hotter than white, a perspective camera that frames a W × H game grid
 // exactly at z = 0 (so hitboxes stay where you see them), and additive sparks.
 import type * as T from "three";
+import { TIERS, pickTier, lower, fpsGovernor, type Tier } from "./quality";
+import { getTierOverride } from "./arcadePrefs";
+import { finishShader } from "./finishPass";
 
 export const FOV = 30;
 
-export async function stage(canvas: HTMLCanvasElement, W: number, H: number, opts: { bloom?: [number, number, number]; shadows?: boolean; env?: number } = {}) {
-  const [THREE, { RoomEnvironment }, { EffectComposer }, { RenderPass }, { UnrealBloomPass }, { OutputPass }] = await Promise.all([
+export async function stage(canvas: HTMLCanvasElement, W: number, H: number, opts: { bloom?: [number, number, number]; shadows?: boolean; env?: number; onLost?: () => void } = {}) {
+  const [THREE, { RoomEnvironment }, { EffectComposer }, { RenderPass }, { UnrealBloomPass }, { OutputPass }, { ShaderPass }, { SMAAPass }] = await Promise.all([
     import("three"),
     import("three/examples/jsm/environments/RoomEnvironment.js"),
     import("three/examples/jsm/postprocessing/EffectComposer.js"),
     import("three/examples/jsm/postprocessing/RenderPass.js"),
     import("three/examples/jsm/postprocessing/UnrealBloomPass.js"),
     import("three/examples/jsm/postprocessing/OutputPass.js"),
+    import("three/examples/jsm/postprocessing/ShaderPass.js"),
+    import("three/examples/jsm/postprocessing/SMAAPass.js"),
   ]);
-  // Phones: fewer pixels, no antialias, no shadows.
   const touch = matchMedia("(pointer: coarse)").matches;
-  const renderer = new THREE.WebGLRenderer({ canvas, antialias: !touch, powerPreference: "high-performance" });
-  renderer.setPixelRatio(Math.min(devicePixelRatio, touch ? 1.5 : 2));
+  const calm = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const store = (() => { try { return localStorage; } catch { return null; } })(); // the property itself throws when storage is blocked
+  let tier = pickTier({ touch, cores: navigator.hardwareConcurrency || 4, memoryGB: (navigator as { deviceMemory?: number }).deviceMemory, dpr: devicePixelRatio }, getTierOverride(store));
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: TIERS[tier].antialias, powerPreference: "high-performance" });
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure = 1.05;
-  const shadows = !!opts.shadows && !touch;
-  renderer.shadowMap.enabled = shadows;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  // The GPU can take the context back (a phone backgrounding the tab). Say so; the game drops to Retro.
+  canvas.addEventListener("webglcontextlost", (e) => { e.preventDefault(); opts.onLost?.(); }, { once: true });
 
   const scene = new THREE.Scene();
   const D = H / 2 / Math.tan((FOV / 2) * (Math.PI / 180)); // the distance at which the grid exactly fills the frame
@@ -49,6 +55,7 @@ export async function stage(canvas: HTMLCanvasElement, W: number, H: number, opt
 
   // Sparks: additive points; set() each live one, then commit() how many.
   const sparks = (max: number, size: number) => {
+    max = Math.max(32, Math.round(max * TIERS[tier].particles));
     const geo = new THREE.BufferGeometry(), pos = new Float32Array(max * 3), col = new Float32Array(max * 3), c = new THREE.Color();
     geo.setAttribute("position", new THREE.BufferAttribute(pos, 3));
     geo.setAttribute("color", new THREE.BufferAttribute(col, 3));
@@ -71,6 +78,11 @@ export async function stage(canvas: HTMLCanvasElement, W: number, H: number, opt
   const [strength, radius, threshold] = opts.bloom ?? [0.7, 0.4, 1.6]; // by default only the hot lights glow, never lit metal
   composer.addPass(new UnrealBloomPass(new THREE.Vector2(256, 160), strength, radius, threshold));
   composer.addPass(new OutputPass());
+  const finish = new ShaderPass(finishShader);
+  composer.addPass(finish);
+  const smaa = new SMAAPass();
+  composer.addPass(smaa);
+
   const fit = () => {
     const w = canvas.clientWidth, h = canvas.clientHeight;
     if (!w || !h) return;
@@ -78,13 +90,37 @@ export async function stage(canvas: HTMLCanvasElement, W: number, H: number, opt
     composer.setPixelRatio(renderer.getPixelRatio());
     composer.setSize(w, h);
   };
-  fit();
+  // Tiers apply live: pixel ratio, shadows (materials recompile), SMAA, the finishing pass.
+  const applyTier = (t: Tier) => {
+    tier = t;
+    const s = TIERS[t];
+    renderer.setPixelRatio(Math.min(devicePixelRatio, s.pixelRatio));
+    const shadows = !!opts.shadows && s.shadows;
+    if (renderer.shadowMap.enabled !== shadows) {
+      renderer.shadowMap.enabled = shadows;
+      scene.traverse((o) => { const m = (o as T.Mesh).material; if (m) (Array.isArray(m) ? m : [m]).forEach((x) => (x.needsUpdate = true)); });
+    }
+    smaa.enabled = s.smaa;
+    finish.enabled = s.finish;
+    fit();
+  };
+  applyTier(tier);
+  const govern = fpsGovernor(() => { const t = lower(tier); if (t) applyTier(t); });
   const ro = new ResizeObserver(fit);
   ro.observe(canvas);
 
   return {
-    THREE, renderer, scene, camera, D, touch, shadows, hot, glowMat, dot, sparks,
-    render: () => composer.render(),
+    THREE, renderer, scene, camera, D, touch, calm,
+    get tier() { return tier; },
+    get settings() { return TIERS[tier]; },
+    shadows: !!opts.shadows,
+    hot, glowMat, dot, sparks,
+    render(dt: number) {
+      govern(dt);
+      finish.uniforms.time.value += dt;
+      composer.render();
+    },
+    info: () => ({ tier, calls: renderer.info.render.calls, triangles: renderer.info.render.triangles, ...renderer.info.memory }),
     dispose(...extra: { dispose(): void }[]) {
       ro.disconnect();
       scene.traverse((o) => {
