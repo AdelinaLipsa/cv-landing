@@ -115,7 +115,7 @@ export async function mountShipIt(canvas: HTMLCanvasElement, W: number, H: numbe
   instanced(new THREE.BoxGeometry(TS, 5, DEPTH * 0.7), new THREE.MeshStandardMaterial({ map: truss, metalness: 0.5, roughness: 0.5 }), cells("=").map(([c, r]) => [c * TS + TS / 2, -(r * TS + 2.5), -DEPTH / 2]));
   const spikeAt: [number, number, number][] = [];
   for (const [c, r] of cells("^")) for (let i = 0; i < 2; i++) for (let k = 0; k < 3; k++) spikeAt.push([c * TS + 2 + i * 4, -(r * TS + 6), -2.5 - k * 5]);
-  instanced(new THREE.ConeGeometry(1.9, 4.5, 12), new THREE.MeshStandardMaterial({ color: 0xe6e9ff, metalness: 1, roughness: 0.15 }), spikeAt);
+  instanced(new THREE.ConeGeometry(1.9, 4.5, 12), new THREE.MeshStandardMaterial({ color: 0xc9cdf0, metalness: 0.9, roughness: 0.35, envMapIntensity: 0.6 }), spikeAt);
 
   // Behind the level: pillars at middle depth, the factory wall far back, warning lights blinking on it.
   const span = cols * TS;
@@ -212,7 +212,7 @@ export async function mountShipIt(canvas: HTMLCanvasElement, W: number, H: numbe
       return disc;
     });
     g.add(hull, eye, ...rotors);
-    return g;
+    return Object.assign(g, { rotors });
   };
   const makeHat = () => {
     const g = new THREE.Group();
@@ -226,7 +226,7 @@ export async function mountShipIt(canvas: HTMLCanvasElement, W: number, H: numbe
     g.add(bodyBox, ...eyesHat, shell);
     return Object.assign(g, { shell });
   };
-  type Foe = T.Group & { spin?: T.Mesh; shell?: T.Group };
+  type Foe = T.Group & { spin?: T.Mesh; shell?: T.Group; rotors?: T.Mesh[] };
   let foes: Foe[] = [];
   let foesFor: unknown = null;
   const foeRoot = new THREE.Group();
@@ -317,7 +317,7 @@ export async function mountShipIt(canvas: HTMLCanvasElement, W: number, H: numbe
         g.visible = e.alive && Math.abs(e.x - f.cam - W / 2) < W;
         if (!g.visible) return;
         if (e.kind === "wheel") { g.position.set(X(e.x + 4), Y(e.y + 8), Z); g.rotation.y = e.vx > 0 ? 0.6 : Math.PI - 0.6; g.spin!.rotation.z = -e.x * 0.45; }
-        else if (e.kind === "drone") { g.position.set(X(e.x + 4.5), Y(e.y + 3), Z); g.rotation.set(0.25, Math.sin(t * 2 + i) * 0.4, Math.sin(t * 3 + i) * 0.12); g.children.forEach((c) => { if ((c as T.Mesh).geometry?.type === "CylinderGeometry" && c.position.y > 1) c.rotation.y = t * 40; }); }
+        else if (e.kind === "drone") { g.position.set(X(e.x + 4.5), Y(e.y + 3), Z); g.rotation.set(0.25, Math.sin(t * 2 + i) * 0.4, Math.sin(t * 3 + i) * 0.12); for (const r of g.rotors!) r.rotation.y = t * 40; }
         else { g.position.set(X(e.x + 5), Y(e.y + 7), Z); g.rotation.y = 0.3; g.shell!.position.y = e.open > 0 ? 4.2 : 0.4; }
       });
 

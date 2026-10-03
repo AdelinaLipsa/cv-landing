@@ -5,7 +5,7 @@ export const finishShader = {
     tDiffuse: { value: null },
     time: { value: 0 },
     grain: { value: 0.035 },
-    aberration: { value: 0.006 },
+    aberration: { value: 0.0025 },
     vignette: { value: 0.35 },
   },
   vertexShader: "varying vec2 vUv; void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }",
