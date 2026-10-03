@@ -76,7 +76,8 @@
   font-weight: 600;
   cursor: pointer;
   color: var(--ink);
-  transition: color 1.2s var(--ease);
+  border-radius: 999px;
+  transition: --fill 0.9s cubic-bezier(0.4, 0, 0.2, 1), color 0.4s var(--ease);
 }
 
 .tab[aria-current="page"] { color: var(--on-night); }
