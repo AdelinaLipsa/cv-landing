@@ -90,20 +90,12 @@ export async function mountFighter(canvas: HTMLCanvasElement, W: number, H: numb
   scene.add(crowd);
 
   // The fighters (lib/fighterModel): The PO in a gi, The Stakeholder in a suit, jointed to the game's poses.
-  type Fighter = Rig & { pose: Pose; wasAir: boolean; lying: number };
+  type Fighter = Rig & { cur: Pose; wasAir: boolean; lying: number };
   const rigs: Fighter[] = [PO, SH].map((look) => {
     const r = buildFighter(THREE, look, look === PO, st.shadows);
     scene.add(r.root);
-    return { ...r, pose: POSES.idle, wasAir: false, lying: 0 };
+    return { ...r, cur: POSES.idle, wasAir: false, lying: 0 };
   });
-
-  const apply = (r: Fighter, p: Pose) => {
-    const [lean, fa, ba, fl, bl, drop] = p;
-    r.hips.position.y = 13 - drop;
-    r.torso.rotation.z = -lean;
-    for (const [i, a] of [fa, ba].entries()) { r.arms[i].sh.rotation.z = a[0] + lean; r.arms[i].el.rotation.z = a[1] - a[0]; }
-    for (const [i, l] of [fl, bl].entries()) { r.legs[i].hip.rotation.z = l[0]; r.legs[i].knee.rotation.z = l[1] - l[0]; }
-  };
 
   // Energy balls: a hot core and a soft halo.
   const balls = Array.from({ length: 4 }, () => {
@@ -139,27 +131,33 @@ export async function mountFighter(canvas: HTMLCanvasElement, W: number, H: numb
   if (f0Season.halloween) {
     skyMat.uniforms.top.value.set("#07041a"); skyMat.uniforms.mid.value.set("#3b1a5a"); skyMat.uniforms.bot.value.set("#ff8c1a");
     sunDisc.material = glowMat(hot("#f3f0d0", 1.6)); sunDisc.position.set(W / 2 + 60, -30, -400); sunStripes.visible = false;
-    const cape = new THREE.Mesh(new THREE.PlaneGeometry(6, 18), new THREE.MeshStandardMaterial({ color: 0x2a0a1a, side: THREE.DoubleSide, roughness: 0.6 }));
+    const capeMat = new THREE.MeshStandardMaterial({ color: 0x2a0a1a, side: THREE.DoubleSide, roughness: 0.6 }); rigs[1].mats.push(capeMat);
+    const cape = new THREE.Mesh(new THREE.PlaneGeometry(6, 18), capeMat);
     cape.position.set(-2.4, 2, 0); cape.rotation.y = Math.PI / 2; rigs[1].torso.add(cape);
   }
   if (f0Season.christmas) {
     const hat = new THREE.Group();
-    const cone = new THREE.Mesh(new THREE.ConeGeometry(2.6, 5, 16), new THREE.MeshStandardMaterial({ color: 0xff3b3b, roughness: 0.7 }));
-    const brim = new THREE.Mesh(new THREE.TorusGeometry(2.6, 0.6, 8, 20), new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.9 }));
+    const red = new THREE.MeshStandardMaterial({ color: 0xff3b3b, roughness: 0.7 }), white = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.9 });
+    rigs[0].mats.push(red, white);
+    const cone = new THREE.Mesh(new THREE.ConeGeometry(2.6, 5, 16), red);
+    const brim = new THREE.Mesh(new THREE.TorusGeometry(2.6, 0.6, 8, 20), white);
     cone.position.y = 3.6; brim.rotation.x = Math.PI / 2; brim.position.y = 1.3; hat.add(cone, brim); rigs[0].head.add(hat);
   }
 
-  const cam = { x: W / 2, y: -H / 2, zoom: 1 };
+  const cam = { x: W / 2, y: -H / 2, zoom: 1, orbit: 0 };
+  let lastNow = performance.now(), cloth = 0; // wall clock for the camera (hit-stop zeroes dt), cloth clock for the waves
   return {
     draw(f) {
       const { t } = f, dt = Math.max(f.dt, 0);
+      const now = performance.now(), wall = Math.min(0.05, (now - lastNow) / 1000); lastNow = now;
+      cloth += dt;
       // Fighters: blend toward the pose the game shows; freeze during hit-stop; lie flat on a KO.
       f.fighters.forEach((s, i) => {
         const r = rigs[i];
         const target = POSES[s.act === "ko" && s.y === 0 ? "hit" : poseName(s, t)] ?? POSES.idle;
-        r.pose = lerpPose(r.pose, target, f.pause > 0 ? 0 : Math.min(1, dt * 20));
-        apply(r, r.pose);
-        r.wave(t, Math.min(150, Math.abs(s.x - (r.root.position.x || s.x)) / Math.max(dt, 1 / 60))); // clamped: a round reset teleports
+        r.cur = lerpPose(r.cur, target, f.pause > 0 ? 0 : 1 - Math.exp(-20 * dt));
+        r.pose(r.cur);
+        r.wave(cloth, Math.min(150, Math.abs(s.x - (r.root.position.x || s.x)) / Math.max(dt, 1 / 60))); // clamped: a round reset teleports
         r.lying += ((s.act === "ko" && s.y === 0 ? 1 : 0) - r.lying) * Math.min(1, dt * 10);
         r.root.position.set(X(s.x), Y(GROUND + s.y) + r.lying * 2.4, 0);
         r.root.scale.x = s.face;
@@ -211,15 +209,18 @@ export async function mountFighter(canvas: HTMLCanvasElement, W: number, H: numb
 
       // Camera: frame the fight. Reduced motion: no zoom changes.
       const me = f.fighters[0], cpu = f.fighters[1];
-      let fr = st.calm ? { x: W / 2, y: -H / 2, zoom: 1 } : framing(me.x, cpu.x, W, H);
+      // A lying fighter extends ~25 behind its feet; on a KO the view may run past the arena edge (the floor goes on).
+      const lying = f.fighters.flatMap((s, i) => (rigs[i].lying > 0.1 ? [s.x - s.face * 25 * rigs[i].lying] : []));
+      let fr = st.calm ? { x: W / 2, y: -H / 2, zoom: 1 } : framing(me.x, cpu.x, W, H, lying, f.state === "ko" ? 30 : 0);
       if (!st.calm && f.state === "intro") fr = { ...fr, zoom: fr.zoom * (1 - Math.min(1, Math.max(0, f.stateT - 1)) * 0.12) }; // starts wide, settles in
       if (!st.calm && f.pause > 0) fr = { ...fr, zoom: fr.zoom * 1.04 }; // a punch-in on every hit-stop
-      const k = Math.min(1, Math.max(f.dt, 1 / 120) * 4);
+      const k = Math.min(1, Math.max(wall, 1 / 120) * 4);
       cam.x += (fr.x - cam.x) * k; cam.y += (fr.y - cam.y) * k; cam.zoom += (fr.zoom - cam.zoom) * k;
       const sx = f.shake > 0 ? (Math.random() - 0.5) * 3 : 0, sy = f.shake > 0 ? (Math.random() - 0.5) * 2 : 0;
       // On a KO the camera circles the fight's midpoint a little; reduced motion keeps it still.
       const loser = f.fighters.find((s) => s.act === "ko");
-      const orbit = !st.calm && f.state === "ko" && loser ? Math.min(0.25, (3 - f.stateT) * 0.1) : 0;
+      const target = !st.calm && loser && (f.state === "ko" || f.state === "end") ? Math.min(0.25, (3 - f.stateT) * 0.1) : 0;
+      const orbit = (cam.orbit += (f.state === "end" ? 0 : target - cam.orbit) * k);
       const dist = D / cam.zoom;
       const px = orbit ? cam.x + Math.sin(orbit) * dist : cam.x + sx, pz = orbit ? Math.cos(orbit) * dist : dist;
       camera.position.set(px, cam.y + sy, pz);

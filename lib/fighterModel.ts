@@ -5,12 +5,13 @@
 // that narrow to the wrist, calves, wide gi trousers. Joints and lengths match the game's poses exactly:
 // hip 13 up, shoulders 8 up the torso, thigh 7, shin 7, upper arm 6, forearm 6. Built facing +x; +z is the near side.
 import type * as T from "three";
-import type { Look } from "./fighterMotion";
+import type { Look, Pose } from "./fighterMotion";
 
 type Three = typeof import("three");
 export type Rig = {
-  root: T.Group; hips: T.Group; torso: T.Group; head: T.Group; mats: T.MeshPhysicalMaterial[];
+  root: T.Group; hips: T.Group; torso: T.Group; head: T.Group; mats: T.MeshStandardMaterial[];
   arms: { sh: T.Group; el: T.Group }[]; legs: { hip: T.Group; knee: T.Group }[];
+  pose: (p: Pose) => void; // apply a pose, lifting the hips so the lowest ankle stays on the floor
   wave: (t: number, speed: number) => void; // cloth: headband and belt tails
 };
 
@@ -149,5 +150,13 @@ export function buildFighter(THREE: Three, look: Look, gi: boolean, shadows: boo
     tails.forEach((g, i) => { const k = i % 3; g.rotation.z = (k === 0 ? 0.35 : 0.12) + Math.sin(t * 9 + i * 1.3) * (0.12 + speed * 0.004); g.rotation.y = Math.sin(t * 6 + i) * 0.15; });
     beltTails.forEach((g, i) => { g.rotation.z = Math.sin(t * 4 + i * 2) * 0.12 - speed * 0.003; });
   };
-  return { root, hips, torso, head, mats, arms, legs: legsR, wave };
+  const pose = (p: Pose) => {
+    const [lean, fa, ba, fl, bl, drop] = p;
+    const reach = (l: [number, number]) => 7 * Math.cos(l[0]) + 7 * Math.cos(l[1]);
+    hips.position.y = Math.max(13 - drop, reach(fl) + 0.35, reach(bl) + 0.35);
+    torso.rotation.z = -lean;
+    for (const [i, a] of [fa, ba].entries()) { arms[i].sh.rotation.z = a[0] + lean; arms[i].el.rotation.z = a[1] - a[0]; }
+    for (const [i, l] of [fl, bl].entries()) { legsR[i].hip.rotation.z = l[0]; legsR[i].knee.rotation.z = l[1] - l[0]; }
+  };
+  return { root, hips, torso, head, mats, arms, legs: legsR, pose, wave };
 }
