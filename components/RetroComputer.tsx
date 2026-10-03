@@ -185,13 +185,14 @@ async function mount(el: HTMLElement, character: boolean, onScreen: () => void) 
   pc.position.y = -0.2;
 
   // Hand-drawn notes in the empty space right of the scene, each arrow curving down-left onto a group:
-  // "my passions" (guitar, gloves, iPad) and "my childhood" (the collectibles). Each tip follows its spot
+  // "my passions" (guitar, gloves, iPad), "my childhood" (the collectibles) and "boot me up" (the screen). Each tip follows its spot
   // on screen every frame, so it stays on target as the diorama turns.
   el.style.position = "relative";
   let zoom = 1, zoomTo = 1; // pinch / ctrl + scroll, eased in the loop
   const NOTES = [
     { text: "my passions", at: new THREE.Vector3(3.9, 2.4, -0.4) }, // just right of the guitar, the iPad and the gloves
     { text: "my childhood", at: new THREE.Vector3(4.3, 1.1, 1.8) }, // just right of the Digivice, the hat and the figures
+    { text: "boot me up", at: new THREE.Vector3(0.72, 2.32, 0.7) }, // the screen's top-right corner: clicking the screen boots Windows 98
   ].map((n) => {
     const node = document.createElement("div");
     node.className = s.note;
