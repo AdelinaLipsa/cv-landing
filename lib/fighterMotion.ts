@@ -45,10 +45,11 @@ export const limbDir = (angle: number, face: number): [number, number] => [Math.
 
 // The HD camera: centred on the fight, zoomed in when the fighters are close, never past the arena's edges,
 // floor kept at the bottom of the screen. y is the world y of the view centre (y-up, floor at −GROUND).
-export function framing(ax: number, bx: number, W: number, H: number) {
-  const dist = Math.abs(ax - bx);
-  const zoom = Math.max(1, Math.min(1.25, W / (dist + 60)));
+// `extra` x points (a lying fighter's head) are kept in view too; `slack` lets the view run that far past each edge.
+export function framing(ax: number, bx: number, W: number, H: number, extra: number[] = [], slack = 0) {
+  const xs = [ax, bx, ...extra], lo = Math.min(...xs), hi = Math.max(...xs);
+  const zoom = Math.max(1, Math.min(1.25, W / (hi - lo + 60)));
   const half = W / zoom / 2;
-  const x = Math.max(half, Math.min(W - half, (ax + bx) / 2));
+  const x = Math.max(half - slack, Math.min(W - half + slack, (lo + hi) / 2));
   return { x, y: -H + H / zoom / 2, zoom };
 }

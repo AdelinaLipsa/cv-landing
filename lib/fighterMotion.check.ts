@@ -45,3 +45,10 @@ test("framing keeps the floor at the bottom of the screen", () => {
   const { y, zoom } = framing(90, 102, 192, 120);
   near(y - 120 / zoom / 2, -120); // bottom edge of the view sits on grid row 120
 });
+test("framing keeps a lying fighter in a corner fully in view with slack", () => {
+  const { x, zoom } = framing(10, 100, 192, 120, [10 - 25], 30);
+  const half = 192 / zoom / 2;
+  assert.ok(zoom >= 1 && zoom <= 1.25);
+  assert.ok(-15 >= x - half && 100 <= x + half, `[${x - half}, ${x + half}]`);
+  assert.ok(x - half >= -30 - 1e-9 && x + half <= 222 + 1e-9, "at most slack past the edges");
+});
