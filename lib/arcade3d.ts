@@ -105,6 +105,13 @@ export async function stage(canvas: HTMLCanvasElement, W: number, H: number, opt
     fit();
   };
   applyTier(tier);
+  // ?perf: a small readout for tuning and leak hunting. Never shown otherwise.
+  let perf: HTMLPreElement | null = null, frames = 0, since = performance.now();
+  if (new URLSearchParams(location.search).has("perf")) {
+    perf = document.createElement("pre");
+    Object.assign(perf.style, { position: "fixed", right: "8px", bottom: "8px", zIndex: "99", margin: "0", padding: "6px 8px", font: "11px/1.4 ui-monospace, monospace", color: "#b6ffcf", background: "rgba(0,0,0,0.7)", borderRadius: "6px", pointerEvents: "none" });
+    document.body.append(perf);
+  }
   const govern = fpsGovernor(() => { const t = lower(tier); if (t) applyTier(t); });
   const ro = new ResizeObserver(fit);
   ro.observe(canvas);
@@ -119,9 +126,15 @@ export async function stage(canvas: HTMLCanvasElement, W: number, H: number, opt
       govern(dt);
       finish.uniforms.time.value += dt;
       composer.render();
+      if (perf && ++frames && performance.now() - since > 500) {
+        const i = renderer.info, fps = (frames * 1000) / (performance.now() - since);
+        perf.textContent = `${fps.toFixed(0)} fps · ${tier}\n${i.render.calls} calls · ${(i.render.triangles / 1000).toFixed(1)}k tris\n${i.memory.geometries} geo · ${i.memory.textures} tex`;
+        frames = 0; since = performance.now();
+      }
     },
     info: () => ({ tier, calls: renderer.info.render.calls, triangles: renderer.info.render.triangles, ...renderer.info.memory }),
     dispose(...extra: { dispose(): void }[]) {
+      perf?.remove();
       ro.disconnect();
       scene.traverse((o) => {
         const m = o as T.Mesh;
