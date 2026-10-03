@@ -146,6 +146,20 @@ export async function mountSpace(canvas: HTMLCanvasElement, W: number, H: number
   player.scale.setScalar(1);
   scene.add(player);
 
+  // Two glowing ribbons stream from the engines; they bend as the ship strafes and fade toward the tail.
+  const TRAIL = 22;
+  const trailGeo = new THREE.BufferGeometry();
+  const trailPos = new Float32Array(2 * TRAIL * 2 * 3), trailCol = new Float32Array(2 * TRAIL * 2 * 3);
+  const idx: number[] = [];
+  for (let s = 0; s < 2; s++) for (let i = 0; i < TRAIL - 1; i++) { const a = (s * TRAIL + i) * 2; idx.push(a, a + 1, a + 2, a + 1, a + 3, a + 2); }
+  trailGeo.setIndex(idx);
+  trailGeo.setAttribute("position", new THREE.BufferAttribute(trailPos, 3));
+  trailGeo.setAttribute("color", new THREE.BufferAttribute(trailCol, 3));
+  const trails = new THREE.Mesh(trailGeo, new THREE.MeshBasicMaterial({ vertexColors: true, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, toneMapped: false, side: THREE.DoubleSide }));
+  trails.frustumCulled = false; scene.add(trails);
+  const hist = [0, 1].map(() => Array.from({ length: TRAIL }, () => new THREE.Vector2(0, -999)));
+  const trailColor = new THREE.Color(), flameTint = new THREE.Color(1, 0.7, 0.3);
+
   // Three alien makes, one per wave, coloured by the wave (or the season).
   const makeAlien = (kind: number) => {
     const g = new THREE.Group(), c = tint[kind];
@@ -301,6 +315,20 @@ export async function mountSpace(canvas: HTMLCanvasElement, W: number, H: number
       bank += (Math.max(-0.7, Math.min(0.7, vx * 0.012)) - bank) * Math.min(1, dt * 10);
       player.position.set(X(f.ship.x), Y(H - 6.5), 0);
       player.rotation.set(-0.35, bank, 0);
+      // Each frame the history shifts back and falls behind (the ship flies "up" through space).
+      for (let s = 0; s < 2; s++) {
+        const h = hist[s], ex = X(f.ship.x) + (s ? 1.45 : -1.45) * Math.cos(bank), ey = Y(H - 6.5) - 4.6;
+        if (Math.abs(h[0].x - ex) > 20 || h[0].y < -500) for (const p of h) p.set(ex, ey); // first frame, or a new game re-centring the ship: no streak
+        for (let i = TRAIL - 1; i > 0; i--) h[i].set(h[i - 1].x, h[i - 1].y - 26 * dt * f.warp);
+        h[0].set(ex, ey);
+        for (let i = 0; i < TRAIL; i++) {
+          const w = 0.55 * (1 - i / TRAIL), k = f.ship.visible ? (1 - i / TRAIL) ** 1.6 * 2.2 : 0, a = (s * TRAIL + i) * 2;
+          trailPos.set([h[i].x - w, h[i].y, -0.5, h[i].x + w, h[i].y, -0.5], a * 3);
+          trailColor.set(f.ship.trim).lerp(flameTint, 0.6).multiplyScalar(k);
+          trailCol.set([trailColor.r, trailColor.g, trailColor.b, trailColor.r, trailColor.g, trailColor.b], a * 3);
+        }
+      }
+      trailGeo.attributes.position.needsUpdate = trailGeo.attributes.color.needsUpdate = true;
       trim.color.set(f.ship.trim); trim.emissive.set(f.ship.trim);
       for (const e of engines) e.flame.scale.set(1, 0.8 + Math.random() * 0.45 + (f.warp > 1 ? 0.8 : 0), 1);
       shield.visible = f.ship.shield;
