@@ -370,19 +370,20 @@ export async function mountSpace(canvas: HTMLCanvasElement, W: number, H: number
         boss.rotation.set(0.5, t * 0.5, Math.sin(t * 0.9) * 0.12); // tilted toward you, turning, rocking
         bossHull.emissiveIntensity = f.boss.hit ? 0.8 : 0;
         eye.scale.setScalar(1 + Math.sin(t * 6) * 0.12);
-        if (f.boss.hp > 0.95) for (const pd of pods) if (pd.off) { pd.off = false; boss.add(pd.p); pd.p.position.set(pd.s * 10.2, 0, 0); pd.p.rotation.set(0, 0, 0); }
+        if (f.boss.hp > 0.95) for (const pd of pods) if (pd.off) { pd.off = false; boss.add(pd.p); pd.p.position.set(pd.s * 10.2, 0, 0); pd.p.rotation.set(0, 0, 0); pd.p.scale.setScalar(1); pd.p.visible = true; }
         pods.forEach((pd, i) => {
           if (!pd.off && f.boss!.hp < (i ? 0.33 : 0.66)) {
             pd.off = true; scene.attach(pd.p); pd.vx = pd.s * 14; pd.vy = 6; pd.spin = 3 + Math.random() * 3;
             explode(pd.p.position.x, pd.p.position.y, bossColor, 1.2);
           }
-          if (pd.off) { pd.vy -= 30 * dt; pd.p.position.x += pd.vx * dt; pd.p.position.y += pd.vy * dt; pd.p.rotation.z += pd.spin * dt; }
+          if (pd.off && pd.p.position.y < -H) pd.p.visible = false;
+          else if (pd.off) { pd.vy -= 30 * dt; pd.p.position.x += pd.vx * dt; pd.p.position.y += pd.vy * dt; pd.p.rotation.z += pd.spin * dt; }
         });
         if (f.boss.hp < 0.5 && Math.random() < dt * 12) {
           const p = puffState[puffNext]; puffNext = (puffNext + 1) % PUFFS;
           Object.assign(p, { x: boss.position.x + (Math.random() - 0.5) * 12, y: boss.position.y + 2, vx: (Math.random() - 0.5) * 3, vy: 8 + Math.random() * 6, life: 0, max: 1.4, size: 7 });
         }
-      } else for (const pd of pods) if (pd.off) { pd.p.position.y -= 40 * dt; }
+      } else for (const pd of pods) if (pd.off && pd.p.position.y > -H) { pd.p.position.y -= 40 * dt; }
 
       shots.count = Math.min(f.shots.length, MAX);
       for (let i = 0; i < shots.count; i++) {
