@@ -220,7 +220,9 @@ export async function mountFighter(canvas: HTMLCanvasElement, W: number, H: numb
       // On a KO the camera circles the fight's midpoint a little; reduced motion keeps it still.
       const loser = f.fighters.find((s) => s.act === "ko");
       const target = !st.calm && loser && (f.state === "ko" || f.state === "end") ? Math.min(0.25, (3 - f.stateT) * 0.1) : 0;
-      const orbit = (cam.orbit += (f.state === "end" ? 0 : target - cam.orbit) * k);
+      cam.orbit += (f.state === "end" ? 0 : target - cam.orbit) * k;
+      if (Math.abs(cam.orbit) < 1e-3) cam.orbit = 0; // settle exactly, so the screen shake comes back
+      const orbit = cam.orbit;
       const dist = D / cam.zoom;
       const px = orbit ? cam.x + Math.sin(orbit) * dist : cam.x + sx, pz = orbit ? Math.cos(orbit) * dist : dist;
       camera.position.set(px, cam.y + sy, pz);
