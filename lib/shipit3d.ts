@@ -121,9 +121,10 @@ export async function mountShipIt(canvas: HTMLCanvasElement, W: number, H: numbe
     if (disposed) { [diff, nor, rough].forEach((x) => x.dispose()); return; }
     diff.colorSpace = THREE.SRGBColorSpace;
     for (const x of [diff, nor, rough]) { x.anisotropy = 4; textures.push(x); }
-    Object.assign(blockMat, { map: diff, normalMap: nor, roughnessMap: rough, color: new THREE.Color(0x9aa0d8), metalness: 0.8, roughness: 1 });
+    Object.assign(blockMat, { map: diff, normalMap: nor, roughnessMap: rough, color: new THREE.Color(0xc4c9f2), metalness: 0.45, roughness: 1, envMapIntensity: 1.2 });
     blockMat.normalScale.set(1.2, 1.2);
     blockMat.needsUpdate = true;
+    steel.dispose();
   }).catch(() => { });
   instanced(new THREE.BoxGeometry(TS, 1.2, DEPTH + 0.2), new THREE.MeshStandardMaterial({ map: hazard, metalness: 0.3, roughness: 0.5 }), blocks.filter(([c, r]) => !solid(c, r - 1)).map(([c, r]) => [c * TS + TS / 2, -(r * TS + 0.5), -DEPTH / 2]));
   instanced(new THREE.BoxGeometry(TS, 5, DEPTH * 0.7), new THREE.MeshStandardMaterial({ map: truss, metalness: 0.5, roughness: 0.5 }), cells("=").map(([c, r]) => [c * TS + TS / 2, -(r * TS + 2.5), -DEPTH / 2]));
