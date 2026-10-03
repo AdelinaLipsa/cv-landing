@@ -63,6 +63,7 @@
 .seeAll { flex-shrink: 0; margin-left: 12px; border: 0; background: none; padding: 0; font-size: 14px; color: var(--steam); text-decoration: underline; cursor: pointer; }
 
 .tiles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.tileWrap { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
 .tile {
   display: flex;
   flex-direction: column;

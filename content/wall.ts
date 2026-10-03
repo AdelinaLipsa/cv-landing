@@ -10,7 +10,7 @@ export type Tile = {
   outcome?: string; // one plain sentence: what happened because of it. Only sourced facts.
   section: Section;
   more?: string[]; // the viewer's details
-  href?: string;
+  links?: { label: string; href: string }[]; // public places to see it: the live thing, its code. Only real, public URLs.
   tbc?: string;
   // The tile takes the shape of the thing: a browser window, a terminal, an extension popup, a phone.
   // No form = a plain card. `chrome` is the text in the window's title bar.
@@ -45,7 +45,7 @@ export const tiles: Tile[] = [
       "Tested with Vitest and property-based fast-check, linted with Biome, architecture checked by dependency-cruiser. CI scans 45 open-source projects every week.",
       "Ships on npm, PyPI, Homebrew, Scoop and winget, plus standalone binaries. Docs and site in Astro. Apache 2.0, nothing leaves your machine."
     ],
-    href: "https://github.com/Hookwarden/hookwarden",
+    links: [{ label: "See the code", href: "https://github.com/Hookwarden/hookwarden" }], // hookwarden.dev was down (Cloudflare 522) on 2026-10-03
   },
   {
     id: "decoder", form: "window", chrome: "param-decoder", title: "Param Decoder", section: "built",
@@ -56,7 +56,7 @@ export const tiles: Tile[] = [
       "Decline explains about 190 Stripe, Braintree and NMI decline codes, each sourced from the processor's own docs: soft or hard, and whether to retry.",
       "Nothing you paste leaves the browser, so live links are safe to paste.",
     ],
-    href: "https://adelinalipsa.github.io/param-decoder/",
+    links: [{ label: "Open it", href: "https://adelinalipsa.github.io/param-decoder/" }, { label: "See the code", href: "https://github.com/AdelinaLipsa/param-decoder" }],
   },
   {
     id: "change-log", form: "window", chrome: "change log", title: "Change log", section: "built",
@@ -92,12 +92,12 @@ export const tiles: Tile[] = [
     id: "this-site", form: "window", chrome: "this site", title: "This CV", section: "built",
     blurb: "Built from scratch in Next.js, with a Web Audio lofi and a git-graph career.",
     more: ["Next.js 16, React 19 and TypeScript, animated with motion, GSAP and three.js, plus React Bits components restyled to fit.", "The lofi is made live with Web Audio, no audio files. The career is a git graph. The whole CV is JSON at /api/cv."],
+    links: [{ label: "See the code", href: "https://github.com/AdelinaLipsa/cv-landing" }],
   },
   {
     id: "ruined-saints", form: "window", chrome: "ruined saints", title: "Ruined Saints", section: "built",
     blurb: "My streetwear label, and the store I built for it.",
     more: ["The store runs on Next.js, with Medusa for commerce and Meilisearch for search. This is its gate and hero."],
-    tbc: "store link, once ruinedsaints.com is live",
   },
   {
     id: "gateways", title: "Gateway routing", section: "owned",

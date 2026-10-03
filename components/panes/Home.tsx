@@ -8,7 +8,7 @@ import { ease, land } from "@/lib/motion";
 import type { UI } from "../Shell";
 import { about, beliefs, origin, profile, ventures } from "@/content/cv";
 import { tiles } from "@/content/wall";
-import { Card } from "./Work";
+import { Card, TileLinks } from "./Work";
 import RetroComputer from "../RetroComputer";
 import Win98 from "../Win98";
 import { LinkedInIcon, WhatsAppIcon } from "../Contact";
@@ -202,9 +202,12 @@ export default function Home({ ui }: { ui: UI }) {
         </div>
         <div className={s.tiles} data-tour="preview">
           {preview.map((t, i) => (
-            <motion.button key={t.id} type="button" className={s.tile} onClick={() => ui.go(1)} aria-label={`${t.title}: see it on the Work tab`} {...rise(i)}>
-              <span className={`${s.media} ${s.teaser}`}><Card tile={t} h={260} /></span>
-            </motion.button>
+            <motion.div key={t.id} className={s.tileWrap} {...rise(i)}>
+              <button type="button" className={s.tile} onClick={() => ui.go(1)} aria-label={`${t.title}: see it on the Work tab`}>
+                <span className={`${s.media} ${s.teaser}`}><Card tile={t} h={260} /></span>
+              </button>
+              <TileLinks tile={t} />
+            </motion.div>
           ))}
         </div>
       </section>

@@ -34,6 +34,20 @@ function Frame({ tile, children }: { tile: Tile; children: React.ReactNode }) {
   );
 }
 
+// A tile's public links, under its card and in the viewer. Outside the card's button: a link can't sit inside one.
+export function TileLinks({ tile }: { tile: Tile }) {
+  if (!tile.links?.length) return null;
+  return (
+    <span className={s.links}>
+      {tile.links.map((l) => (
+        <a key={l.href} href={l.href} target="_blank" rel="noopener" className={p.textLink}>
+          <DecryptedText text={`${l.label} ↗`} animateOn="hover" speed={40} maxIterations={8} />
+        </a>
+      ))}
+    </span>
+  );
+}
+
 // One card for every tile: the demo, its title, one plain sentence. The demo plays while you hover it
 // (always on touch screens). Exported: the Home page teaser shows the very same cards.
 export function Card({ tile, h }: { tile: Tile; h: number }) {
@@ -119,7 +133,7 @@ function Viewer({ list, at, onMove, onClose }: { list: Tile[]; at: number; onMov
               </div>
               <p className={s.viewerGap}>{tile.blurb}</p>
               {(tile.more ?? []).map((m) => <p key={m} className={p.lede}>{m}</p>)}
-              {tile.href && <a href={tile.href} target="_blank" rel="noopener" className={p.textLink}><DecryptedText text={tile.href.includes("github.com") ? "See the code" : "Open it"} animateOn="hover" speed={40} maxIterations={8} /></a>}
+              <TileLinks tile={tile} />
               {tile.tbc && <p className={p.tbc}>[TBC: {tile.tbc}]</p>}
               <p className={s.count} aria-live="polite">{at + 1} / {list.length}</p>
             </div>
@@ -151,20 +165,19 @@ export default function Work(_: { ui: UI }) {
           </div>
           <div className={s.grid}>
             {tiles.filter((t) => t.section === sec.id).map((t, k) => (
-              <motion.button
+              <motion.div
                 key={t.id}
-                type="button"
-                data-key={t.id}
-                className={s.tileBtn}
-                onClick={() => setOpen(list.indexOf(t))}
-                aria-label={`${t.title}: open details`}
+                className={s.tileWrap}
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, amount: 0.2 }}
                 transition={{ ...glide, delay: k * 0.06 }}
               >
-                <Card tile={t} h={desktop ? 300 : 260} />
-              </motion.button>
+                <button type="button" data-key={t.id} className={s.tileBtn} onClick={() => setOpen(list.indexOf(t))} aria-label={`${t.title}: open details`}>
+                  <Card tile={t} h={desktop ? 300 : 260} />
+                </button>
+                <TileLinks tile={t} />
+              </motion.div>
             ))}
           </div>
         </section>
