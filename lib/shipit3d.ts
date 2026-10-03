@@ -114,17 +114,15 @@ export async function mountShipIt(canvas: HTMLCanvasElement, W: number, H: numbe
   const blocks = cells("#");
   const blockMat = new THREE.MeshStandardMaterial({ map: steel, metalness: 0.7, roughness: 0.55 });
   instanced(new THREE.BoxGeometry(TS, TS, DEPTH), blockMat, blocks.map(([c, r]) => [c * TS + TS / 2, -(r * TS + TS / 2), -DEPTH / 2]));
-  // Worn steel plates (Poly Haven, CC0): colour, normal and roughness maps, tinted to the site's indigo.
+  // Worn steel plates (Poly Haven, CC0): normal and roughness maps add surface detail to the painted indigo.
   // Until they load, or if they don't, the painted steel above stays.
   const tl = new THREE.TextureLoader();
-  Promise.all(["diff", "nor", "rough"].map((m) => tl.loadAsync(`/arcade/shipit/metal-plate-${m}.jpg`))).then(([diff, nor, rough]) => {
-    if (disposed) { [diff, nor, rough].forEach((x) => x.dispose()); return; }
-    diff.colorSpace = THREE.SRGBColorSpace;
-    for (const x of [diff, nor, rough]) { x.anisotropy = 4; textures.push(x); }
-    Object.assign(blockMat, { map: diff, normalMap: nor, roughnessMap: rough, color: new THREE.Color(0xc4c9f2), metalness: 0.45, roughness: 1, envMapIntensity: 1.2 });
+  Promise.all(["nor", "rough"].map((m) => tl.loadAsync(`/arcade/shipit/metal-plate-${m}.jpg`))).then(([nor, rough]) => {
+    if (disposed) { [nor, rough].forEach((x) => x.dispose()); return; }
+    for (const x of [nor, rough]) { x.anisotropy = 4; textures.push(x); }
+    Object.assign(blockMat, { normalMap: nor, roughnessMap: rough, metalness: 0.55, roughness: 1, envMapIntensity: 1.2 });
     blockMat.normalScale.set(1.2, 1.2);
     blockMat.needsUpdate = true;
-    steel.dispose();
   }).catch(() => { });
   instanced(new THREE.BoxGeometry(TS, 1.2, DEPTH + 0.2), new THREE.MeshStandardMaterial({ map: hazard, metalness: 0.3, roughness: 0.5 }), blocks.filter(([c, r]) => !solid(c, r - 1)).map(([c, r]) => [c * TS + TS / 2, -(r * TS + 0.5), -DEPTH / 2]));
   instanced(new THREE.BoxGeometry(TS, 5, DEPTH * 0.7), new THREE.MeshStandardMaterial({ map: truss, metalness: 0.5, roughness: 0.5 }), cells("=").map(([c, r]) => [c * TS + TS / 2, -(r * TS + 2.5), -DEPTH / 2]));
