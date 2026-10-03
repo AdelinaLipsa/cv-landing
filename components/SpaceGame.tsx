@@ -46,6 +46,7 @@ export default function SpaceGame({ mode: want, onLost, onEnd }: { mode: Mode; o
 
   useEffect(() => {
     setShown(want);
+    const calm = matchMedia("(prefers-reduced-motion: reduce)").matches;
     const ctx = canvas.current!.getContext("2d")!;
     ctx.setTransform(S, 0, 0, S, 0, 0);
     const SEASON = season();
@@ -269,7 +270,7 @@ export default function SpaceGame({ mode: want, onLost, onEnd }: { mode: Mode; o
       const warp = state === "banner" ? 7 : 1; // between waves the stars streak past
       ctx.clearRect(0, 0, W, H);
       view?.draw({
-        t, dt, warp, shake,
+        t, dt, warp, shake: calm ? 0 : shake,
         ship: { x: ship, visible: state !== "over" && (invuln <= 0 || Math.floor(t * 12) % 2 === 1), trim: triple > 0 ? "#F5B53F" : rapid > 0 ? "#b6ffcf" : "#5fd897", shield },
         aliens, kind: Math.min(Math.max(wave, 0), WAVES.length - 1),
         boss: boss && { x: boss.x, y: boss.y, hit: boss.hp < BOSS_HP / 2 && Math.floor(t * 8) % 2 === 1 },
@@ -277,7 +278,7 @@ export default function SpaceGame({ mode: want, onLost, onEnd }: { mode: Mode; o
         drops: drops.map((d) => ({ x: d.x, y: d.y, color: DROPS[d.type] })),
       });
       ctx.save();
-      if (shake > 0) ctx.translate((Math.random() - 0.5) * 2, (Math.random() - 0.5) * 2);
+      if (shake > 0 && !calm) ctx.translate((Math.random() - 0.5) * 2, (Math.random() - 0.5) * 2);
       if (SEASON === "christmas") drawSnow(ctx, t, W, H);
       ctx.font = "bold 5px ui-monospace, monospace";
       ctx.textBaseline = "middle";
@@ -288,7 +289,7 @@ export default function SpaceGame({ mode: want, onLost, onEnd }: { mode: Mode; o
         text(p.text, p.x, p.y, p.color, "center");
       }
       ctx.globalAlpha = 1;
-      if (flash > 0 && !matchMedia("(prefers-reduced-motion: reduce)").matches) { ctx.fillStyle = `rgba(255,255,255,${flash})`; ctx.fillRect(-4, -4, W + 8, H + 8); }
+      if (flash > 0 && !calm) { ctx.fillStyle = `rgba(255,255,255,${flash})`; ctx.fillRect(-4, -4, W + 8, H + 8); }
       ctx.restore();
 
       // HUD: score, hearts, wave, boss health, power-up timer.
