@@ -1,0 +1,212 @@
+"use client";
+import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
+import { jobs, ventures } from "@/content/cv";
+import { unlock } from "@/lib/achievements";
+import { useCalm } from "@/lib/useCalm";
+import { flag, newBoard, reveal, type Board } from "@/lib/mines";
+import s from "./Win98.module.css";
+
+// The retro computer boots: a Windows 98 desktop with her CV as files, Minesweeper renamed Scope Mines,
+// and a Recycle Bin full of what this site deleted. Start → Shut Down ends on the famous orange line.
+type App = "readme" | "career" | "saints" | "mines" | "bin";
+type Win = { id: App; x: number; y: number; z: number };
+
+// Tiny pixel icons, drawn from maps like the arcade sprites. Letters pick colours from PAL.
+const PAL: Record<string, string> = { k: "#000", w: "#fff", g: "#c0c0c0", d: "#808080", y: "#ffd700", b: "#000080", c: "#00a0a0", r: "#c00000", l: "#5fd0ff", o: "#ff8000" };
+const ICONS: Record<App, string[]> = {
+  readme: ["kkkkkkkk..", "kwwwwwwkk.", "kwkkkkwwkk", "kwwwwwwwwk", "kwkkkkkkwk", "kwwwwwwwwk", "kwkkkkkkwk", "kwwwwwwwwk", "kwkkkkwwwk", "kkkkkkkkkk"],
+  career: ["kkkkkkkk..", "kwwwwwwkk.", "kwbbbbwwkk", "kwwwwwwwwk", "kwbbbbbbwk", "kwwwwwwwwk", "kwbbbbbbwk", "kwwwwwwwwk", "kwbbbwwwwk", "kkkkkkkkkk"],
+  saints: ["kkkkkkkkkk", "kllllllllk", "kllllyylk.", "klllllllk.", "kllcclllk.", "klcccclllk", "kcccccccck", "kcccccccck", "kcccccccck", "kkkkkkkkkk"],
+  mines: ["gggggggggg", "gwwwwwwwwd", "gwg.k.gggd", "gwgkkkkggd", "gw.kwkk.gd", "gwgkkkkggd", "gwg.k.gggd", "gwggggggd.", "gwggggggd.", "dddddddddd"],
+  bin: ["..kkkkkk..", ".kggggggk.", "kkkkkkkkkk", ".kwgwgwgk.", ".kwgwgwgk.", ".kwgwgwgk.", ".kwgwgwgk.", ".kwgwgwgk.", ".kwgwgwgk.", "..kkkkkk.."],
+};
+const Icon = ({ app, size = 32 }: { app: App; size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 10 10" shapeRendering="crispEdges" aria-hidden="true">
+    {ICONS[app].flatMap((row, y) => [...row].map((c, x) => (PAL[c] ? <rect key={`${x}-${y}`} x={x} y={y} width="1" height="1" fill={PAL[c]} /> : null)))}
+  </svg>
+);
+
+const NAMES: Record<App, string> = { readme: "README.txt", career: "Career.txt", saints: "Ruined_Saints.bmp", mines: "Scope Mines", bin: "Recycle Bin" };
+const TITLES: Record<App, string> = { readme: "README.txt - Notepad", career: "Career.txt - Notepad", saints: "Ruined_Saints.bmp - Paint", mines: "Scope Mines", bin: "Recycle Bin" };
+const DESKTOP: App[] = ["readme", "career", "saints", "mines", "bin"];
+
+function Readme() {
+  return (
+    <pre className={s.notepad}>{`Hi, it's Adelina. You booted my old computer.
+
+This is roughly where it started: rooting Windows
+in high school, and emulating the Nintendo and
+Game Boy games I couldn't get.
+
+Have a look around.
+  Career.txt         the short version of my CV
+  Ruined_Saints.bmp  my streetwear label
+  Scope Mines        Minesweeper, except every
+                     mine is a scope change
+
+Don't open the Recycle Bin.
+(You will.)`}</pre>
+  );
+}
+
+function Career() {
+  const pad = Math.max(...jobs.map((j) => j.dates.length));
+  return <pre className={s.notepad}>{`CAREER.TXT\n==========\n\n${jobs.map((j) => `${j.dates.padEnd(pad)}  ${j.short}\n${" ".repeat(pad)}  ${j.company}`).join("\n\n")}\n\nThe full story is on the Career tab.`}</pre>;
+}
+
+function Saints() {
+  const v = ventures[0];
+  return (
+    <div className={s.paint}>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src="/media/ruined-saints.jpg" alt={`${v.name}: the site’s hero`} />
+      <p>{v.name}: {v.note}</p>
+    </div>
+  );
+}
+
+const BIN = [
+  { name: "halloween-theme.css", note: "Dripping green titles. Removed by popular demand (mine)." },
+  { name: "arcade-hd/", note: "2,031 lines of 3D. The pixels were better." },
+  { name: "tinted-pill-button.png", note: "We don’t talk about the tinted pill." },
+];
+function Bin() {
+  return (
+    <div className={s.bin}>
+      <ul>{BIN.map((f) => <li key={f.name}><b>{f.name}</b><span>{f.note}</span></li>)}</ul>
+      <div className={s.binBar}><button type="button" className={s.btn} disabled title="Some things stay deleted">Restore</button><span>{BIN.length} object(s)</span></div>
+    </div>
+  );
+}
+
+function Mines() {
+  const [b, setB] = useState<Board>(newBoard());
+  useEffect(() => { if (b.state === "won") unlock("mines"); }, [b.state]);
+  const left = b.mines - b.cells.filter((c) => c.flag).length;
+  const face = b.state === "won" ? "😎" : b.state === "lost" ? "😵" : "🙂";
+  return (
+    <div className={s.mines}>
+      <div className={s.minesBar}>
+        <span className={s.lcd}>{String(Math.max(left, 0)).padStart(3, "0")}</span>
+        <button type="button" className={`${s.btn} ${s.face}`} onClick={() => setB(newBoard())} aria-label="New game">{face}</button>
+        <span className={s.lcd}>{b.state === "won" ? "WIN" : b.state === "lost" ? "OOP" : "SCP"}</span>
+      </div>
+      <div className={s.grid} style={{ gridTemplateColumns: `repeat(${b.w}, 22px)` }} onContextMenu={(e) => e.preventDefault()}>
+        {b.cells.map((c, i) => (
+          <button
+            key={i}
+            type="button"
+            className={s.cell}
+            data-open={c.open || undefined}
+            data-n={c.open && !c.mine ? c.near : undefined}
+            onClick={() => setB((x) => reveal(x, i))}
+            onContextMenu={() => setB((x) => flag(x, i))}
+            aria-label={c.open ? (c.mine ? "scope change" : `${c.near} near`) : c.flag ? "flagged" : "hidden"}
+          >
+            {c.open ? (c.mine ? "✱" : c.near || "") : c.flag ? "⚑" : ""}
+          </button>
+        ))}
+      </div>
+      <p className={s.minesNote}>{b.state === "lost" ? "Scope crept in. Click the face to try again." : b.state === "won" ? "Scope contained. Ship it." : "Right-click (or long-press) to flag a scope change."}</p>
+    </div>
+  );
+}
+
+const BODY: Record<App, () => React.ReactNode> = { readme: Readme, career: Career, saints: Saints, mines: Mines, bin: Bin };
+
+export default function Win98({ onClose, contact }: { onClose: () => void; contact: () => void }) {
+  const calm = useCalm();
+  const [booting, setBooting] = useState(!calm);
+  const [off, setOff] = useState(false);
+  const [start, setStart] = useState(false);
+  const [wins, setWins] = useState<Win[]>([{ id: "readme", x: 140, y: 40, z: 1 }]);
+  const [clock, setClock] = useState("");
+  const top = useRef(1);
+  const quit = useRef(onClose); // a ref, so a parent re-render never restarts the boot or the clock
+  quit.current = onClose;
+
+  useEffect(() => {
+    unlock("win98");
+    const t = setTimeout(() => setBooting(false), 1400);
+    const tick = () => setClock(new Date().toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" }));
+    tick();
+    const id = setInterval(tick, 15000);
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") quit.current(); };
+    window.addEventListener("keydown", onKey);
+    return () => { clearTimeout(t); clearInterval(id); window.removeEventListener("keydown", onKey); };
+  }, []);
+
+  const open = (id: App) => {
+    setStart(false);
+    setWins((ws) => {
+      top.current += 1;
+      const had = ws.find((w) => w.id === id);
+      if (had) return ws.map((w) => (w.id === id ? { ...w, z: top.current } : w));
+      const n = ws.length;
+      return [...ws, { id, x: 120 + n * 56, y: 30 + n * 40, z: top.current }];
+    });
+  };
+  const focus = (id: App) => setWins((ws) => { top.current += 1; return ws.map((w) => (w.id === id ? { ...w, z: top.current } : w)); });
+  const close = (id: App) => setWins((ws) => ws.filter((w) => w.id !== id));
+
+  // Drag a window by its title bar.
+  const drag = (id: App) => (e: React.PointerEvent) => {
+    if ((e.target as HTMLElement).closest("button")) return;
+    focus(id);
+    const w = wins.find((x) => x.id === id)!, sx = e.clientX - w.x, sy = e.clientY - w.y;
+    const move = (m: PointerEvent) => setWins((ws) => ws.map((x) => (x.id === id ? { ...x, x: Math.max(-200, m.clientX - sx), y: Math.max(0, m.clientY - sy) } : x)));
+    const up = () => { window.removeEventListener("pointermove", move); window.removeEventListener("pointerup", up); };
+    window.addEventListener("pointermove", move);
+    window.addEventListener("pointerup", up);
+  };
+
+  const screen = off ? (
+    <button type="button" className={s.off} onClick={onClose} aria-label="Close">It’s now safe to turn off your computer.</button>
+  ) : booting ? (
+    <div className={s.boot} onClick={() => setBooting(false)}><b>Windows<sup>98</sup></b><span>Starting Windows 98…</span><i /></div>
+  ) : (
+    <div className={s.desk} onPointerDown={(e) => { if (e.target === e.currentTarget) setStart(false); }}>
+      <ul className={s.icons}>
+        {DESKTOP.map((id) => (
+          <li key={id}><button type="button" className={s.icon} onDoubleClick={() => open(id)} onClick={(e) => { if (e.detail === 0 || matchMedia("(pointer: coarse)").matches) open(id); }}><Icon app={id} /><span>{NAMES[id]}</span></button></li>
+        ))}
+      </ul>
+
+      {wins.map((w) => {
+        const Body = BODY[w.id];
+        return (
+          <section key={w.id} className={s.win} style={{ left: w.x, top: w.y, zIndex: w.z }} onPointerDown={() => focus(w.id)} aria-label={TITLES[w.id]} data-app={w.id}>
+            <header className={s.title} onPointerDown={drag(w.id)} data-active={w.z === top.current || undefined}>
+              <Icon app={w.id} size={14} /><span>{TITLES[w.id]}</span>
+              <button type="button" className={`${s.btn} ${s.x}`} onClick={() => close(w.id)} aria-label={`Close ${NAMES[w.id]}`}>✕</button>
+            </header>
+            <div className={s.winBody}><Body /></div>
+          </section>
+        );
+      })}
+
+      {start && (
+        <nav className={s.menu} aria-label="Start menu">
+          <span className={s.menuSide}><b>Windows</b>98</span>
+          <ul>
+            {DESKTOP.map((id) => <li key={id}><button type="button" onClick={() => open(id)}><Icon app={id} size={20} />{NAMES[id]}</button></li>)}
+            <li className={s.sep} />
+            <li><button type="button" onClick={() => { onClose(); contact(); }}><span className={s.menuGlyph}>✉</span>Message Adelina…</button></li>
+            <li><button type="button" onClick={() => setOff(true)}><span className={s.menuGlyph}>⏻</span>Shut Down…</button></li>
+          </ul>
+        </nav>
+      )}
+
+      <footer className={s.taskbar}>
+        <button type="button" className={`${s.btn} ${s.start}`} data-on={start || undefined} onClick={() => setStart((v) => !v)}><b>⊞</b> Start</button>
+        <div className={s.tasks}>
+          {wins.map((w) => <button key={w.id} type="button" className={s.btn} data-on={w.z === top.current || undefined} onClick={() => focus(w.id)}><Icon app={w.id} size={14} />{NAMES[w.id]}</button>)}
+        </div>
+        <span className={s.tray}>{clock}</span>
+      </footer>
+    </div>
+  );
+
+  return createPortal(<div className={s.overlay} role="dialog" aria-modal="true" aria-label="Windows 98">{screen}</div>, document.body);
+}

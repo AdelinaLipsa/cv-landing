@@ -1,0 +1,78 @@
+/* Windows 98, by hand: teal desktop, grey bevels, navy title bars. Pixel icons, Tahoma-ish type. */
+.overlay { position: fixed; inset: 0; z-index: 66; font: 12px/1.35 Tahoma, "MS Sans Serif", Geneva, Verdana, sans-serif; color: #000; -webkit-font-smoothing: none; user-select: none; -webkit-user-select: none; }
+.overlay * { box-sizing: border-box; }
+
+/* The 3D bevel every control wears */
+.btn { display: inline-flex; align-items: center; gap: 4px; min-height: 22px; padding: 2px 8px; border: 0; border-radius: 0; background: #c0c0c0; color: #000; font: inherit; cursor: pointer; box-shadow: inset -1px -1px #000, inset 1px 1px #fff, inset -2px -2px #808080, inset 2px 2px #dfdfdf; }
+.btn:active:not(:disabled), .btn[data-on] { box-shadow: inset -1px -1px #fff, inset 1px 1px #000, inset -2px -2px #dfdfdf, inset 2px 2px #808080; }
+.btn:disabled { color: #808080; text-shadow: 1px 1px #fff; cursor: default; }
+.btn:focus-visible { outline: 1px dotted #000; outline-offset: -4px; }
+
+/* Boot splash and the shut-down screen */
+.boot { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; background: linear-gradient(#000 0%, #0b1a6b 55%, #3a6ea5 100%); color: #fff; cursor: pointer; }
+.boot b { font: italic 800 54px/1 "Franklin Gothic Medium", "Arial Black", sans-serif; letter-spacing: -1px; }
+.boot sup { font-size: 24px; color: #ffd700; }
+.boot span { font-size: 14px; }
+.boot i { width: 220px; height: 10px; background: repeating-linear-gradient(90deg, #3a6ea5 0 14px, #fff 14px 18px); animation: boot 1.4s linear forwards; clip-path: inset(0 100% 0 0); }
+@keyframes boot { to { clip-path: inset(0 0 0 0); } }
+.off { position: absolute; inset: 0; width: 100%; border: 0; background: #000; color: #ff8000; font: 700 clamp(18px, 3vw, 30px) "Courier New", monospace; text-align: center; padding: 20px; cursor: pointer; }
+
+/* Desktop */
+.desk { position: absolute; inset: 0; background: #008080; overflow: hidden; }
+.icons { list-style: none; margin: 0; padding: 10px 6px; display: flex; flex-direction: column; flex-wrap: wrap; gap: 14px; max-height: calc(100% - 40px); align-content: flex-start; }
+.icon { display: flex; flex-direction: column; align-items: center; gap: 4px; width: 78px; padding: 2px; border: 0; background: none; color: #fff; font: inherit; cursor: default; text-align: center; }
+.icon svg { image-rendering: pixelated; }
+.icon span { max-width: 100%; padding: 0 2px; overflow-wrap: anywhere; text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.5); }
+.icon:focus span, .icon:focus-visible span { background: #000080; outline: 1px dotted #fff; }
+.icon:focus svg { filter: brightness(0.6) sepia(1) hue-rotate(190deg) saturate(4); }
+
+/* Windows */
+.win { position: absolute; display: flex; flex-direction: column; min-width: 260px; max-width: min(560px, calc(100vw - 16px)); padding: 3px; background: #c0c0c0; box-shadow: inset -1px -1px #000, inset 1px 1px #dfdfdf, inset -2px -2px #808080, inset 2px 2px #fff, 4px 6px 0 rgba(0, 0, 0, 0.25); }
+.title { display: flex; align-items: center; gap: 4px; height: 20px; padding: 0 2px 0 4px; background: linear-gradient(90deg, #808080, #b5b5b5); color: #dfdfdf; font-weight: 700; cursor: grab; touch-action: none; }
+.title[data-active] { background: linear-gradient(90deg, #000080, #1084d0); color: #fff; }
+.title span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.x { min-height: 16px; width: 18px; padding: 0; justify-content: center; font-size: 10px; font-weight: 700; }
+.winBody { margin-top: 3px; }
+.notepad { margin: 0; max-height: 52vh; overflow: auto; padding: 6px 8px; background: #fff; font: 13px/1.4 "Fixedsys", "Courier New", monospace; white-space: pre; box-shadow: inset -1px -1px #fff, inset 1px 1px #808080, inset -2px -2px #dfdfdf, inset 2px 2px #000; user-select: text; -webkit-user-select: text; }
+.paint { display: flex; flex-direction: column; gap: 6px; padding: 6px; background: #808080; }
+.paint img { display: block; width: 100%; max-width: 480px; image-rendering: auto; box-shadow: 2px 2px 0 #000; }
+.paint p { margin: 0; color: #fff; }
+.bin ul { list-style: none; margin: 0; padding: 6px; display: flex; flex-direction: column; gap: 8px; background: #fff; box-shadow: inset 1px 1px #808080, inset -1px -1px #fff; }
+.bin li { display: flex; flex-direction: column; }
+.bin span { color: #555; }
+.binBar { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 6px; }
+
+/* Scope Mines */
+.mines { display: flex; flex-direction: column; gap: 6px; padding: 6px; }
+.minesBar { display: flex; align-items: center; justify-content: space-between; padding: 4px 6px; box-shadow: inset 1px 1px #808080, inset -1px -1px #fff; }
+.lcd { min-width: 42px; padding: 0 3px; background: #000; color: #ff0000; font: 700 20px/1.1 "Courier New", monospace; text-align: center; }
+.face { width: 30px; min-height: 30px; justify-content: center; padding: 0; font-size: 16px; }
+.grid { display: grid; justify-content: center; box-shadow: inset 2px 2px #808080, inset -2px -2px #fff; padding: 2px; }
+.cell { width: 22px; height: 22px; padding: 0; border: 0; background: #c0c0c0; font: 700 13px/1 Tahoma, sans-serif; cursor: pointer; box-shadow: inset -1px -1px #808080, inset 1px 1px #fff, inset -2px -2px #a0a0a0; }
+.cell[data-open] { box-shadow: inset 1px 1px #808080; cursor: default; }
+.cell[data-n="1"] { color: #0000ff; } .cell[data-n="2"] { color: #008000; } .cell[data-n="3"] { color: #ff0000; } .cell[data-n="4"] { color: #000080; }
+.cell[data-n="5"] { color: #800000; } .cell[data-n="6"] { color: #008080; } .cell[data-n="7"] { color: #000; } .cell[data-n="8"] { color: #808080; }
+.minesNote { margin: 0; max-width: 220px; font-size: 11px; }
+
+/* Start menu and taskbar */
+.taskbar { position: absolute; left: 0; right: 0; bottom: 0; height: 32px; display: flex; align-items: center; gap: 4px; padding: 3px 3px 2px; background: #c0c0c0; box-shadow: inset 0 1px #dfdfdf, inset 0 2px #fff; z-index: 9000; }
+.start { font-weight: 700; height: 26px; }
+.start b { font-size: 14px; color: #000080; }
+.tasks { flex: 1; display: flex; gap: 3px; min-width: 0; overflow: hidden; }
+.tasks .btn { flex: 0 1 160px; min-width: 0; height: 26px; justify-content: flex-start; overflow: hidden; white-space: nowrap; }
+.tray { padding: 4px 10px; box-shadow: inset 1px 1px #808080, inset -1px -1px #fff; }
+.menu { position: absolute; left: 2px; bottom: 32px; display: flex; z-index: 9001; background: #c0c0c0; box-shadow: inset -1px -1px #000, inset 1px 1px #dfdfdf, inset -2px -2px #808080, inset 2px 2px #fff; padding: 3px; }
+.menuSide { writing-mode: vertical-rl; transform: rotate(180deg); padding: 8px 4px; background: linear-gradient(#1084d0, #000080); color: #c0c0c0; font-size: 18px; }
+.menuSide b { color: #fff; }
+.menu ul { list-style: none; margin: 0; padding: 0; min-width: 200px; }
+.menu button { display: flex; align-items: center; gap: 10px; width: 100%; height: 32px; padding: 0 10px 0 6px; border: 0; background: none; font: inherit; text-align: left; cursor: pointer; }
+.menu button:hover, .menu button:focus-visible { background: #000080; color: #fff; outline: none; }
+.menuGlyph { width: 20px; text-align: center; font-size: 16px; }
+.sep { height: 2px; margin: 3px 0; box-shadow: inset 0 1px #808080, inset 0 -1px #fff; }
+
+@media (max-width: 640px) {
+  .win { left: 6px !important; right: 6px; top: 6px !important; max-width: none; }
+  .title { cursor: default; }
+  .notepad { white-space: pre-wrap; font-size: 12px; }
+}
+@media (prefers-reduced-motion: reduce) { .boot i { animation: none; clip-path: none; } }

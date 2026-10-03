@@ -7,8 +7,10 @@ import s from "./RetroComputer.module.css";
 
 // A beige late-90s computer in three.js. The screen is a canvas texture running the pixel battle.
 // three.js is only fetched when this scrolls near view, and nothing renders while it's off screen.
-export default function RetroComputer({ className, character = false }: { className?: string; character?: boolean }) {
+export default function RetroComputer({ className, character = false, onScreen }: { className?: string; character?: boolean; onScreen?: () => void }) {
   const host = useRef<HTMLDivElement>(null);
+  const boot = useRef(onScreen); // a ref, so the scene never remounts for it
+  boot.current = onScreen;
 
   useEffect(() => {
     const el = host.current!;
@@ -18,7 +20,7 @@ export default function RetroComputer({ className, character = false }: { classN
     const io = new IntersectionObserver(async ([e]) => {
       if (!e.isIntersecting || started) return;
       started = true;
-      cleanup = await mount(el, character);
+      cleanup = await mount(el, character, () => boot.current?.());
     }, { rootMargin: "300px" });
     io.observe(el);
 
@@ -28,7 +30,7 @@ export default function RetroComputer({ className, character = false }: { classN
   return <div ref={host} className={className} role="img" aria-label="A kid runs home from school to her room and a beige 90s computer. Around it: a cat on the monitor, a guitar, an iPad mid-drawing, a Mega Man figure, kid Goku, a Digivice, a Pokéball, a straw hat, and boxing gloves. The computer switches on, and a tiny pixel navi battles a virus on a grid." />;
 }
 
-async function mount(el: HTMLElement, character: boolean) {
+async function mount(el: HTMLElement, character: boolean, onScreen: () => void) {
   const [THREE, { RoomEnvironment }] = await Promise.all([import("three"), import("three/examples/jsm/environments/RoomEnvironment.js")]);
   const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
 
@@ -547,8 +549,16 @@ async function mount(el: HTMLElement, character: boolean) {
     drag = { x: e.clientX, y: e.clientY, yaw, px: pan.x, py: pan.y };
     el.style.cursor = "grabbing";
   };
+  // A click (not a drag) on the monitor's screen boots it: Windows 98 (components/Win98).
+  const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
+  const onScreenAt = (e: PointerEvent) => {
+    const r = el.getBoundingClientRect();
+    ndc.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
+    ray.setFromCamera(ndc, camera);
+    return ray.intersectObject(screen).length > 0;
+  };
   const onMove = (e: PointerEvent) => {
-    if (!drag) return;
+    if (!drag) { el.style.cursor = onScreenAt(e) ? "pointer" : "grab"; return; }
     const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
     if (zoom > 1.05) {
       // Zoomed in: drag the view, like a map. Kept within the room.
@@ -556,7 +566,12 @@ async function mount(el: HTMLElement, character: boolean) {
       pan.set(Math.max(-lim, Math.min(lim, drag.px - dx * k)), Math.max(-lim, Math.min(lim, drag.py + dy * k)));
     } else yaw = Math.max(-0.9, Math.min(0.9, drag.yaw + (dx / el.clientWidth) * 2.5));
   };
-  const onUp = () => { drag = null; el.style.cursor = "grab"; };
+  const onUp = (e: PointerEvent) => {
+    const tap = drag && Math.hypot(e.clientX - drag.x, e.clientY - drag.y) < 6;
+    drag = null;
+    el.style.cursor = "grab";
+    if (tap && e.type === "pointerup" && onScreenAt(e)) onScreen();
+  };
   el.style.cursor = "grab";
   // Pinch on a trackpad (or ctrl + scroll) zooms. A plain scroll still scrolls the page.
   const onWheel = (e: WheelEvent) => {

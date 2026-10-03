@@ -10,6 +10,7 @@ import { about, beliefs, origin, profile, ventures } from "@/content/cv";
 import { tiles } from "@/content/wall";
 import { Card } from "./Work";
 import RetroComputer from "../RetroComputer";
+import Win98 from "../Win98";
 import { LinkedInIcon, WhatsAppIcon } from "../Contact";
 import Dock from "../Dock";
 import VariableProximity from "../VariableProximity";
@@ -102,6 +103,7 @@ export default function Home({ ui }: { ui: UI }) {
   const originOn = useInView(originRef, { once: true, amount: 0.25 });
   const drop = (at: number) => (stage < at ? { "data-drop": "" } : {});
   const quick = <button type="button" className={`${p.primary} ${s.quick}`} onClick={() => ui.sheet("The 30-second version", <QuickRead contact={ui.contact} />)}><DecryptedText text="Busy? Read the 30-second version →" animateOn="hover" speed={40} maxIterations={8} /></button>;
+  const [win98, setWin98] = useState(false); // the retro computer, booted
   const buildLabel = touring ? "Stop the build" : ui.returning ? "Replay the build" : "Watch me build it";
 
   return (
@@ -239,7 +241,11 @@ export default function Home({ ui }: { ui: UI }) {
             <span aria-hidden="true">&gt;_</span> psst… there’s a terminal in here<span className={s.termHint}>. Press `</span>
           </button>
         </div>
-        <div className={s.retro} data-tour="retro"><RetroComputer className={s.retroCanvas} character={ui.character} /></div>
+        <div className={s.retro} data-tour="retro">
+          <RetroComputer className={s.retroCanvas} character={ui.character} onScreen={() => setWin98(true)} />
+          {!touring && <button type="button" className={s.bootBtn} onClick={() => setWin98(true)}><span aria-hidden="true">▶</span> Boot the old computer</button>}
+        </div>
+        {win98 && <Win98 onClose={() => setWin98(false)} contact={ui.contact} />}
       </section>
     </div>
   );
