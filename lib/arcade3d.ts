@@ -28,6 +28,7 @@ export async function stage(canvas: HTMLCanvasElement, W: number, H: number, opt
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure = 1.05;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  renderer.info.autoReset = false; // manually reset before composer.render() for accurate draw call counts
   // The GPU can take the context back (a phone backgrounding the tab). Say so; the game drops to Retro.
   canvas.addEventListener("webglcontextlost", (e) => { e.preventDefault(); opts.onLost?.(); }, { once: true });
 
@@ -125,6 +126,7 @@ export async function stage(canvas: HTMLCanvasElement, W: number, H: number, opt
     render(dt: number) {
       govern(dt);
       finish.uniforms.time.value += dt;
+      renderer.info.reset();
       composer.render();
       if (perf && ++frames && performance.now() - since > 500) {
         const i = renderer.info, fps = (frames * 1000) / (performance.now() - since);
