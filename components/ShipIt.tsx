@@ -1,11 +1,9 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
-import type { Mode } from "@/lib/arcadePrefs";
+import { useEffect, useRef } from "react";
 import { sfx } from "@/lib/sfx";
 import { unlock } from "@/lib/achievements";
 import { drawSnow, season } from "@/lib/season";
-import type { ShipItView } from "@/lib/shipit3d";
-import { PAL, retroShipIt } from "@/lib/retro/shipit";
+import { type ShipItView, PAL, retroShipIt } from "@/lib/retro/shipit";
 import crt from "./SpaceGame.module.css";
 import s from "./Arcade.module.css";
 
@@ -43,40 +41,20 @@ const tile = (c: number, r: number) => (r < 0 ? "." : r >= ROWS ? "." : c < 0 ||
 const solidAt = (c: number, r: number, wall: boolean) => { const t = tile(c, r); return t === "#" || t === "=" || (wall && c === ARENA - 1 && r < 13); };
 const LEVEL = { tile, rows: ROWS, cols: COLS, size: T, arena: ARENA };
 
-export default function ShipIt({ mode: want = "hd", onLost, onEnd }: { mode?: Mode; onLost?: () => void; onEnd?: (score: number) => void }) {
+export default function ShipIt({ onEnd }: { onEnd?: (score: number) => void }) {
   // The final score goes to the arcade's leaderboard. A ref, so the game loop never restarts for it.
   const report = useRef(onEnd);
   report.current = onEnd;
-  // Ship It! owns its fallback like the space shooter: no WebGL or a lost GPU swaps to Retro in place (the run
-  // goes on), then tells the parent. `shown` is presentation only; the game effect depends on the requested mode.
-  const [shown, setShown] = useState(want);
-  const lost = useRef(onLost);
-  lost.current = onLost;
   const canvas = useRef<HTMLCanvasElement>(null);
-  const stage = useRef<HTMLCanvasElement>(null);
   const keys = useRef({ left: false, right: false, jump: false, fire: false });
 
   useEffect(() => {
-    setShown(want);
     const calm = matchMedia("(prefers-reduced-motion: reduce)").matches;
     const ctx = canvas.current!.getContext("2d")!;
     ctx.setTransform(S, 0, 0, S, 0, 0);
     const k = keys.current;
     const SEASON = season();
-    let view: ShipItView | null = null, gone = false, dropped = false;
-    const drop = () => {
-      if (gone || dropped) return;
-      dropped = true;
-      view?.dispose();
-      view = retroShipIt(ctx, W, H, LEVEL);
-      setShown("retro");
-      lost.current?.();
-    };
-    if (want === "retro") view = retroShipIt(ctx, W, H, LEVEL);
-    else import("@/lib/shipit3d")
-      .then((m) => (gone ? null : m.mountShipIt(stage.current!, W, H, LEVEL, drop)))
-      .then((v) => { if (!v) return; if (gone || dropped) v.dispose(); else view = v; })
-      .catch(drop); // no WebGL: drop to Retro
+    const view: ShipItView = retroShipIt(ctx, W, H, LEVEL);
 
     let p: Body & { hp: number; inv: number; face: number; charge: number; lives: number; dead: number; shot: number } = null!;
     let impacts: { x: number; y: number; at: number; vx: number }[] = [];
@@ -298,10 +276,10 @@ export default function ShipIt({ mode: want = "hd", onLost, onEnd }: { mode?: Mo
       const target = boss?.on ? ARENA * T : p.x - W / 2 + 20;
       cam += (Math.max(0, Math.min(COLS * T - W, target)) - cam) * Math.min(1, dt * 8);
 
-      // Draw: the view (3D on the stage canvas, or Retro on this one), then snow, flash and the HUD on top.
+      // Draw: the pixel view, then snow, flash and the HUD on top.
       ctx.clearRect(0, 0, W, H);
       const beaming = state === "ready" && stateT > 0.7;
-      view?.draw({
+      view.draw({
         t, dt, cam, shake: calm ? 0 : shake, halloween: SEASON === "halloween",
         p: {
           x: p.x, y: p.y, vx: p.vx, vy: p.vy, ground: p.ground, face: p.face, shot: p.shot, charge: p.charge, won: state === "won",
@@ -364,14 +342,13 @@ export default function ShipIt({ mode: want = "hd", onLost, onEnd }: { mode?: Mo
     window.addEventListener("keyup", ku);
     el.addEventListener("pointerdown", tap);
     return () => {
-      gone = true;
-      view?.dispose();
+      view.dispose();
       cancelAnimationFrame(raf);
       window.removeEventListener("keydown", kd);
       window.removeEventListener("keyup", ku);
       el.removeEventListener("pointerdown", tap);
     };
-  }, [want]);
+  }, []);
 
   // Touch pad: hold buttons set the same keys the keyboard does.
   const hold = (name: keyof typeof keys.current) => ({
@@ -382,8 +359,7 @@ export default function ShipIt({ mode: want = "hd", onLost, onEnd }: { mode?: Mo
 
   return (
     <>
-      <div className={`${crt.crt} ${shown === "hd" ? crt.hd : crt.retro}`}>
-        {shown === "hd" && <canvas ref={stage} aria-hidden="true" />}
+      <div className={`${crt.crt} ${crt.retro}`}>
         <canvas ref={canvas} width={W * S} height={H * S} className={crt.hud} role="img" aria-label="Ship It!, a platformer. Left and right arrows to run, Z or up to jump, X or Space to shoot, hold to charge." />
       </div>
       <div className={s.pad} aria-hidden="true">

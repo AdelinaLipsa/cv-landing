@@ -1,15 +1,13 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { sfx } from "@/lib/sfx";
 import { unlock } from "@/lib/achievements";
 import { drawSnow, season } from "@/lib/season";
-import type { SpaceView } from "@/lib/space3d";
-import type { Mode } from "@/lib/arcadePrefs";
-import { retroSpace } from "@/lib/retro/space";
+import { type SpaceView, retroSpace } from "@/lib/retro/space";
 import s from "./SpaceGame.module.css";
 
 // A space shooter: the gamepad button in the nav, or `play` in the terminal. It plays on a 192 × 120 grid;
-// lib/space3d draws that grid as a lit 3D scene, and a sharp 2D layer on top carries the score and messages.
+// lib/retro/space draws it in pixels, and a sharp 2D layer on top carries the score and messages.
 // Three waves, then a boss: The Backlog. Beat it and you win. ← → (or drag) to move; the ship fires on its own.
 // Power-ups drop from aliens: T triple shot, R rapid fire, S shield, B bomb (clears the screen), + extra life.
 // Quick kills chain a combo up to x5. The high score is remembered.
@@ -31,41 +29,21 @@ type P = { x: number; y: number; vx: number; vy: number };
 type Spark = P & { life: number; max: number; color: string };
 type Pop = { x: number; y: number; text: string; life: number; color: string };
 
-export default function SpaceGame({ mode: want, onLost, onEnd }: { mode: Mode; onLost?: () => void; onEnd?: (score: number) => void }) {
+export default function SpaceGame({ onEnd }: { onEnd?: (score: number) => void }) {
   // The final score goes to the arcade's leaderboard. A ref, so the game loop never restarts for it.
   const report = useRef(onEnd);
   report.current = onEnd;
-  // SpaceGame owns its fallback: no WebGL or a lost GPU swaps to Retro in place (the run goes on), then tells the parent.
-  // `shown` is presentation only; the game effect depends on the requested mode, never on it.
-  const [shown, setShown] = useState(want);
-  const lost = useRef(onLost); // likewise: a ref, so a lost GPU never restarts the loop
-  lost.current = onLost;
   const canvas = useRef<HTMLCanvasElement>(null);
-  const stage = useRef<HTMLCanvasElement>(null);
   const strip = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    setShown(want);
     const calm = matchMedia("(prefers-reduced-motion: reduce)").matches;
     const ctx = canvas.current!.getContext("2d")!;
     ctx.setTransform(S, 0, 0, S, 0, 0);
     const SEASON = season();
     const tint = SEASON === "halloween" ? ["#ff8c1a", "#b46bff", "#7dff6b"] : SEASON === "christmas" ? ["#ff5a5a", "#5fd897", "#ffffff"] : KINDS.map((k) => k.color);
     const bossColor = SEASON === "halloween" ? "#7dff6b" : "#ff5a5a";
-    let view: SpaceView | null = null, gone = false, dropped = false;
-    const drop = () => {
-      if (gone || dropped) return;
-      dropped = true;
-      view?.dispose();
-      view = retroSpace(ctx, W, H, tint, bossColor);
-      setShown("retro");
-      lost.current?.();
-    };
-    if (want === "retro") view = retroSpace(ctx, W, H, tint, bossColor);
-    else import("@/lib/space3d")
-      .then((m) => (gone ? null : m.mountSpace(stage.current!, W, H, tint, bossColor, drop)))
-      .then((v) => { if (!v) return; if (gone || dropped) v.dispose(); else view = v; })
-      .catch(drop); // no WebGL: drop to Retro
+    const view: SpaceView = retroSpace(ctx, W, H, tint, bossColor);
     let hi = 0;
     try { hi = Number(localStorage.getItem(HI_KEY)) || 0; } catch { }
     let best = hi; // the record to beat this game
@@ -92,7 +70,7 @@ export default function SpaceGame({ mode: want, onLost, onEnd }: { mode: Mode; o
         const max = 0.4 + Math.random() * 0.5;
         sparks.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, life: max, max, color });
       }
-      if (n >= 8) view?.boom(x, y, color, n / 10); // big ones light up the ships around them
+      if (n >= 8) view.boom(x, y, color, n / 10); // big ones light up the ships around them
     };
 
     // Kills inside 1.2s of each other chain a combo: x2, x3, up to x5.
@@ -270,7 +248,7 @@ export default function SpaceGame({ mode: want, onLost, onEnd }: { mode: Mode; o
       // Draw: the 3D scene, then the 2D layer on top (power-up letters, points, flash, snow), shaken when hit.
       const warp = state === "banner" ? 7 : 1; // between waves the stars streak past
       ctx.clearRect(0, 0, W, H);
-      view?.draw({
+      view.draw({
         t, dt, warp, shake: calm ? 0 : shake,
         ship: { x: ship, visible: state !== "over" && (invuln <= 0 || Math.floor(t * 12) % 2 === 1), trim: triple > 0 ? "#F5B53F" : rapid > 0 ? "#b6ffcf" : "#5fd897", shield },
         aliens, kind: Math.min(Math.max(wave, 0), WAVES.length - 1),
@@ -356,19 +334,17 @@ export default function SpaceGame({ mode: want, onLost, onEnd }: { mode: Mode; o
     window.addEventListener("keyup", ku);
     for (const t of [el, pad] as HTMLElement[]) { t.addEventListener("pointerdown", steer); t.addEventListener("pointermove", steer); }
     return () => {
-      gone = true;
-      view?.dispose();
+      view.dispose();
       cancelAnimationFrame(raf);
       window.removeEventListener("keydown", kd);
       window.removeEventListener("keyup", ku);
       for (const t of [el, pad] as HTMLElement[]) { t.removeEventListener("pointerdown", steer); t.removeEventListener("pointermove", steer); }
     };
-  }, [want]);
+  }, []);
 
   return (
     <>
-    <div className={`${s.crt} ${shown === "hd" ? s.hd : s.retro}`}>
-      {shown === "hd" && <canvas ref={stage} aria-hidden="true" />}
+    <div className={`${s.crt} ${s.retro}`}>
       <canvas
         ref={canvas}
         width={W * S}

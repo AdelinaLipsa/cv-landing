@@ -5,8 +5,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "test": "node --test \"lib/**/*.check.ts\" \"scripts/**/*.check.mjs\"",
-    "assets:check": "node scripts/asset-budget.mjs public/arcade"
+    "test": "node --test \"lib/**/*.check.ts\""
   },
   "dependencies": {
     "gsap": "^3.15.0",

@@ -11,7 +11,3 @@ The Oxford comma, for its service.
 Built with: Next.js, React, motion, three.js, React Bits
 Standards: HTML, CSS, TypeScript, an unreasonable number of easter eggs
 Hint: open the console. Then try ↑ ↑ ↓ ↓ ← → ← → B A. Or press ` and type play.
-
-/* ARCADE ASSETS */
-Ship It! robot: RobotExpressive by Tomás Laulhé (Quaternius), modified by Don McCurdy. CC0 1.0.
-Ship It! steel: Metal Plate by Rob Tuytel, Poly Haven. CC0.

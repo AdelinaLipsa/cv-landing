@@ -8,7 +8,6 @@ import { tiles } from "@/content/wall";
 import { glide } from "@/lib/motion";
 import AnimatedList from "./AnimatedList";
 import SpaceGame from "./SpaceGame";
-import { getMode, hasWebGL2 } from "@/lib/arcadePrefs";
 import { unlock } from "@/lib/achievements";
 import s from "./Terminal.module.css";
 
@@ -107,7 +106,7 @@ export default function Terminal({ onClose, onContact, onWork }: { onClose: () =
       case "sudo":
         return print("sudo what? Try: sudo hire adelina");
       case "play":
-        return print(<SpaceGame mode={getMode((() => { try { return localStorage; } catch { return null; } })(), hasWebGL2())} />, <span className={s.muted}>← → or drag to move. Your ship fires on its own.</span>);
+        return print(<SpaceGame />, <span className={s.muted}>← → or drag to move. Your ship fires on its own.</span>);
       case "clear":
         return setLines([]);
       case "exit":

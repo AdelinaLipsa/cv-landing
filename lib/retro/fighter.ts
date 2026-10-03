@@ -1,7 +1,13 @@
 // Sprint Fighter as it was: a pixel rooftop at sunset, the crowd, two fighters made of thick pixel limbs.
-// Retro mode, and the fallback when WebGL isn't there or the GPU takes it back.
 import { POSES, PO, SH, poseName, type Look } from "../fighterMotion";
-import type { FighterFrame, FighterView } from "../fighter3d";
+export type FighterFrame = {
+  t: number; dt: number; shake: number; pause: number; halloween: boolean; christmas: boolean;
+  state: "intro" | "fight" | "ko" | "end"; stateT: number;
+  fighters: { x: number; y: number; face: number; act: string; actT: number; low: boolean; look: Look }[];
+  balls: { x: number; y: number; vx: number; mine: boolean; big: boolean }[];
+  sparks: { x: number; y: number; life: number; color: string }[];
+};
+export type FighterView = { draw(f: FighterFrame): void; dispose(): void };
 
 export function retroFighter(ctx: CanvasRenderingContext2D, W: number, H: number, GROUND: number): FighterView {
   let f!: FighterFrame; // the frame being drawn, for the helpers below

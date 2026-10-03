@@ -1,12 +1,10 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
-import type { Mode } from "@/lib/arcadePrefs";
+import { useEffect, useRef } from "react";
 import { sfx } from "@/lib/sfx";
 import { unlock } from "@/lib/achievements";
 import { drawSnow, season } from "@/lib/season";
 import { PO, SH, type Look } from "@/lib/fighterMotion";
-import { retroFighter } from "@/lib/retro/fighter";
-import type { FighterView } from "@/lib/fighter3d";
+import { type FighterView, retroFighter } from "@/lib/retro/fighter";
 import crt from "./SpaceGame.module.css";
 import s from "./Arcade.module.css";
 
@@ -34,38 +32,19 @@ const MOVES = {
   airkick: { time: 0.35, from: 0.05, to: 0.3, reach: 15, lo: 4, hi: 14, dmg: 8, sound: "kick" },
 } as const;
 
-export default function SprintFighter({ mode: want = "hd", onLost, onEnd }: { mode?: Mode; onLost?: () => void; onEnd?: (score: number) => void }) {
+export default function SprintFighter({ onEnd }: { onEnd?: (score: number) => void }) {
   // The final score goes to the arcade's leaderboard. A ref, so the game loop never restarts for it.
   const report = useRef(onEnd);
   report.current = onEnd;
-  // Owns its fallback like Ship It!: no WebGL or a lost GPU swaps to Retro in place (the match goes on), then tells the parent.
-  const [shown, setShown] = useState(want);
-  const lost = useRef(onLost);
-  lost.current = onLost;
   const canvas = useRef<HTMLCanvasElement>(null);
-  const stage = useRef<HTMLCanvasElement>(null);
   const keys = useRef<Input>({ left: false, right: false, up: false, down: false, p: false, k: false, s: false });
 
   useEffect(() => {
-    setShown(want);
     const calm = matchMedia("(prefers-reduced-motion: reduce)").matches;
     const ctx = canvas.current!.getContext("2d")!;
     ctx.setTransform(S, 0, 0, S, 0, 0);
     const SEASON = season();
-    let view: FighterView | null = null, gone = false, dropped = false;
-    const drop = () => {
-      if (gone || dropped) return;
-      dropped = true;
-      view?.dispose();
-      view = retroFighter(ctx, W, H, GROUND);
-      setShown("retro");
-      lost.current?.();
-    };
-    if (want === "retro") view = retroFighter(ctx, W, H, GROUND);
-    else import("@/lib/fighter3d")
-      .then((m) => (gone ? null : m.mountFighter(stage.current!, W, H, GROUND, { halloween: SEASON === "halloween", christmas: SEASON === "christmas" }, drop)))
-      .then((v) => { if (!v) return; if (gone || dropped) v.dispose(); else view = v; })
-      .catch(drop);
+    const view: FighterView = retroFighter(ctx, W, H, GROUND);
 
     const fighter = (x: number, face: number, look: Look, wins = 0): F => ({
       x, y: 0, vy: 0, vx: 0, face, hp: 100, shown: 100, meter: 0, act: "idle", actT: 0, low: false, hitDone: false,
@@ -255,9 +234,9 @@ export default function SprintFighter({ mode: want = "hd", onLost, onEnd }: { mo
       sparks = sparks.filter((sp) => ((sp.x += sp.vx * dt), (sp.y += sp.vy * dt), (sp.vy += 80 * dt), (sp.life -= dt) > 0));
       for (const f of [me, cpu]) f.shown += (f.hp - f.shown) * Math.min(1, dt * (f.shown > f.hp ? 2.5 : 10)); // the red part drains behind
 
-      // Draw: the view (3D on the stage canvas, or Retro on this one), then snow, flash and the HUD on top.
+      // Draw: the pixel view, then snow, flash and the HUD on top.
       ctx.clearRect(0, 0, W, H);
-      view?.draw({
+      view.draw({
         t, dt, shake: calm ? 0 : shake, pause, halloween: SEASON === "halloween", christmas: SEASON === "christmas", state, stateT,
         fighters: [me, cpu].map((f) => ({ x: f.x, y: f.y, face: f.face, act: f.act, actT: f.actT, low: f.low, look: f.look })),
         balls: balls.map((b) => ({ x: b.x, y: GROUND - 19, vx: b.vx, mine: b.owner === me, big: b.big })),
@@ -323,13 +302,13 @@ export default function SprintFighter({ mode: want = "hd", onLost, onEnd }: { mo
     window.addEventListener("keydown", kd);
     window.addEventListener("keyup", ku);
     return () => {
-      gone = true; view?.dispose();
+      view.dispose();
       cancelAnimationFrame(raf);
       el.removeEventListener("pointerdown", again);
       window.removeEventListener("keydown", kd);
       window.removeEventListener("keyup", ku);
     };
-  }, [want]);
+  }, []);
 
   const hold = (name: keyof Input) => ({
     onPointerDown: (e: React.PointerEvent) => { e.preventDefault(); (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId); keys.current[name] = true; },
@@ -339,8 +318,7 @@ export default function SprintFighter({ mode: want = "hd", onLost, onEnd }: { mo
 
   return (
     <>
-      <div className={`${crt.crt} ${shown === "hd" ? crt.hd : crt.retro}`}>
-        {shown === "hd" && <canvas ref={stage} aria-hidden="true" />}
+      <div className={`${crt.crt} ${crt.retro}`}>
         <canvas ref={canvas} width={W * S} height={H * S} className={crt.hud} role="img" aria-label="Sprint Fighter, a one-on-one fighting game. Arrows to move, jump and crouch, hold back to block. Z punch, X kick, C special." />
       </div>
       <div className={s.pad} aria-hidden="true">

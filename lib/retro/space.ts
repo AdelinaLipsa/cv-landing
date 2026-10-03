@@ -1,6 +1,15 @@
 // The space shooter as it was: pixel sprites, three layers of square stars, drawn on the 2D layer.
-// Retro mode, and the fallback when WebGL isn't there or the GPU takes it back.
-import type { SpaceFrame, SpaceView } from "../space3d";
+export type SpaceFrame = {
+  t: number; dt: number; warp: number; shake: number;
+  ship: { x: number; visible: boolean; trim: string; shield: boolean };
+  aliens: { x: number; y: number; alive: boolean; diving: boolean }[]; kind: number;
+  boss: { x: number; y: number; hit: boolean; hp: number } | null;
+  shots: { x: number; y: number; vx: number; vy: number }[];
+  bombs: { x: number; y: number }[];
+  drops: { x: number; y: number; color: string }[];
+  sparks: { x: number; y: number; life: number; max: number; color: string }[];
+};
+export type SpaceView = { draw: (f: SpaceFrame) => void; boom: (x: number, y: number, color: string, power: number) => void; dispose: () => void };
 
 const SHIP = ["...#...", "..###..", ".#####.", "##.#.##", "#..#..#"];
 const FRAMES = [

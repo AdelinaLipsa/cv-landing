@@ -1,4 +1,4 @@
-// Sprint Fighter's poses and the HD camera, kept pure so both views (and tests) share them.
+// Sprint Fighter's poses, kept pure so the game, the pixel view and the tests share them.
 
 export type Look = { skin: string; top: string; sleeve: string; legs: string; hair: string; extra: string; name: string; move: string };
 
@@ -32,24 +32,4 @@ export function poseName(f: { act: string; low: boolean; y: number }, t: number)
   if (f.act === "kick" && f.y < 0) return "airkick";
   if (f.act === "ko") return "hit";
   return POSES[f.act] ? f.act : "idle";
-}
-
-const mix = (a: number, b: number, k: number) => (k >= 1 ? b : k <= 0 ? a : a + (b - a) * k); // exact at the ends
-export function lerpPose(a: Pose, b: Pose, k: number): Pose {
-  return [mix(a[0], b[0], k), [mix(a[1][0], b[1][0], k), mix(a[1][1], b[1][1], k)], [mix(a[2][0], b[2][0], k), mix(a[2][1], b[2][1], k)],
-    [mix(a[3][0], b[3][0], k), mix(a[3][1], b[3][1], k)], [mix(a[4][0], b[4][0], k), mix(a[4][1], b[4][1], k)], mix(a[5], b[5], k)];
-}
-
-// A limb at `angle` (from straight down, + forward) for a fighter facing `face`, as a y-up world direction.
-export const limbDir = (angle: number, face: number): [number, number] => [Math.sin(angle) * face, -Math.cos(angle)];
-
-// The HD camera: centred on the fight, zoomed in when the fighters are close, never past the arena's edges,
-// floor kept at the bottom of the screen. y is the world y of the view centre (y-up, floor at −GROUND).
-// `extra` x points (a lying fighter's head) are kept in view too; `slack` lets the view run that far past each edge.
-export function framing(ax: number, bx: number, W: number, H: number, extra: number[] = [], slack = 0) {
-  const xs = [ax, bx, ...extra], lo = Math.min(...xs), hi = Math.max(...xs);
-  const zoom = Math.max(1, Math.min(1.25, W / (hi - lo + 60)));
-  const half = W / zoom / 2;
-  const x = Math.max(half - slack, Math.min(W - half + slack, (lo + hi) / 2));
-  return { x, y: -H + H / zoom / 2, zoom };
 }

@@ -1,6 +1,18 @@
 // Ship It! as it was: pixel sprites on a riveted fortress, drawn on the 2D layer.
-// Retro mode, and the fallback when WebGL isn't there or the GPU takes it back.
-import type { Level, ShipItFrame, ShipItView } from "../shipit3d";
+export type Level = { tile: (c: number, r: number) => string; rows: number; cols: number; size: number; arena: number };
+export type ShipItFrame = {
+  t: number; dt: number; cam: number; shake: number; halloween: boolean;
+  p: { x: number; y: number; vx: number; vy: number; ground: boolean; face: number; shot: number; charge: number; won: boolean; visible: boolean; beam: number | null };
+  enemies: { x: number; y: number; vx: number; kind: "wheel" | "drone" | "hat"; alive: boolean; open: number }[];
+  boss: { x: number; y: number; vy: number; ground: boolean; cool: number; hit: boolean } | null;
+  calm: boolean;
+  door: boolean;
+  health: { x: number; y: number; on: boolean }[];
+  shots: { x: number; y: number; vx: number; vy: number; big: boolean; foe: boolean }[];
+  sparks: { x: number; y: number; life: number; color: string }[];
+  impacts: { x: number; y: number; at: number; vx: number }[];
+};
+export type ShipItView = { draw: (f: ShipItFrame) => void; dispose: () => void };
 
 export const PAL: Record<string, string> = { b: "#2f6bff", l: "#7fe3ff", s: "#f2c29b", k: "#0b0a1f", w: "#ffffff", g: "#5fd897", m: "#8c94c9", p: "#ff7ac6", a: "#F5B53F", r: "#ff5a5a", y: "#fff1a8" };
 // The hero: an armoured robot, helmet and visor, arm cannon out when firing. 12 × 14.
