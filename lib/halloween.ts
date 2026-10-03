@@ -1,4 +1,3 @@
-// Halloween on the page: October's look is CSS plus components/Halloween (pumpkin, candles).
 // All year: type boo and the lights flicker and a ghost rises.
 import { sfx } from "./sfx";
 import { toast, unlock } from "./achievements";

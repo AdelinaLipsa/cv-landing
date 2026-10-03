@@ -16,9 +16,7 @@ export default function Boot({ onBuild, onSkip }: { onBuild: () => void; onSkip:
       </p>
       <div className={s.actions}>
         <button type="button" className={s.button} onClick={onBuild}>Watch me build it</button>
-        <a href="#home" className={s.link} onClick={(e) => { e.preventDefault(); onSkip(); }}>
-          Skip, show me the finished one
-        </a>
+        <button type="button" className={s.button} onClick={onSkip}>Skip to the finished CV</button>
       </div>
       <div className={s.boxes} aria-hidden="true">
         <div className={s.box} style={{ height: 140 }}>[ wall of things that didn’t exist ]</div>

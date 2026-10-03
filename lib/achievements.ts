@@ -21,7 +21,6 @@ export const ACHIEVEMENTS = {
   lost: { name: "Lost and found", hint: "Find the 404 page" },
   sudo: { name: "Incident reported", hint: "Try to sudo the page" },
   boo: { name: "Spooked", hint: "Type boo" },
-  candles: { name: "Make a wish", hint: "Blow out both candles (they’re lit in October)" },
 } as const;
 export type AchievementId = keyof typeof ACHIEVEMENTS;
 

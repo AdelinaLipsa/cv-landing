@@ -8,7 +8,6 @@ import Boot from "./Boot";
 import EasterEggs from "./EasterEggs";
 import Toasts from "./Toasts";
 import Clock from "./Clock";
-import Halloween from "./Halloween";
 import Cat from "./Cat";
 import { unlock } from "@/lib/achievements";
 import Arcade from "./Arcade";
@@ -259,7 +258,6 @@ export default function Shell({ code, character }: { code: Snippets; character: 
       {arcade && <Arcade onClose={() => setArcade(false)} />}
       <Toasts />
       <Clock />
-      <Halloween />
       {!touring && <Cat />}
 
       <AnimatePresence>

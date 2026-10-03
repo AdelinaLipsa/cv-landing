@@ -167,8 +167,9 @@
   .h2 { font-size: 40px; }
   .tiles { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; }
   .media { height: 200px; border-radius: 24px; }
-  .offDuty { margin-top: 80px; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: center; gap: 48px; }
-  .retro { order: 0; height: 460px; margin: 0; }
+  .offDuty { margin-top: 80px; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: start; gap: 48px; }
+  /* The text column runs long: the computer rides along beside it instead of sitting halfway down. */
+  .retro { order: 0; height: 460px; margin: 0; position: sticky; top: 48px; }
 }
 
 /* Build mode: sections that drop in during the 2026 build */
@@ -249,5 +250,7 @@
 @media (hover: hover) and (pointer: fine) { .termHint { display: inline; } }
 
 /* "Busy? The 30-second version": a quiet link under the hero buttons */
-.quick { align-self: flex-start; margin-top: 14px; padding: 0; border: 0; background: none; font-size: 14px; font-weight: 600; color: var(--body-2); text-decoration: underline; text-underline-offset: 4px; text-decoration-color: var(--line); cursor: pointer; }
-.quick:hover, .quick:focus-visible { color: var(--blueprint); text-decoration-color: currentColor; }
+/* The recruiter's shortcut: a tinted pill, loud enough to find in the first glance. */
+.quick { align-self: flex-start; display: inline-flex; align-items: center; gap: 8px; margin-top: 6px; padding: 9px 16px 9px 12px; border: 1.5px solid color-mix(in srgb, var(--blueprint) 35%, transparent); border-radius: 999px; background: color-mix(in srgb, var(--blueprint) 9%, transparent); font-size: 15px; font-weight: 600; color: var(--blueprint); cursor: pointer; transition: background-color 0.3s var(--ease), border-color 0.3s var(--ease), transform 0.3s var(--ease); }
+.quick:hover, .quick:focus-visible { background: color-mix(in srgb, var(--blueprint) 16%, transparent); border-color: var(--blueprint); transform: translateY(-1px); }
+.quick svg { flex-shrink: 0; width: 17px; height: 17px; }

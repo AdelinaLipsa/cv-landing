@@ -61,7 +61,7 @@ export default function EasterEggs({ contact, terminal, arcade }: { contact: () 
 
     const spooky = season() === "halloween";
     if (!greeted) console.log(
-      `%c${BANNER}%c\nThe console takes requests:\n  hire()      the fastest way to reach me\n  ramen()     try it\n  milk()      a public service announcement\n  terminal()  a real one, sort of\n  play()      the arcade: three tiny games\n  secrets()   everything else hidden here\n  achievements()  what you’ve found so far\n\nThe whole CV is JSON at /api/cv.${spooky ? "\n\nIt’s October. Type boo() if you dare. And mind the candles." : ""}`,
+      `%c${BANNER}%c\nThe console takes requests:\n  hire()      the fastest way to reach me\n  ramen()     try it\n  milk()      a public service announcement\n  terminal()  a real one, sort of\n  play()      the arcade: three tiny games\n  secrets()   everything else hidden here\n  achievements()  what you’ve found so far\n\nThe whole CV is JSON at /api/cv.${spooky ? "\n\nIt’s October. Type boo() if you dare." : ""}`,
       "font: 700 18px/1.25 ui-monospace, monospace; color: #3355FF",
       "font: 16px/1.6 ui-monospace, monospace; color: #6B6990"
     );

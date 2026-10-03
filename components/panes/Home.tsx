@@ -21,7 +21,6 @@ import Workbench from "../Workbench";
 import { Rich } from "../Keyword";
 import EqualizerRing from "../EqualizerRing";
 import ThemeToggle from "../ThemeToggle";
-import { HalloweenToggle } from "../Halloween";
 import Magnet from "../Magnet";
 import DecryptedText from "../DecryptedText";
 import QuickRead from "../QuickRead";
@@ -111,7 +110,6 @@ export default function Home({ ui }: { ui: UI }) {
           <Magnet padding={24} magnetStrength={3} disabled={!!reduce}><a href={profile.linkedin} target="_blank" rel="noopener" aria-label="LinkedIn" className={`${s.icon} ${s.linkedin} water`}><LinkedInIcon /></a></Magnet>
           <Magnet padding={24} magnetStrength={3} disabled={!!reduce}><button type="button" onClick={ui.contact} aria-label="Message me" className={`${s.icon} ${s.whatsapp} water`}><WhatsAppIcon size={18} /></button></Magnet>
           <ThemeToggle className={`${s.icon} water`} />
-          <HalloweenToggle className={`${s.icon} water`} />
           <Magnet padding={24} magnetStrength={3} disabled={!!reduce}><a href={profile.pdf} download className={`${s.pdf} water`} aria-label="Download CV as PDF">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 4v11m0 0-4.5-4.5M12 15l4.5-4.5M5 20h14" /></svg>
             <span>PDF</span>
@@ -124,7 +122,7 @@ export default function Home({ ui }: { ui: UI }) {
           <div className={s.portrait} data-tour="portrait" data-marks-off={stage < STAGE.portrait || undefined}>
             <EqualizerRing className={s.ring} />
             <Image className={s.photo} src="/adelina.jpg" alt="Adelina Lipșa" width={132} height={132} sizes="(min-width: 1000px) 132px, 96px" priority />
-            <span className={`${p.specLabel} ${s.portraitLabel}`}><span className={s.mobileOnly}>96 × 96, radius 28</span><span className={s.desktopOnly}>132 × 132, radius 36</span></span>
+            {touring && <span className={`${p.specLabel} ${s.portraitLabel}`}><span className={s.mobileOnly}>96 × 96, radius 28</span><span className={s.desktopOnly}>132 × 132, radius 36</span></span>}
           </div>
           <motion.h1
             key={touring ? `era-${era}` : "built"}
@@ -170,7 +168,7 @@ export default function Home({ ui }: { ui: UI }) {
             <button type="button" className={`${s.messageBtn} water`} onClick={ui.contact}><WhatsAppIcon size={17} /><DecryptedText text="Message me" animateOn="hover" speed={40} maxIterations={8} /></button>
           </div>
           {/* Skip the cutscene: the whole CV in 30 seconds, for the busy */}
-          {!touring && <button type="button" className={s.quick} onClick={() => ui.sheet("The 30-second version", <QuickRead contact={ui.contact} />)}>Busy? Read the 30-second version →</button>}
+          {!touring && <button type="button" className={s.quick} onClick={() => ui.sheet("The 30-second version", <QuickRead contact={ui.contact} />)}><Svg><circle cx="12" cy="13" r="8" /><path d="M12 9v4l2.5 2M10 2h4" /></Svg>Busy? Read the 30-second version →</button>}
           {touring && era === 0 && <VisitorCounter />}
           <div className={`${s.dock} ${s.dropper}`} {...drop(STAGE.cards)}>
             <Dock items={dockItems(ui)} baseItemSize={60} magnification={92} distance={160} panelHeight={96} dockHeight={96} spring={{ stiffness: 120, damping: 26 }} />

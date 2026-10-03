@@ -45,20 +45,6 @@
   --shadow-btn: 0 14px 30px rgba(0, 0, 0, 0.5);
 }
 
-/* Halloween (October): set on <html> by layout's GATE script. Dripping horror titles in slime green (Rubik Wet Paint: one of the few that has the Ș in Lipșa); pumpkin and candles in components/Halloween. */
-[data-season="halloween"] { --slime: #1d8a3c; --slime-glow: rgba(57, 255, 106, 0.35); }
-[data-season="halloween"][data-theme="dark"] { --slime: #6dff8a; --slime-glow: rgba(57, 255, 106, 0.6); }
-[data-season="halloween"] ::selection { background: #ff8c1a; color: #17153a; }
-[data-season="halloween"] [data-era="3"] :is(h1, h2) {
-  font-family: var(--font-spooky), var(--font-display), sans-serif;
-  font-weight: 400;
-  font-stretch: normal;
-  font-variation-settings: normal;
-  letter-spacing: 0.03em;
-  color: var(--slime);
-  text-shadow: 0 0 18px var(--slime-glow), 0 2px 0 rgba(0, 0, 0, 0.25);
-}
-
 * { box-sizing: border-box; }
 
 html, body { margin: 0; height: 100%; }
