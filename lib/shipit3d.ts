@@ -154,6 +154,48 @@ export async function mountShipIt(canvas: HTMLCanvasElement, W: number, H: numbe
   door.visible = false;
   scene.add(door);
 
+  // Light shafts from high windows: open cones, additive, fading toward the floor, breathing slowly.
+  const shaftMat = new THREE.ShaderMaterial({
+    uniforms: { t: { value: 0 }, c: { value: hot("#9fb4ff", 0.5) } },
+    transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide,
+    vertexShader: "varying vec2 vUv; void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }",
+    fragmentShader: `varying vec2 vUv; uniform float t; uniform vec3 c;
+      void main() { float fall = smoothstep(0.0, 1.0, vUv.y); float edge = sin(vUv.x * 3.14159); float flick = 0.75 + 0.25 * sin(t * 0.7 + vUv.x * 9.0);
+        gl_FragColor = vec4(c * fall * edge * flick * 0.35, 1.0); }`,
+  });
+  for (let x = 40; x < span; x += 96) {
+    const cone = new THREE.Mesh(new THREE.ConeGeometry(16, 150, 24, 1, true), shaftMat);
+    cone.position.set(x, -40, -30);
+    cone.rotation.z = 0.25;
+    scene.add(cone);
+  }
+
+  // Steam vents at the back of the floor: soft grey puffs that rise, swell and fade.
+  const VENTS: number[] = [];
+  for (let x = 72; x < span; x += 120) VENTS.push(x);
+  const PUFFS = 18, steamCount = VENTS.length * PUFFS;
+  const steamGeo = new THREE.BufferGeometry();
+  const steamPos = new Float32Array(steamCount * 3), steamA = new Float32Array(steamCount), steamS = new Float32Array(steamCount);
+  steamGeo.setAttribute("position", new THREE.BufferAttribute(steamPos, 3));
+  steamGeo.setAttribute("alpha", new THREE.BufferAttribute(steamA, 1));
+  steamGeo.setAttribute("size", new THREE.BufferAttribute(steamS, 1));
+  const steam = new THREE.Points(steamGeo, new THREE.ShaderMaterial({
+    uniforms: { map: { value: st.dot }, scale: { value: 1 } }, // half the drawing-buffer height, set each frame
+    transparent: true, depthWrite: false,
+    vertexShader: `attribute float alpha; attribute float size; varying float vA; uniform float scale;
+      void main() { vA = alpha; vec4 mv = modelViewMatrix * vec4(position, 1.0); gl_PointSize = size * scale / -mv.z; gl_Position = projectionMatrix * mv; }`,
+    fragmentShader: "uniform sampler2D map; varying float vA; void main() { gl_FragColor = vec4(vec3(0.62, 0.62, 0.72), texture2D(map, gl_PointCoord).a * vA * 0.35); }",
+  }));
+  steam.frustumCulled = false;
+  scene.add(steam);
+
+  // Rotating amber beacons on the floor's back edge; the three nearest the camera really light the scene.
+  const beaconAt: number[] = [];
+  for (let x = 24; x < span; x += 64) beaconAt.push(x);
+  const beaconMat = glowMat(hot("#F5B53F", 3));
+  const beacons = beaconAt.map((x) => { const b = new THREE.Mesh(new THREE.SphereGeometry(1.1, 12, 8), beaconMat); b.position.set(x, -(13 * TS) + 1.1, -DEPTH + 1.5); scene.add(b); return b; });
+  const beaconLights = [0, 1, 2].map(() => { const l = new THREE.PointLight(0xffb347, 0, 46, 0); scene.add(l); return l; });
+
   // Materials for the bodies.
   const gloss = (hex: string, metal = 0.15) => new THREE.MeshPhysicalMaterial({ color: hex, metalness: metal, roughness: 0.32, clearcoat: 1, clearcoatRoughness: 0.15 });
   const joint = new THREE.MeshStandardMaterial({ color: 0x2a2d40, metalness: 0.8, roughness: 0.4 });
@@ -338,6 +380,25 @@ export async function mountShipIt(canvas: HTMLCanvasElement, W: number, H: numbe
       lampOn[0].copy(hot(c1, 3)); lampOn[1].copy(hot(c2, 3));
       lampAt.forEach((_, i) => lamps.setColorAt(i, (Math.floor(t * 2) + i) % 3 ? lampOff : lampOn[i % 2]));
       if (lamps.instanceColor) lamps.instanceColor.needsUpdate = true;
+      shaftMat.uniforms.t.value = t;
+      (steam.material as T.ShaderMaterial).uniforms.scale.value = st.renderer.domElement.height / 2; // tracks pixel ratio and resizes
+      VENTS.forEach((vx, v) => {
+        for (let k = 0; k < PUFFS; k++) {
+          const i = v * PUFFS + k, life = ((t * 0.35 + k / PUFFS + v * 0.37) % 1);
+          steamPos[i * 3] = vx + Math.sin(life * 6 + k) * 3; steamPos[i * 3 + 1] = -(13 * TS) + life * 46; steamPos[i * 3 + 2] = -DEPTH + 2;
+          steamA[i] = Math.sin(life * Math.PI); steamS[i] = 4 + life * 12;
+        }
+      });
+      steamGeo.attributes.position.needsUpdate = steamGeo.attributes.alpha.needsUpdate = steamGeo.attributes.size.needsUpdate = true;
+      const centre = f.cam + W / 2;
+      const nearBeacons = beaconAt.map((x, i) => [Math.abs(x - centre), i]).sort((a, b) => a[0] - b[0]).slice(0, 3);
+      beaconLights.forEach((l, k) => {
+        const i = nearBeacons[k]?.[1];
+        if (i === undefined) { l.intensity = 0; return; }
+        const spin = Math.max(0, Math.sin(t * 5 + i));
+        l.position.set(beaconAt[i] + Math.cos(t * 5 + i) * 6, -(13 * TS) + 3, -DEPTH + 6);
+        l.intensity = 0.6 + spin * 2.4;
+      });
       door.visible = f.door;
       door.children.forEach((b, k) => (b.visible = (Math.floor(t * 12) + k) % 4 !== 0));
 
