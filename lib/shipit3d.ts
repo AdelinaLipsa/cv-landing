@@ -200,14 +200,20 @@ export async function mountShipIt(canvas: HTMLCanvasElement, W: number, H: numbe
       const m = o as T.Mesh;
       if (!m.isMesh) return;
       m.castShadow = st.shadows;
+      m.frustumCulled = false; // skinned bounds go stale; the robot is always near the camera
       const mat = (m.material as T.MeshStandardMaterial).clone(); // clones share the cached material: never tint it in place
       if (mat.name === "Main") mat.color.set("#2f6bff");
       if (mat.name === "Grey") mat.color.set("#7fe3ff");
       mat.metalness = 0.35; mat.roughness = 0.35;
       m.material = mat;
     });
+    model.updateMatrixWorld(true); // measure it posed: unposed skinned meshes report a bogus box
+    model.traverse((o) => { if ((o as T.SkinnedMesh).isSkinnedMesh) (o as T.SkinnedMesh).skeleton.update(); });
     const box = new THREE.Box3().setFromObject(model);
-    model.scale.setScalar(15 / (box.max.y - box.min.y)); // as tall as the hitbox, a touch over
+    const h = box.max.y - box.min.y;
+    const k = Number.isFinite(h) && h > 0.01 ? 15 / h : 15 / 4.6; // as tall as the hitbox, a touch over
+    model.scale.setScalar(k);
+    if (process.env.NODE_ENV !== "production") console.debug("[shipit] robot ready", { height: h, scale: k });
     const root = new THREE.Group();
     root.add(model);
     const mixer = new THREE.AnimationMixer(model);
