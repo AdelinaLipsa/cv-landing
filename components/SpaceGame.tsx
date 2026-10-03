@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { sfx } from "@/lib/sfx";
 import { unlock } from "@/lib/achievements";
 import { drawSnow, season } from "@/lib/season";
@@ -31,10 +31,13 @@ type P = { x: number; y: number; vx: number; vy: number };
 type Spark = P & { life: number; max: number; color: string };
 type Pop = { x: number; y: number; text: string; life: number; color: string };
 
-export default function SpaceGame({ mode, onLost, onEnd }: { mode: Mode; onLost?: () => void; onEnd?: (score: number) => void }) {
+export default function SpaceGame({ mode: want, onLost, onEnd }: { mode: Mode; onLost?: () => void; onEnd?: (score: number) => void }) {
   // The final score goes to the arcade's leaderboard. A ref, so the game loop never restarts for it.
   const report = useRef(onEnd);
   report.current = onEnd;
+  // SpaceGame owns its fallback: no WebGL or a lost GPU drops it to Retro, then tells the parent.
+  const [mode, setMode] = useState(want);
+  useEffect(() => setMode(want), [want]);
   const lost = useRef(onLost); // likewise: a ref, so a lost GPU never restarts the loop
   lost.current = onLost;
   const canvas = useRef<HTMLCanvasElement>(null);
@@ -48,11 +51,12 @@ export default function SpaceGame({ mode, onLost, onEnd }: { mode: Mode; onLost?
     const tint = SEASON === "halloween" ? ["#ff8c1a", "#b46bff", "#7dff6b"] : SEASON === "christmas" ? ["#ff5a5a", "#5fd897", "#ffffff"] : KINDS.map((k) => k.color);
     const bossColor = SEASON === "halloween" ? "#7dff6b" : "#ff5a5a";
     let view: SpaceView | null = null, gone = false;
+    const drop = () => { setMode("retro"); lost.current?.(); };
     if (mode === "retro") view = retroSpace(ctx, W, H, tint, bossColor);
     else import("@/lib/space3d")
-      .then((m) => m.mountSpace(stage.current!, W, H, tint, bossColor, () => lost.current?.()))
+      .then((m) => m.mountSpace(stage.current!, W, H, tint, bossColor, drop))
       .then((v) => { if (gone) v.dispose(); else view = v; })
-      .catch(() => lost.current?.()); // no WebGL: the arcade switches to Retro
+      .catch(drop); // no WebGL: drop to Retro
     let hi = 0;
     try { hi = Number(localStorage.getItem(HI_KEY)) || 0; } catch { }
     let best = hi; // the record to beat this game
