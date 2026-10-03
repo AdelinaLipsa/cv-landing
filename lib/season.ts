@@ -3,6 +3,9 @@
 export type Season = "halloween" | "christmas" | null;
 export const season = (): Season => {
   if (typeof window === "undefined") return null;
+  // October: on unless switched off, decided by layout's GATE script and the toggle (components/Halloween).
+  const root = document.documentElement.dataset;
+  if (root.october) return root.season === "halloween" ? "halloween" : null;
   const forced = new URLSearchParams(location.search).get("season");
   if (forced) return forced === "halloween" || forced === "christmas" ? forced : null;
   const d = new Date(), m = d.getMonth(), day = d.getDate();

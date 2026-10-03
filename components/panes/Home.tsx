@@ -21,6 +21,7 @@ import Workbench from "../Workbench";
 import { Rich } from "../Keyword";
 import EqualizerRing from "../EqualizerRing";
 import ThemeToggle from "../ThemeToggle";
+import { HalloweenToggle } from "../Halloween";
 import Magnet from "../Magnet";
 import DecryptedText from "../DecryptedText";
 import QuickRead from "../QuickRead";
@@ -110,6 +111,7 @@ export default function Home({ ui }: { ui: UI }) {
           <Magnet padding={24} magnetStrength={3} disabled={!!reduce}><a href={profile.linkedin} target="_blank" rel="noopener" aria-label="LinkedIn" className={`${s.icon} ${s.linkedin} water`}><LinkedInIcon /></a></Magnet>
           <Magnet padding={24} magnetStrength={3} disabled={!!reduce}><button type="button" onClick={ui.contact} aria-label="Message me" className={`${s.icon} ${s.whatsapp} water`}><WhatsAppIcon size={18} /></button></Magnet>
           <ThemeToggle className={`${s.icon} water`} />
+          <HalloweenToggle className={`${s.icon} water`} />
           <Magnet padding={24} magnetStrength={3} disabled={!!reduce}><a href={profile.pdf} download className={`${s.pdf} water`} aria-label="Download CV as PDF">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 4v11m0 0-4.5-4.5M12 15l4.5-4.5M5 20h14" /></svg>
             <span>PDF</span>

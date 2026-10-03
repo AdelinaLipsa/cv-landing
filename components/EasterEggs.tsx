@@ -3,7 +3,7 @@ import { useEffect, useRef } from "react";
 import { ACHIEVEMENTS, unlock, unlocked } from "@/lib/achievements";
 import { cheatCode, ramenStorm } from "@/lib/ramenStorm";
 import { sudo } from "@/lib/sudo";
-import { bats, boo } from "@/lib/halloween";
+import { boo } from "@/lib/halloween";
 import { season } from "@/lib/season";
 
 // Hidden things for the curious: a devtools welcome with commands, the Konami code,
@@ -61,7 +61,7 @@ export default function EasterEggs({ contact, terminal, arcade }: { contact: () 
 
     const spooky = season() === "halloween";
     if (!greeted) console.log(
-      `%c${BANNER}%c\nThe console takes requests:\n  hire()      the fastest way to reach me\n  ramen()     try it\n  milk()      a public service announcement\n  terminal()  a real one, sort of\n  play()      the arcade: three tiny games\n  secrets()   everything else hidden here\n  achievements()  what you’ve found so far\n\nThe whole CV is JSON at /api/cv.${spooky ? "\n\nIt’s October. Type boo() if you dare. And keep an eye on the sky." : ""}`,
+      `%c${BANNER}%c\nThe console takes requests:\n  hire()      the fastest way to reach me\n  ramen()     try it\n  milk()      a public service announcement\n  terminal()  a real one, sort of\n  play()      the arcade: three tiny games\n  secrets()   everything else hidden here\n  achievements()  what you’ve found so far\n\nThe whole CV is JSON at /api/cv.${spooky ? "\n\nIt’s October. Type boo() if you dare. And mind the candles." : ""}`,
       "font: 700 18px/1.25 ui-monospace, monospace; color: #3355FF",
       "font: 16px/1.6 ui-monospace, monospace; color: #6B6990"
     );
@@ -90,15 +90,13 @@ export default function EasterEggs({ contact, terminal, arcade }: { contact: () 
 
     // The tab misses you.
     const title = document.title;
-    const onVis = () => { document.title = document.hidden ? (spooky ? "👻 It’s dark in here without you…" : "🍜 Your ramen is getting cold…") : title; };
-    const stopBats = spooky ? bats() : () => {};
+    const onVis = () => { document.title = document.hidden ? (season() === "halloween" ? "👻 It’s dark in here without you…" : "🍜 Your ramen is getting cold…") : title; };
 
     window.addEventListener("keydown", onKey);
     document.addEventListener("visibilitychange", onVis);
     return () => {
       window.removeEventListener("keydown", onKey);
       document.removeEventListener("visibilitychange", onVis);
-      stopBats();
       for (const k of Object.keys(cmds)) delete w[k];
     };
   }, []);
