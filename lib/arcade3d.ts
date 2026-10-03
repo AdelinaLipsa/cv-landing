@@ -27,7 +27,7 @@ export async function stage(canvas: HTMLCanvasElement, W: number, H: number, opt
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure = 1.05;
-  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  renderer.shadowMap.type = THREE.PCFShadowMap;
   renderer.info.autoReset = false; // manually reset before composer.render() for accurate draw call counts
   // The GPU can take the context back (a phone backgrounding the tab). Say so; the game drops to Retro.
   const onContextLost = (e: Event) => { e.preventDefault(); opts.onLost?.(); };

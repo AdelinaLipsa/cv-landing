@@ -269,8 +269,6 @@ export async function mountShipIt(canvas: HTMLCanvasElement, W: number, H: numbe
   scene.add(shadowed(hero));
   const heroLight = new THREE.PointLight(0x7fe3ff, 0, 40, 0);
   scene.add(heroLight);
-  const beam = new THREE.Mesh(new THREE.CylinderGeometry(1.1, 1.1, 1, 12), glowMat(hot("#7fe3ff", 2.5)));
-
   // The beam-in: a column of light with scanning rings, replacing the plain cylinder.
   const beamMat = new THREE.ShaderMaterial({
     uniforms: { t: { value: 0 } },
@@ -280,9 +278,7 @@ export async function mountShipIt(canvas: HTMLCanvasElement, W: number, H: numbe
       void main() { float bands = 0.55 + 0.45 * step(0.5, fract(vUv.y * 14.0 - t * 6.0)); float core = pow(sin(vUv.x * 3.14159), 3.0);
         gl_FragColor = vec4(vec3(0.5, 0.9, 1.0) * 2.4 * bands * core, 1.0); }`,
   });
-  beam.material = beamMat as unknown as T.MeshBasicMaterial;
-  beam.geometry.dispose();
-  beam.geometry = new THREE.CylinderGeometry(2.4, 2.4, 1, 24, 1, true);
+  const beam = new THREE.Mesh(new THREE.CylinderGeometry(2.4, 2.4, 1, 24, 1, true), beamMat);
   scene.add(beam);
 
   // The real hero: a rigged CC0 robot with idle, run, jump, punch and thumbs-up clips, painted in the game's
@@ -554,7 +550,7 @@ export async function mountShipIt(canvas: HTMLCanvasElement, W: number, H: numbe
       hitSparks.commit(hs);
 
       // Dust when the hero lands from a real fall, and when Scope Creep lands.
-      if (p.ground && !heroWasGround && heroVy > 140 && p.visible) dust(X(p.x + 5), Y(p.y + 14), 9);
+      if (p.ground && !heroWasGround && heroVy > 200 && p.visible) dust(X(p.x + 5), Y(p.y + 14), 9);
       heroWasGround = p.ground; heroVy = p.ground ? 0 : p.vy;
       for (const r of rings) {
         if (!r.m.visible) continue;
@@ -567,7 +563,7 @@ export async function mountShipIt(canvas: HTMLCanvasElement, W: number, H: numbe
 
       // Scope Creep telegraphs a leap: a crouch and a red glow in the half second before it jumps.
       if (f.boss && f.boss.ground && f.boss.cool < 0.45) { bossArmor.emissive.set("#ff3b3b"); bossArmor.emissiveIntensity = 0.25 + Math.sin(t * 30) * 0.15; boss.scale.y *= 0.9; }
-      else if (f.boss && !f.boss.hit) bossArmor.emissive.set(0xffffff);
+      else bossArmor.emissive.set(0xffffff);
 
       beamMat.uniforms.t.value = t;
 
