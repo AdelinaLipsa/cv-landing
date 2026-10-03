@@ -13,11 +13,12 @@ export type ShipItFrame = {
   p: { x: number; y: number; vx: number; vy: number; ground: boolean; face: number; shot: number; charge: number; won: boolean; visible: boolean; beam: number | null };
   enemies: { x: number; y: number; vx: number; kind: "wheel" | "drone" | "hat"; alive: boolean; open: number }[];
   boss: { x: number; y: number; vy: number; ground: boolean; cool: number; hit: boolean } | null;
+  calm: boolean;
   door: boolean;
   health: { x: number; y: number; on: boolean }[];
   shots: { x: number; y: number; vx: number; vy: number; big: boolean; foe: boolean }[];
   sparks: { x: number; y: number; life: number; color: string }[];
-  impacts: { x: number; y: number; at: number }[];
+  impacts: { x: number; y: number; at: number; vx: number }[];
 };
 export type ShipItView = { draw: (f: ShipItFrame) => void; dispose: () => void };
 
@@ -410,9 +411,10 @@ export async function mountShipIt(canvas: HTMLCanvasElement, W: number, H: numbe
       const { t, dt } = f;
       const sx = f.shake > 0 ? (Math.random() - 0.5) * 3 : 0, sy = f.shake > 0 ? (Math.random() - 0.5) * 3 : 0;
       lead = lookAhead(lead, f.p.face, f.p.vx, dt, f.door);
-      camera.position.set(f.cam + W / 2 + lead + sx, -H / 2 + sy, D);
-      key.position.set(f.cam + W / 2 - 70, 60, 120);
-      key.target.position.set(f.cam + W / 2, -H / 2, -DEPTH / 2);
+      const viewX = Math.max(0, Math.min(cols * TS - W, f.cam + lead)); // never show past the level edge
+      camera.position.set(viewX + W / 2 + sx, -H / 2 + sy, D);
+      key.position.set(viewX + W / 2 - 70, 60, 120);
+      key.target.position.set(viewX + W / 2, -H / 2, -DEPTH / 2);
 
       const [c1, c2] = lampColors(f.halloween);
       lampOn[0].copy(hot(c1, 3)); lampOn[1].copy(hot(c2, 3));
@@ -485,10 +487,13 @@ export async function mountShipIt(canvas: HTMLCanvasElement, W: number, H: numbe
       if (p.beam !== null) { const top = 0, bottom = p.beam; beam.scale.y = Math.max(1, bottom - top); beam.position.set(X(p.x + 5), Y((top + bottom) / 2), Z); }
 
       // Enemies: rebuild the models when the list is new (a fresh game), then pose them.
+      if (foesFor !== f.enemies && foes.length === f.enemies.length && foes.every((g, i) => g.userData.kind === f.enemies[i].kind)) foesFor = f.enemies; // a retry: same line-up, keep the models
       if (foesFor !== f.enemies) {
+        const shared = new Set<unknown>([red, amber, steelGrey, joint]);
+        foeRoot.traverse((o) => { const m = o as T.Mesh; if (!m.isMesh) return; m.geometry.dispose(); if (!shared.has(m.material)) (m.material as T.Material).dispose(); });
         foeRoot.clear();
         foes = f.enemies.map((e) => (e.kind === "wheel" ? makeWheel() : e.kind === "drone" ? makeDrone(f.halloween) : makeHat()));
-        foes.forEach((g) => shadowed(g));
+        foes.forEach((g, i) => { g.userData.kind = f.enemies[i].kind; shadowed(g); });
         if (foes.length) foeRoot.add(...foes);
         foesFor = f.enemies;
       }
@@ -539,9 +544,13 @@ export async function mountShipIt(canvas: HTMLCanvasElement, W: number, H: numbe
       // New wall impacts: a scorch mark and a spray of sparks. `impacts` holds the last 40, oldest first.
       for (const im of f.impacts) if (!seenImpacts.has(im)) {
         seenImpacts.add(im);
-        const s = scorches.reduce((a, b) => ((a.userData.at ?? -1) < (b.userData.at ?? -1) ? a : b));
-        s.position.set(X(im.x), Y(im.y), 0.05); s.userData.at = t; s.visible = true; s.rotation.z = Math.random() * Math.PI;
-        for (let i = 0; i < 7; i++) { const a = Math.PI / 2 + (Math.random() - 0.5) * 2.4; wallSparks.push({ x: X(im.x), y: Y(im.y), vx: Math.cos(a) * 40 * Math.sign(-(f.p.face || 1)), vy: Math.sin(a) * 40, life: 0.35 + Math.random() * 0.25 }); }
+        const c = Math.floor(im.x / TS), r = Math.floor(im.y / TS);
+        if (c >= 0 && c < cols && tile(c, r) === "#") { // a scorch only where there is a block face to mark
+          const s = scorches.reduce((a, b) => ((a.userData.at ?? -1) < (b.userData.at ?? -1) ? a : b));
+          const top = r * TS, y = !solid(c, r - 1) && im.y - top < 1.5 ? top + 2.5 : im.y; // floor hits: keep the disc on the front face
+          s.position.set(X(im.x), Y(y), 0.05); s.userData.at = t; s.visible = true; s.rotation.z = Math.random() * Math.PI;
+        }
+        for (let i = 0; i < 7; i++) { const a = Math.PI / 2 + (Math.random() - 0.5) * 2.4; wallSparks.push({ x: X(im.x), y: Y(im.y), vx: Math.cos(a) * 40 * Math.sign(-im.vx || 1), vy: Math.sin(a) * 40, life: 0.35 + Math.random() * 0.25 }); }
       }
       for (const s of scorches) if (s.visible) { const age = t - s.userData.at; (s.material as T.MeshBasicMaterial).opacity = Math.max(0, 1 - age / 8); if (age > 8) s.visible = false; }
       wallSparks = wallSparks.filter((s) => ((s.x += s.vx * dt), (s.y += s.vy * dt), (s.vy -= 90 * dt), (s.life -= dt) > 0));
@@ -562,7 +571,7 @@ export async function mountShipIt(canvas: HTMLCanvasElement, W: number, H: numbe
       }
 
       // Scope Creep telegraphs a leap: a crouch and a red glow in the half second before it jumps.
-      if (f.boss && f.boss.ground && f.boss.cool < 0.45) { bossArmor.emissive.set("#ff3b3b"); bossArmor.emissiveIntensity = 0.25 + Math.sin(t * 30) * 0.15; boss.scale.y *= 0.9; }
+      if (f.boss && f.boss.cool > 0 && f.boss.ground && f.boss.cool < 0.45) { bossArmor.emissive.set("#ff3b3b"); bossArmor.emissiveIntensity = f.calm ? 0.3 : 0.25 + Math.sin(t * 30) * 0.15; boss.scale.y *= 0.9; }
       else bossArmor.emissive.set(0xffffff);
 
       beamMat.uniforms.t.value = t;

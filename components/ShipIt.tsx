@@ -79,7 +79,7 @@ export default function ShipIt({ mode: want = "hd", onLost, onEnd }: { mode?: Mo
       .catch(drop); // no WebGL: drop to Retro
 
     let p: Body & { hp: number; inv: number; face: number; charge: number; lives: number; dead: number; shot: number } = null!;
-    let impacts: { x: number; y: number; at: number }[] = [];
+    let impacts: { x: number; y: number; at: number; vx: number }[] = [];
     let enemies: Enemy[] = [], shots: Shot[] = [], sparks: Spark[] = [], health: { x: number; y: number; on: boolean }[] = [];
     let boss: (Body & { hp: number; cool: number; on: boolean }) | null = null;
     let cam = 0, checkpoint = 0, score = 0, t = 0, shake = 0, flash = 0;
@@ -265,7 +265,7 @@ export default function ShipIt({ mode: want = "hd", onLost, onEnd }: { mode?: Mo
       for (const sh of shots) {
         sh.x += sh.vx * dt; sh.y += sh.vy * dt;
         const box = { x: sh.x, y: sh.y, w: sh.big ? 6 : 3, h: sh.big ? 6 : 2 };
-        if (solidAt(Math.floor(sh.x / T), Math.floor(sh.y / T), !!boss?.on)) { impacts.push({ x: sh.x, y: sh.y, at: t }); if (impacts.length > 40) impacts.shift(); sh.y = 999; continue; }
+        if (solidAt(Math.floor(sh.x / T), Math.floor(sh.y / T), !!boss?.on)) { impacts.push({ x: sh.x, y: sh.y, at: t, vx: sh.vx }); if (impacts.length > 40) impacts.shift(); sh.y = 999; continue; }
         if (Math.abs(sh.x - p.x) > W) { sh.y = 999; continue; }
         if (sh.foe) { if (!p.dead && overlap(p, box)) { hurt(2, sh.x); sh.y = 999; } continue; }
         for (const e of enemies) if (e.alive && overlap(e, box)) {
@@ -310,7 +310,7 @@ export default function ShipIt({ mode: want = "hd", onLost, onEnd }: { mode?: Mo
         },
         enemies,
         boss: boss && { x: boss.x, y: boss.y, vy: boss.vy, ground: boss.ground, cool: boss.cool, hit: boss.hp < BOSS_HP / 2 && Math.floor(t * 10) % 2 === 1 },
-        door: !!boss?.on, health, shots, sparks, impacts,
+        door: !!boss?.on, calm, health, shots, sparks, impacts,
       });
       if (SEASON === "christmas") drawSnow(ctx, t, W, H);
       if (flash > 0 && !calm) { ctx.fillStyle = `rgba(255,255,255,${flash})`; ctx.fillRect(0, 0, W, H); }
