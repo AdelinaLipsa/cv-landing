@@ -1,16 +1,7 @@
 // Sprint Fighter as it was: a pixel rooftop at sunset, the crowd, two fighters made of thick pixel limbs.
 // Retro mode, and the fallback when WebGL isn't there or the GPU takes it back.
 import { POSES, PO, SH, poseName, type Look } from "../fighterMotion";
-
-type Fighter = { x: number; y: number; face: number; act: string; actT: number; low: boolean; look: Look };
-export type FighterFrame = {
-  t: number; dt: number; shake: number; pause: number; halloween: boolean; christmas: boolean;
-  state: "intro" | "fight" | "ko" | "end"; stateT: number;
-  fighters: Fighter[]; // [me, cpu]
-  balls: { x: number; y: number; vx: number; mine: boolean; big: boolean }[];
-  sparks: { x: number; y: number; life: number; color: string }[];
-};
-export type FighterView = { draw(f: FighterFrame): void; dispose(): void };
+import type { FighterFrame, FighterView } from "../fighter3d";
 
 export function retroFighter(ctx: CanvasRenderingContext2D, W: number, H: number, GROUND: number): FighterView {
   let f!: FighterFrame; // the frame being drawn, for the helpers below
@@ -22,7 +13,7 @@ export function retroFighter(ctx: CanvasRenderingContext2D, W: number, H: number
       for (let i = 0; i <= len; i++) { const k = i / len; ctx.fillRect(Math.round(x + (ex - x) * k - th / 2), Math.round(y + (ey - y) * k - th / 2), th, th); }
       return [ex, ey] as const;
     };
-    const draw = (g: Fighter) => {
+    const draw = (g: FighterFrame["fighters"][number]) => {
       const L = g.look, face = g.face;
       const gx = Math.round(g.x), gy = GROUND + Math.round(g.y);
       ctx.fillStyle = "rgba(0,0,0,0.35)"; ctx.fillRect(gx - 7, GROUND, 14, 2); // shadow

@@ -5,7 +5,8 @@ import { sfx } from "@/lib/sfx";
 import { unlock } from "@/lib/achievements";
 import { drawSnow, season } from "@/lib/season";
 import { PO, SH, type Look } from "@/lib/fighterMotion";
-import { retroFighter, type FighterView } from "@/lib/retro/fighter";
+import { retroFighter } from "@/lib/retro/fighter";
+import type { FighterView } from "@/lib/fighter3d";
 import crt from "./SpaceGame.module.css";
 import s from "./Arcade.module.css";
 
