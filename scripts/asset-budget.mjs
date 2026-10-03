@@ -1,6 +1,7 @@
 // Keeps the arcade light: no single model over 1.5 MB, no game over 4 MB. `npm run assets:check`.
 import { existsSync, readdirSync, statSync } from "node:fs";
 import { join, relative } from "node:path";
+import { pathToFileURL } from "node:url";
 
 const MB = 1024 * 1024;
 export function checkBudget(dir, limits = { file: 1.5 * MB, game: 4 * MB }) {
@@ -17,7 +18,7 @@ export function checkBudget(dir, limits = { file: 1.5 * MB, game: 4 * MB }) {
   return problems;
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (import.meta.url === pathToFileURL(process.argv[1]).href) {
   const problems = checkBudget(process.argv[2] ?? "public/arcade");
   problems.forEach((p) => console.error(p));
   process.exit(problems.length ? 1 : 0);

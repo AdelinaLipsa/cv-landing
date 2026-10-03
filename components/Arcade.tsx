@@ -80,7 +80,7 @@ export default function Arcade({ onClose }: { onClose: () => void }) {
       <header className={s.head}>
         {game ? <button type="button" className={s.back} onClick={() => { setOn(null); setLast(null); }}>← Arcade</button> : <b className={s.title}>Arcade</b>}
         <span className={s.headRight}>
-          <button type="button" className={s.sound} onClick={() => pickMode(label === "hd" ? "retro" : "hd")} aria-pressed={label === "hd"} title="Switch between HD graphics and the original pixels">
+          <button type="button" className={s.sound} onClick={() => pickMode(label === "hd" ? "retro" : "hd")} aria-pressed={label === "hd"} aria-label="HD graphics" title="Switch between HD graphics and the original pixels">
             <span aria-hidden="true">{label === "hd" ? "✨" : "👾"}</span> {label === "hd" ? "HD" : "Retro"}
           </button>
           <button type="button" className={s.sound} onClick={toggle} aria-pressed={!quiet} title="Sound and vibration (M)">
