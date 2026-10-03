@@ -51,7 +51,7 @@ export default function SpaceGame({ mode: want, onLost, onEnd }: { mode: Mode; o
     const tint = SEASON === "halloween" ? ["#ff8c1a", "#b46bff", "#7dff6b"] : SEASON === "christmas" ? ["#ff5a5a", "#5fd897", "#ffffff"] : KINDS.map((k) => k.color);
     const bossColor = SEASON === "halloween" ? "#7dff6b" : "#ff5a5a";
     let view: SpaceView | null = null, gone = false;
-    const drop = () => { setMode("retro"); lost.current?.(); };
+    const drop = () => { if (gone) return; setMode("retro"); lost.current?.(); };
     if (mode === "retro") view = retroSpace(ctx, W, H, tint, bossColor);
     else import("@/lib/space3d")
       .then((m) => m.mountSpace(stage.current!, W, H, tint, bossColor, drop))

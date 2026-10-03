@@ -16,5 +16,9 @@ export function getTierOverride(store: Store | null, search = typeof location ==
   try { return store?.getItem(TIER) ?? null; } catch { return null; }
 }
 export function hasWebGL2() {
-  try { return !!document.createElement("canvas").getContext("webgl2"); } catch { return false; }
+  try {
+    const gl = document.createElement("canvas").getContext("webgl2");
+    gl?.getExtension("WEBGL_lose_context")?.loseContext(); // release the probe
+    return !!gl;
+  } catch { return false; }
 }

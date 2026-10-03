@@ -30,7 +30,8 @@ export async function stage(canvas: HTMLCanvasElement, W: number, H: number, opt
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
   renderer.info.autoReset = false; // manually reset before composer.render() for accurate draw call counts
   // The GPU can take the context back (a phone backgrounding the tab). Say so; the game drops to Retro.
-  canvas.addEventListener("webglcontextlost", (e) => { e.preventDefault(); opts.onLost?.(); }, { once: true });
+  const onContextLost = (e: Event) => { e.preventDefault(); opts.onLost?.(); };
+  canvas.addEventListener("webglcontextlost", onContextLost, { once: true });
 
   const scene = new THREE.Scene();
   const D = H / 2 / Math.tan((FOV / 2) * (Math.PI / 180)); // the distance at which the grid exactly fills the frame
@@ -144,7 +145,11 @@ export async function stage(canvas: HTMLCanvasElement, W: number, H: number, opt
         if (m.material) (Array.isArray(m.material) ? m.material : [m.material]).forEach((mt) => { (mt as T.MeshStandardMaterial).map?.dispose(); mt.dispose(); });
       });
       extra.forEach((x) => x.dispose());
-      dot.dispose(); env.dispose(); pmrem.dispose(); composer.dispose(); renderer.dispose();
+      dot.dispose(); env.dispose(); pmrem.dispose();
+      composer.passes.forEach((p) => (p as { dispose?: () => void }).dispose?.());
+      composer.dispose(); renderer.dispose();
+      canvas.removeEventListener("webglcontextlost", onContextLost); // our own release is not a loss
+      renderer.forceContextLoss();
     },
   };
 }
