@@ -4,6 +4,8 @@ import { sfx } from "@/lib/sfx";
 import { unlock } from "@/lib/achievements";
 import { drawSnow, season } from "@/lib/season";
 import type { SpaceView } from "@/lib/space3d";
+import type { Mode } from "@/lib/arcadePrefs";
+import { retroSpace } from "@/lib/retro/space";
 import s from "./SpaceGame.module.css";
 
 // A space shooter: the gamepad button in the nav, or `play` in the terminal. It plays on a 192 × 120 grid;
@@ -29,10 +31,12 @@ type P = { x: number; y: number; vx: number; vy: number };
 type Spark = P & { life: number; max: number; color: string };
 type Pop = { x: number; y: number; text: string; life: number; color: string };
 
-export default function SpaceGame({ onEnd }: { onEnd?: (score: number) => void }) {
+export default function SpaceGame({ mode, onLost, onEnd }: { mode: Mode; onLost?: () => void; onEnd?: (score: number) => void }) {
   // The final score goes to the arcade's leaderboard. A ref, so the game loop never restarts for it.
   const report = useRef(onEnd);
   report.current = onEnd;
+  const lost = useRef(onLost); // likewise: a ref, so a lost GPU never restarts the loop
+  lost.current = onLost;
   const canvas = useRef<HTMLCanvasElement>(null);
   const stage = useRef<HTMLCanvasElement>(null);
   const strip = useRef<HTMLDivElement>(null);
@@ -40,14 +44,15 @@ export default function SpaceGame({ onEnd }: { onEnd?: (score: number) => void }
   useEffect(() => {
     const ctx = canvas.current!.getContext("2d")!;
     ctx.setTransform(S, 0, 0, S, 0, 0);
-    let view: SpaceView | null = null, gone = false, broken = false;
-    import("@/lib/space3d")
-      .then((m) => m.mountSpace(stage.current!, W, H, tint, bossColor))
-      .then((v) => { if (gone) v.dispose(); else view = v; })
-      .catch(() => { broken = true; }); // no WebGL: say so on screen
     const SEASON = season();
     const tint = SEASON === "halloween" ? ["#ff8c1a", "#b46bff", "#7dff6b"] : SEASON === "christmas" ? ["#ff5a5a", "#5fd897", "#ffffff"] : KINDS.map((k) => k.color);
     const bossColor = SEASON === "halloween" ? "#7dff6b" : "#ff5a5a";
+    let view: SpaceView | null = null, gone = false;
+    if (mode === "retro") view = retroSpace(ctx, W, H, tint, bossColor);
+    else import("@/lib/space3d")
+      .then((m) => m.mountSpace(stage.current!, W, H, tint, bossColor, () => lost.current?.()))
+      .then((v) => { if (gone) v.dispose(); else view = v; })
+      .catch(() => lost.current?.()); // no WebGL: the arcade switches to Retro
     let hi = 0;
     try { hi = Number(localStorage.getItem(HI_KEY)) || 0; } catch { }
     let best = hi; // the record to beat this game
@@ -251,6 +256,7 @@ export default function SpaceGame({ onEnd }: { onEnd?: (score: number) => void }
 
       // Draw: the 3D scene, then the 2D layer on top (power-up letters, points, flash, snow), shaken when hit.
       const warp = state === "banner" ? 7 : 1; // between waves the stars streak past
+      ctx.clearRect(0, 0, W, H);
       view?.draw({
         t, dt, warp, shake,
         ship: { x: ship, visible: state !== "over" && (invuln <= 0 || Math.floor(t * 12) % 2 === 1), trim: triple > 0 ? "#F5B53F" : rapid > 0 ? "#b6ffcf" : "#5fd897", shield },
@@ -259,7 +265,6 @@ export default function SpaceGame({ onEnd }: { onEnd?: (score: number) => void }
         shots, bombs, sparks,
         drops: drops.map((d) => ({ x: d.x, y: d.y, color: DROPS[d.type] })),
       });
-      ctx.clearRect(0, 0, W, H);
       ctx.save();
       if (shake > 0) ctx.translate((Math.random() - 0.5) * 2, (Math.random() - 0.5) * 2);
       if (SEASON === "christmas") drawSnow(ctx, t, W, H);
@@ -272,9 +277,8 @@ export default function SpaceGame({ onEnd }: { onEnd?: (score: number) => void }
         text(p.text, p.x, p.y, p.color, "center");
       }
       ctx.globalAlpha = 1;
-      if (flash > 0) { ctx.fillStyle = `rgba(255,255,255,${flash})`; ctx.fillRect(-4, -4, W + 8, H + 8); }
+      if (flash > 0 && !matchMedia("(prefers-reduced-motion: reduce)").matches) { ctx.fillStyle = `rgba(255,255,255,${flash})`; ctx.fillRect(-4, -4, W + 8, H + 8); }
       ctx.restore();
-      if (broken) { ctx.font = "7px ui-monospace, monospace"; text("THIS GAME NEEDS WEBGL", W / 2, H - 20, "#ff5a5a", "center"); }
 
       // HUD: score, hearts, wave, boss health, power-up timer.
       ctx.font = "7px monospace";
@@ -346,12 +350,12 @@ export default function SpaceGame({ onEnd }: { onEnd?: (score: number) => void }
       window.removeEventListener("keyup", ku);
       for (const t of [el, pad] as HTMLElement[]) { t.removeEventListener("pointerdown", steer); t.removeEventListener("pointermove", steer); }
     };
-  }, []);
+  }, [mode]);
 
   return (
     <>
-    <div className={`${s.crt} ${s.hd}`}>
-      <canvas ref={stage} aria-hidden="true" />
+    <div className={`${s.crt} ${mode === "hd" ? s.hd : s.retro}`}>
+      {mode === "hd" && <canvas ref={stage} aria-hidden="true" />}
       <canvas
         ref={canvas}
         width={W * S}

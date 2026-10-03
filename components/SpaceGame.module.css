@@ -23,3 +23,6 @@
 .hd canvas { image-rendering: auto; filter: none; }
 .hd .hud { position: absolute; inset: 0; width: 100%; height: 100%; }
 .hd::after { background: radial-gradient(ellipse at center, transparent 60%, rgba(0, 0, 0, 0.4) 100%); }
+
+/* Retro: the 2D layer is the whole game, drawn at 4× in hard pixels, under the scanlines */
+.retro .hud { position: relative; image-rendering: pixelated; }

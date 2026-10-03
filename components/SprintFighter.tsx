@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useRef } from "react";
+import type { Mode } from "@/lib/arcadePrefs";
 import { sfx } from "@/lib/sfx";
 import { unlock } from "@/lib/achievements";
 import { drawSnow, season } from "@/lib/season";
@@ -51,7 +52,7 @@ const MOVES = {
   airkick: { time: 0.35, from: 0.05, to: 0.3, reach: 15, lo: 4, hi: 14, dmg: 8, sound: "kick" },
 } as const;
 
-export default function SprintFighter({ onEnd }: { onEnd?: (score: number) => void }) {
+export default function SprintFighter({ onEnd }: { mode?: Mode; onLost?: () => void; onEnd?: (score: number) => void }) {
   // The final score goes to the arcade's leaderboard. A ref, so the game loop never restarts for it.
   const report = useRef(onEnd);
   report.current = onEnd;

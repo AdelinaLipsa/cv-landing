@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useRef } from "react";
+import type { Mode } from "@/lib/arcadePrefs";
 import { sfx } from "@/lib/sfx";
 import { unlock } from "@/lib/achievements";
 import { drawSnow, season } from "@/lib/season";
@@ -74,7 +75,7 @@ type Spark = { x: number; y: number; vx: number; vy: number; life: number; color
 const tile = (c: number, r: number) => (r < 0 ? "." : r >= ROWS ? "." : c < 0 || c >= COLS ? "#" : grid[r][c]);
 const solidAt = (c: number, r: number, wall: boolean) => { const t = tile(c, r); return t === "#" || t === "=" || (wall && c === ARENA - 1 && r < 13); };
 
-export default function ShipIt({ onEnd }: { onEnd?: (score: number) => void }) {
+export default function ShipIt({ onEnd }: { mode?: Mode; onLost?: () => void; onEnd?: (score: number) => void }) {
   // The final score goes to the arcade's leaderboard. A ref, so the game loop never restarts for it.
   const report = useRef(onEnd);
   report.current = onEnd;
