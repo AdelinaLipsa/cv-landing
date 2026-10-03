@@ -178,7 +178,7 @@ export async function mountSpace(canvas: HTMLCanvasElement, W: number, H: number
   const bombs = new THREE.InstancedMesh(new THREE.SphereGeometry(0.75, 12, 8), glowMat(hot("#ff4a4a", 3)), MAX);
   const bombHalo = new THREE.InstancedMesh(new THREE.SphereGeometry(1.6, 12, 8), glowMat(hot("#ff4a4a", 0.6), 0.5), MAX);
   for (const m of [shots, bombs, bombHalo]) { m.frustumCulled = false; scene.add(m); }
-  const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), v = new THREE.Vector3(), one = new THREE.Vector3(1, 1, 1), zAxis = new THREE.Vector3(0, 0, 1), pulse = new THREE.Vector3();
+  const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), v = new THREE.Vector3(), one = new THREE.Vector3(1, 1, 1), zAxis = new THREE.Vector3(0, 0, 1), pulse = new THREE.Vector3(), eul = new THREE.Euler();
 
   // Power-ups: spinning glass gems with a hot core in the drop's colour.
   const dropPool = Array.from({ length: 12 }, () => {
@@ -193,6 +193,49 @@ export async function mountSpace(canvas: HTMLCanvasElement, W: number, H: number
 
   const sparks = st.sparks(900, 2.2);
 
+  // Explosions: hull shards that tumble outward, soft smoke that swells and fades, a shockwave ring.
+  // Fixed pools; the oldest entry is recycled, so a bomb power-up or the boss's death can't grow them.
+  const scale = st.settings.particles;
+  const SHARDS = Math.round(160 * scale), PUFFS = Math.round(90 * scale);
+  const shardGeo = new THREE.TetrahedronGeometry(0.7, 0);
+  const shards = new THREE.InstancedMesh(shardGeo, new THREE.MeshStandardMaterial({ color: 0x9aa0bd, metalness: 0.8, roughness: 0.35, emissive: 0xff7a2a, emissiveIntensity: 0.6 }), SHARDS);
+  shards.frustumCulled = false; scene.add(shards);
+  const shardState = Array.from({ length: SHARDS }, () => ({ x: 0, y: 0, z: 0, vx: 0, vy: 0, vz: 0, rx: 0, ry: 0, spin: 0, life: 0, size: 1 }));
+  let shardNext = 0;
+  const puffGeo = new THREE.BufferGeometry();
+  const puffPos = new Float32Array(PUFFS * 3), puffA = new Float32Array(PUFFS), puffS = new Float32Array(PUFFS);
+  puffGeo.setAttribute("position", new THREE.BufferAttribute(puffPos, 3));
+  puffGeo.setAttribute("alpha", new THREE.BufferAttribute(puffA, 1));
+  puffGeo.setAttribute("size", new THREE.BufferAttribute(puffS, 1));
+  const puffs = new THREE.Points(puffGeo, new THREE.ShaderMaterial({
+    uniforms: { map: { value: dot }, scale: { value: 1 } }, transparent: true, depthWrite: false,
+    vertexShader: "attribute float alpha; attribute float size; varying float vA; uniform float scale; void main() { vA = alpha; vec4 mv = modelViewMatrix * vec4(position, 1.0); gl_PointSize = size * scale / -mv.z; gl_Position = projectionMatrix * mv; }",
+    fragmentShader: "uniform sampler2D map; varying float vA; void main() { gl_FragColor = vec4(vec3(0.42, 0.4, 0.5), texture2D(map, gl_PointCoord).a * vA * 0.5); }",
+  }));
+  puffs.frustumCulled = false; scene.add(puffs);
+  const puffState = Array.from({ length: PUFFS }, () => ({ x: 0, y: 0, vx: 0, vy: 0, life: 0, max: 1, size: 1 }));
+  let puffNext = 0;
+  const waves = Array.from({ length: 6 }, () => {
+    const m = new THREE.Mesh(new THREE.TorusGeometry(1, 0.18, 8, 48), glowMat(new THREE.Color(), 0.9));
+    m.visible = false; scene.add(m); return { m, age: 99, size: 1 };
+  });
+  const explode = (x: number, y: number, color: string, power: number) => {
+    const n = Math.round(Math.min(24, 6 + power * 8) * scale);
+    for (let i = 0; i < n; i++) {
+      const s = shardState[shardNext]; shardNext = (shardNext + 1) % SHARDS;
+      const a = Math.random() * Math.PI * 2, sp = 18 + Math.random() * 40 * power;
+      Object.assign(s, { x, y, z: (Math.random() - 0.5) * 4, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, vz: (Math.random() - 0.5) * 20, rx: Math.random() * 6, ry: Math.random() * 6, spin: 4 + Math.random() * 10, life: 0.6 + Math.random() * 0.6, size: 0.5 + Math.random() * 1.2 });
+    }
+    for (let i = 0; i < Math.round(Math.min(10, 3 + power * 3) * scale); i++) {
+      const p = puffState[puffNext]; puffNext = (puffNext + 1) % PUFFS;
+      const a = Math.random() * Math.PI * 2, sp = 4 + Math.random() * 10;
+      Object.assign(p, { x, y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, life: 0, max: 0.9 + Math.random() * 0.8, size: 6 + Math.random() * 6 * power });
+    }
+    const w = waves.reduce((a, b) => (a.age > b.age ? a : b));
+    w.age = 0; w.size = 10 + power * 14; w.m.position.set(x, y, 1); w.m.visible = true;
+    (w.m.material as T.MeshBasicMaterial).color.copy(hot(color, 2));
+  };
+
   let lastShipX = W / 2, bank = 0, flashPower = 0;
 
   return {
@@ -200,6 +243,7 @@ export async function mountSpace(canvas: HTMLCanvasElement, W: number, H: number
       flashLight.color.set(color);
       flashLight.position.set(X(x), Y(y), 12);
       flashPower = Math.max(flashPower, power);
+      explode(X(x), Y(y), color, power);
     },
     draw(f) {
       const { t, dt } = f;
@@ -279,6 +323,30 @@ export async function mountSpace(canvas: HTMLCanvasElement, W: number, H: number
 
       flashPower = Math.max(0, flashPower - dt * 4);
       flashLight.intensity = flashPower * 6;
+      // Shards tumble and slow; smoke drifts, swells and fades; shockwaves race out and thin.
+      for (let i = 0; i < SHARDS; i++) {
+        const s = shardState[i];
+        if (s.life > 0) { s.life -= dt; s.x += s.vx * dt; s.y += s.vy * dt; s.z += s.vz * dt; s.vx *= 0.97; s.vy *= 0.97; s.rx += s.spin * dt; s.ry += s.spin * 0.7 * dt; }
+        const k = Math.max(0, Math.min(1, s.life * 2)) * s.size;
+        q.setFromEuler(eul.set(s.rx, s.ry, 0));
+        shards.setMatrixAt(i, m4.compose(v.set(s.x, s.y, s.z), q, pulse.setScalar(k)));
+      }
+      shards.instanceMatrix.needsUpdate = true;
+      (puffs.material as T.ShaderMaterial).uniforms.scale.value = st.renderer.domElement.height / 2;
+      for (let i = 0; i < PUFFS; i++) {
+        const p = puffState[i];
+        if (p.life < p.max) { p.life += dt; p.x += p.vx * dt; p.y += p.vy * dt; }
+        const u = p.life / p.max;
+        puffPos[i * 3] = p.x; puffPos[i * 3 + 1] = p.y; puffPos[i * 3 + 2] = -1;
+        puffA[i] = u < 1 ? Math.sin(u * Math.PI) : 0; puffS[i] = p.size * (0.6 + u);
+      }
+      puffGeo.attributes.position.needsUpdate = puffGeo.attributes.alpha.needsUpdate = puffGeo.attributes.size.needsUpdate = true;
+      for (const w of waves) {
+        if (!w.m.visible) continue;
+        w.age += dt; const u = Math.min(1, w.age / 0.45);
+        w.m.scale.setScalar(1 + u * w.size); (w.m.material as T.MeshBasicMaterial).opacity = (1 - u) * 0.9;
+        if (u >= 1) w.m.visible = false;
+      }
       const k = f.shake > 0 && !st.calm ? 3 : 0;
       camera.position.set((Math.random() - 0.5) * k, (Math.random() - 0.5) * k, D);
       st.render(dt);
