@@ -23,8 +23,7 @@ import EqualizerRing from "../EqualizerRing";
 import ThemeToggle from "../ThemeToggle";
 import Magnet from "../Magnet";
 import DecryptedText from "../DecryptedText";
-import ShinyText from "../ShinyText";
-import StarBorder from "../StarBorder";
+import ElectricBorder from "../ElectricBorder";
 import QuickRead from "../QuickRead";
 import GuestbookButton from "../Guestbook";
 import p from "./pane.module.css";
@@ -101,6 +100,7 @@ export default function Home({ ui }: { ui: UI }) {
   const originRef = useRef<HTMLOListElement>(null);
   const originOn = useInView(originRef, { once: true, amount: 0.25 });
   const drop = (at: number) => (stage < at ? { "data-drop": "" } : {});
+  const quick = <button type="button" className={`${p.primary} ${s.quick} water`} onClick={() => ui.sheet("The 30-second version", <QuickRead contact={ui.contact} />)}><DecryptedText text="Busy? Read the 30-second version →" animateOn="hover" speed={40} maxIterations={8} /></button>;
   const buildLabel = touring ? "Stop the build" : ui.returning ? "Replay the build" : "Watch me build it";
 
   return (
@@ -171,10 +171,14 @@ export default function Home({ ui }: { ui: UI }) {
           </div>
           {/* Skip the cutscene: the whole CV in 30 seconds, for the busy */}
           {!touring && (
-            // React Bits: a star of light circles the border, and a shine runs across the label, so the busy reader finds it
-            <StarBorder type="button" className={s.quick} onClick={() => ui.sheet("The 30-second version", <QuickRead contact={ui.contact} />)} color="var(--blueprint)" speed="5s" thickness={1.5} backgroundColor="var(--surface)" textColor="var(--ink)" borderColor="var(--line)">
-              <ShinyText text="Busy? Read the 30-second version →" color="var(--ink)" shineColor="var(--blueprint)" disabled={!!reduce} className={reduce ? "disabled" : ""} />
-            </StarBorder>
+            // The recruiter's shortcut: a live current runs round it (React Bits ElectricBorder). Calm mode: just the button.
+            <Magnet padding={40} magnetStrength={4} disabled={!!reduce}>
+              {reduce ? quick : (
+                <ElectricBorder color="#3355ff" speed={0.8} chaos={0.035} borderRadius={23} className={s.quickWrap}>
+                  {quick}
+                </ElectricBorder>
+              )}
+            </Magnet>
           )}
           {touring && era === 0 && <VisitorCounter />}
           <div className={`${s.dock} ${s.dropper}`} {...drop(STAGE.cards)}>
