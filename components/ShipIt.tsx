@@ -309,7 +309,7 @@ export default function ShipIt({ mode: want = "hd", onLost, onEnd }: { mode?: Mo
           beam: beaming ? Math.min(p.y + 8, (1.8 - stateT) * 140) : null,
         },
         enemies,
-        boss: boss && { x: boss.x, y: boss.y, vy: boss.vy, ground: boss.ground, cool: boss.cool, hit: boss.hp < BOSS_HP / 2 && Math.floor(t * 10) % 2 === 1 },
+        boss: boss && { x: boss.x, y: boss.y, vy: boss.vy, ground: boss.ground, cool: state === "over" ? 1 : boss.cool, hit: boss.hp < BOSS_HP / 2 && Math.floor(t * 10) % 2 === 1 },
         door: !!boss?.on, calm, health, shots, sparks, impacts,
       });
       if (SEASON === "christmas") drawSnow(ctx, t, W, H);
