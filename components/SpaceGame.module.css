@@ -18,3 +18,8 @@
 @media (pointer: coarse) {
   .strip { display: flex; align-items: center; justify-content: center; height: 150px; margin-top: 10px; border: 2px dashed #3a3670; border-radius: 18px; background: #0d0b24; color: #8e8cae; font: 700 13px var(--font-mono), monospace; letter-spacing: 0.1em; touch-action: none; user-select: none; -webkit-user-select: none; }
 }
+
+/* HD: the 3D scene (lib/space3d) under a sharp 2D layer for the score and messages. No scanlines, just the vignette. */
+.hd canvas { image-rendering: auto; filter: none; }
+.hd .hud { position: absolute; inset: 0; width: 100%; height: 100%; }
+.hd::after { background: radial-gradient(ellipse at center, transparent 60%, rgba(0, 0, 0, 0.4) 100%); }

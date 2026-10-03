@@ -3,29 +3,17 @@ import { useEffect, useRef } from "react";
 import { sfx } from "@/lib/sfx";
 import { unlock } from "@/lib/achievements";
 import { drawSnow, season } from "@/lib/season";
+import type { SpaceView } from "@/lib/space3d";
 import s from "./SpaceGame.module.css";
 
-// A tiny space shooter: the gamepad button in the nav, or `play` in the terminal. 192 × 120 pixels, scaled up crisp behind CRT scanlines.
+// A space shooter: the gamepad button in the nav, or `play` in the terminal. It plays on a 192 × 120 grid;
+// lib/space3d draws that grid as a lit 3D scene, and a sharp 2D layer on top carries the score and messages.
 // Three waves, then a boss: The Backlog. Beat it and you win. ← → (or drag) to move; the ship fires on its own.
 // Power-ups drop from aliens: T triple shot, R rapid fire, S shield, B bomb (clears the screen), + extra life.
 // Quick kills chain a combo up to x5. The high score is remembered.
 const W = 192, H = 120;
-const SHIP = ["...#...", "..###..", ".#####.", "##.#.##", "#..#..#"];
-const KINDS = [
-  { frames: [["..#.#..", ".#####.", "##.#.##", "#######", ".#...#."], [".#.#.#.", ".#####.", "##.#.##", "#######", "#.#.#.#"]], color: "#F5B53F", pts: 10 },
-  { frames: [["#.....#", ".#####.", "##.#.##", "#######", "#.#.#.#"], ["#.....#", "#######", "##.#.##", ".#####.", ".#...#."]], color: "#ff7ac6", pts: 20 },
-  { frames: [["..###..", ".#####.", "#.#.#.#", "#######", ".#.#.#."], ["..###..", ".#####.", "#.#.#.#", "#######", "#.....#"]], color: "#5fd0ff", pts: 30 },
-];
-const BOSS = [
-  "....#######....",
-  "..###########..",
-  ".##..#####..##.",
-  "###############",
-  "#.###########.#",
-  "#.#...#.#...#.#",
-  "...##.....##...",
-  "..#.........#..",
-];
+const S = 4; // the 2D layer draws at 4× the grid, so text is sharp
+const KINDS = [{ color: "#F5B53F", pts: 10 }, { color: "#ff7ac6", pts: 20 }, { color: "#5fd0ff", pts: 30 }];
 const WAVES = [
   { kind: 0, rows: 3, cols: 6, speed: 10, fire: 0.5, dive: 0 },
   { kind: 1, rows: 4, cols: 7, speed: 13, fire: 0.75, dive: 0 },
@@ -46,19 +34,23 @@ export default function SpaceGame({ onEnd }: { onEnd?: (score: number) => void }
   const report = useRef(onEnd);
   report.current = onEnd;
   const canvas = useRef<HTMLCanvasElement>(null);
-  const glow = useRef<HTMLCanvasElement>(null);
+  const stage = useRef<HTMLCanvasElement>(null);
   const strip = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const ctx = canvas.current!.getContext("2d")!;
+    ctx.setTransform(S, 0, 0, S, 0, 0);
+    let view: SpaceView | null = null, gone = false, broken = false;
+    import("@/lib/space3d")
+      .then((m) => m.mountSpace(stage.current!, W, H, tint, bossColor))
+      .then((v) => { if (gone) v.dispose(); else view = v; })
+      .catch(() => { broken = true; }); // no WebGL: say so on screen
     const SEASON = season();
     const tint = SEASON === "halloween" ? ["#ff8c1a", "#b46bff", "#7dff6b"] : SEASON === "christmas" ? ["#ff5a5a", "#5fd897", "#ffffff"] : KINDS.map((k) => k.color);
     const bossColor = SEASON === "halloween" ? "#7dff6b" : "#ff5a5a";
-    const bloom = glow.current!.getContext("2d")!; // a blurred copy on top, blended with screen: cheap glow
     let hi = 0;
     try { hi = Number(localStorage.getItem(HI_KEY)) || 0; } catch { }
     let best = hi; // the record to beat this game
-    const stars = Array.from({ length: 60 }, (_, i) => ({ x: Math.random() * W, y: Math.random() * H, layer: i % 3 }));
 
     let ship = W / 2, lives = 3, score = 0, wave = -1;
     let state: "banner" | "play" | "over" | "won" = "banner", stateT = 0, banner = "";
@@ -82,6 +74,7 @@ export default function SpaceGame({ onEnd }: { onEnd?: (score: number) => void }
         const max = 0.4 + Math.random() * 0.5;
         sparks.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, life: max, max, color });
       }
+      if (n >= 8) view?.boom(x, y, color, n / 10); // big ones light up the ships around them
     };
 
     // Kills inside 1.2s of each other chain a combo: x2, x3, up to x5.
@@ -146,13 +139,10 @@ export default function SpaceGame({ onEnd }: { onEnd?: (score: number) => void }
       if (lives <= 0) { end("over"); burst(ship, H - 9, "#ffffff", 30, 70); sfx.boom(); sfx.lose(); }
     };
 
-    const sprite = (rows: string[], x: number, y: number, color: string) => {
-      ctx.fillStyle = color;
-      rows.forEach((row, j) => { for (let i = 0; i < row.length; i++) if (row[i] === "#") ctx.fillRect(Math.round(x) + i, Math.round(y) + j, 1, 1); });
-    };
     const text = (str: string, x: number, y: number, color = "#e8e6ff", align: CanvasTextAlign = "left") => {
       ctx.fillStyle = color;
       ctx.textAlign = align;
+      ctx.shadowColor = "rgba(0, 0, 0, 0.85)"; ctx.shadowBlur = 6; // readable over a bright explosion
       ctx.fillText(str, x, y);
     };
 
@@ -259,57 +249,32 @@ export default function SpaceGame({ onEnd }: { onEnd?: (score: number) => void }
       sparks = sparks.filter((p) => (p.life -= dt) > 0 && move(p));
       pops = pops.filter((p) => ((p.y -= 14 * dt), (p.life -= dt) > 0));
 
-      // Draw: space, three layers of stars, then everything else, shaken when hit.
-      ctx.save();
-      if (shake > 0) ctx.translate(Math.round((Math.random() - 0.5) * 4), Math.round((Math.random() - 0.5) * 4));
-      ctx.fillStyle = "#07061a";
-      ctx.fillRect(-4, -4, W + 8, H + 8);
+      // Draw: the 3D scene, then the 2D layer on top (power-up letters, points, flash, snow), shaken when hit.
       const warp = state === "banner" ? 7 : 1; // between waves the stars streak past
-      for (const st of stars) {
-        st.y = (st.y + (6 + st.layer * 9) * warp * dt) % H;
-        ctx.fillStyle = ["#2e2b5c", "#5a56a0", "#a9a6e8"][st.layer];
-        ctx.fillRect(Math.round(st.x), Math.round(st.y), 1, warp > 1 ? 1 + st.layer * 2 : 1);
-      }
+      view?.draw({
+        t, dt, warp, shake,
+        ship: { x: ship, visible: state !== "over" && (invuln <= 0 || Math.floor(t * 12) % 2 === 1), trim: triple > 0 ? "#F5B53F" : rapid > 0 ? "#b6ffcf" : "#5fd897", shield },
+        aliens, kind: Math.min(Math.max(wave, 0), WAVES.length - 1),
+        boss: boss && { x: boss.x, y: boss.y, hit: boss.hp < BOSS_HP / 2 && Math.floor(t * 8) % 2 === 1 },
+        shots, bombs, sparks,
+        drops: drops.map((d) => ({ x: d.x, y: d.y, color: DROPS[d.type] })),
+      });
+      ctx.clearRect(0, 0, W, H);
+      ctx.save();
+      if (shake > 0) ctx.translate((Math.random() - 0.5) * 2, (Math.random() - 0.5) * 2);
       if (SEASON === "christmas") drawSnow(ctx, t, W, H);
-
-      const pose = Math.floor(Math.max(0, t) * 2) % 2;
-      aliens.forEach((a) => a.alive && sprite(KINDS[a.kind].frames[pose], a.x, a.y, tint[a.kind]));
-      if (boss) sprite(BOSS, boss.x, boss.y, boss.hp < BOSS_HP / 2 && Math.floor(t * 8) % 2 ? "#ffffff" : bossColor);
-
-      for (const d of drops) {
-        ctx.fillStyle = DROPS[d.type];
-        ctx.fillRect(Math.round(d.x) - 3, Math.round(d.y) - 3, 7, 7);
-        ctx.fillStyle = "#07061a";
-        ctx.fillRect(Math.round(d.x) - 2, Math.round(d.y) - 2, 5, 5);
-        ctx.font = "6px monospace";
-        ctx.textBaseline = "middle";
-        text(d.type, Math.round(d.x) + 0.5, Math.round(d.y) + 0.5, DROPS[d.type], "center");
-      }
-
-      if (state !== "over" && (invuln <= 0 || Math.floor(t * 12) % 2)) {
-        if (Math.floor(t * 20) % 2) { ctx.fillStyle = "#F5B53F"; ctx.fillRect(Math.round(ship), H - 3, 1, 2); } // engine flicker
-        sprite(SHIP, ship - 3, H - 9, triple > 0 ? "#F5B53F" : rapid > 0 ? "#b6ffcf" : "#5fd897");
-        if (shield) { ctx.strokeStyle = "#5fd0ff"; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(ship + 0.5, H - 6.5, 6, 0, Math.PI * 2); ctx.stroke(); }
-      }
-
-      ctx.fillStyle = "#ffffff";
-      shots.forEach((p) => ctx.fillRect(Math.round(p.x), Math.round(p.y), 1, 3));
-      ctx.fillStyle = "#ff5a5a";
-      bombs.forEach((p) => ctx.fillRect(Math.round(p.x), Math.round(p.y), 1, 2));
-      for (const p of sparks) {
-        ctx.globalAlpha = p.life / p.max;
-        ctx.fillStyle = p.color;
-        ctx.fillRect(Math.round(p.x), Math.round(p.y), 1, 1);
-      }
-      ctx.font = "6px monospace";
+      ctx.font = "bold 5px ui-monospace, monospace";
       ctx.textBaseline = "middle";
+      for (const d of drops) text(d.type, d.x, d.y + 0.3, "#ffffff", "center");
+      ctx.font = "6px ui-monospace, monospace";
       for (const p of pops) {
         ctx.globalAlpha = Math.min(1, p.life * 2);
-        text(p.text, Math.round(p.x), Math.round(p.y), p.color, "center");
+        text(p.text, p.x, p.y, p.color, "center");
       }
       ctx.globalAlpha = 1;
       if (flash > 0) { ctx.fillStyle = `rgba(255,255,255,${flash})`; ctx.fillRect(-4, -4, W + 8, H + 8); }
       ctx.restore();
+      if (broken) { ctx.font = "7px ui-monospace, monospace"; text("THIS GAME NEEDS WEBGL", W / 2, H - 20, "#ff5a5a", "center"); }
 
       // HUD: score, hearts, wave, boss health, power-up timer.
       ctx.font = "7px monospace";
@@ -346,8 +311,6 @@ export default function SpaceGame({ onEnd }: { onEnd?: (score: number) => void }
       }
 
       // Once the fireworks are over, stop drawing: nothing moves on the end screens.
-      bloom.clearRect(0, 0, W, H);
-      bloom.drawImage(ctx.canvas, 0, 0);
       if (ended()) { raf = 0; return; }
       raf = requestAnimationFrame(frame);
     };
@@ -376,6 +339,8 @@ export default function SpaceGame({ onEnd }: { onEnd?: (score: number) => void }
     window.addEventListener("keyup", ku);
     for (const t of [el, pad] as HTMLElement[]) { t.addEventListener("pointerdown", steer); t.addEventListener("pointermove", steer); }
     return () => {
+      gone = true;
+      view?.dispose();
       cancelAnimationFrame(raf);
       window.removeEventListener("keydown", kd);
       window.removeEventListener("keyup", ku);
@@ -385,15 +350,16 @@ export default function SpaceGame({ onEnd }: { onEnd?: (score: number) => void }
 
   return (
     <>
-    <div className={s.crt}>
+    <div className={`${s.crt} ${s.hd}`}>
+      <canvas ref={stage} aria-hidden="true" />
       <canvas
         ref={canvas}
-        width={W}
-        height={H}
+        width={W * S}
+        height={H * S}
+        className={s.hud}
         role="img"
         aria-label="Space shooter: three waves and a boss. Left and right arrows, or drag, to move. The ship fires on its own."
       />
-      <canvas ref={glow} width={W} height={H} className={s.glow} aria-hidden="true" />
     </div>
     {/* Phones: a big strip under the screen to steer with your thumb, so it never covers the ship */}
     <div ref={strip} className={s.strip} aria-hidden="true"><span>◀ drag here to steer ▶</span></div>
