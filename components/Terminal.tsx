@@ -21,7 +21,7 @@ const COMMANDS = [
   { cmd: "whoami", does: "who I am, in one line" },
   { cmd: "cat about.txt", does: "the about, unabridged" },
   { cmd: "git log", does: "my career as commits, dev and product branches" },
-  { cmd: "ls projects", does: "things that didn’t exist, pick one to open it" },
+  { cmd: "ls projects", does: "what I built and what I own, pick one to open it" },
   { cmd: "curl cv", does: "the whole CV as JSON, for the curious" },
   { cmd: "sudo hire adelina", does: "you know what this does" },
   { cmd: "play", does: "a tiny space shooter, ← → to move" },

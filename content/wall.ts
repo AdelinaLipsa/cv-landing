@@ -1,4 +1,4 @@
-// The Work page: ten pieces in two sections, each a live demo drawn in code (wall/Live.tsx), a title,
+// The Work page: twelve pieces in two sections, things she built and products she owns, each a live demo drawn in code (wall/Live.tsx), a title,
 // and one plain sentence. Facts are from the CV, her repos, or her own words. tbc = waiting on Adelina.
 
 export type Section = "built" | "owned";
@@ -19,7 +19,7 @@ export type Tile = {
 };
 
 export const sections: { id: Section; title: string; lede: string }[] = [
-  { id: "built", title: "Things I built", lede: "Tools I wrote myself, because the team kept hitting the same wall." },
+  { id: "built", title: "Things that didn’t exist", lede: "Until I built them, at work and after it." },
   { id: "owned", title: "Products I own", lede: "Payments and delivery: what ships, in what order, and how it performs." },
 ];
 
@@ -59,6 +59,31 @@ export const tiles: Tile[] = [
     href: "https://adelinalipsa.github.io/param-decoder/",
   },
   {
+    id: "change-log", form: "window", chrome: "change log", title: "Change log", section: "built",
+    blurb: "What changed and when, in one place. I built it in ClickUp.",
+    outcome: "Leadership gets one view of dependencies, risks and timelines.",
+    more: ["Part of running PRDs, standups and weekly reporting end-to-end in ClickUp.", "Gives leadership one view of dependencies, risks and timelines."],
+  },
+  {
+    id: "support-flows", form: "terminal", chrome: "support-flows", title: "Customer support automations", section: "built",
+    blurb: "I code the automations behind customer support’s flows, from the AI voice agent’s call to Zendesk.",
+    more: [
+      "With the head of customer support, I code the automations behind their flows. When an AI voice agent call ends, my automation maps it and sends it to Zendesk, routed to a person when it needs one.",
+      "I test the AI voice agents’ calls with call scenarios, end to end, until each one lands in Zendesk the way it should.",
+      "I also run customer support’s statistics.",
+      "Demo run, demo data.",
+    ],
+  },
+  {
+    id: "declines", form: "window", chrome: "declines · Datadog", title: "Where declines come from", section: "built",
+    blurb: "I run the analysis in Datadog, log data and SQL to find the source of a decline rate.",
+    more: [
+      "I analyse payment performance across the gateways in Datadog, log data and SQL: approval rates, declines, and checkout conversion.",
+      "The question each time: where does this decline rate come from? I break it down by gateway, by decline code, and by 3DS until one source stands out.",
+      "Demo dashboard, demo numbers.",
+    ],
+  },
+  {
     id: "mobile", form: "phone", title: "AgroCity on phones", section: "built",
     blurb: "The app on iOS and Android with Capacitor, published to both stores.",
     more: ["Took the AgroCity app mobile with Capacitor: iOS builds in Xcode, Android builds, and publishing to the App Store and Google Play."],
@@ -67,13 +92,13 @@ export const tiles: Tile[] = [
     id: "this-site", form: "window", chrome: "this site", title: "This CV", section: "built",
     blurb: "Built from scratch in Next.js, with a Web Audio lofi and a git-graph career.",
     more: ["Next.js 16, React 19 and TypeScript, animated with motion, GSAP and three.js, plus React Bits components restyled to fit.", "The lofi is made live with Web Audio, no audio files. The career is a git graph. The whole CV is JSON at /api/cv."],
-  },  {
+  },
+  {
     id: "ruined-saints", form: "window", chrome: "ruined saints", title: "Ruined Saints", section: "built",
     blurb: "My streetwear label, and the store I built for it.",
     more: ["The store runs on Next.js, with Medusa for commerce and Meilisearch for search. This is its gate and hero."],
     tbc: "store link, once ruinedsaints.com is live",
   },
-
   {
     id: "gateways", title: "Gateway routing", section: "owned",
     blurb: "Chase Paymentech, NMI, Braintree, PayPal and Stripe, plus 3DS/SCA.",
@@ -84,12 +109,6 @@ export const tiles: Tile[] = [
     id: "apms", form: "phone", title: "Ways to pay", section: "owned",
     blurb: "Paze, PayPal Pay Later and Amazon Pay at checkout.",
     more: ["I own the alternative payment methods: Paze, PayPal Pay Later and Amazon Pay.", "Demo checkout, demo amount."],
-  },
-  {
-    id: "change-log", form: "window", chrome: "change log", title: "Change log", section: "owned",
-    blurb: "What changed and when, in one place, run in ClickUp.",
-    outcome: "Leadership gets one view of dependencies, risks and timelines.",
-    more: ["Part of running PRDs, standups and weekly reporting end-to-end in ClickUp.", "Gives leadership one view of dependencies, risks and timelines."],
   },
   {
     id: "pipeline", title: "Eligibility pipeline", section: "owned",

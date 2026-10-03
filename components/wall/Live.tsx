@@ -58,19 +58,31 @@ const TERMINAL = [
   { t: "done. nothing left the machine.", c: "muted" },
 ];
 
-export function Terminal() {
+// Customer support automations: an AI voice agent call runs through her automation into Zendesk, then the
+// scenario tests. Same story as the Workbench Customers panel; demo data.
+export const SUPPORT_RUN = [
+  { t: "$ test-call --scenario refund", c: "" },
+  { t: "ai voice call ended · intent: refund", c: "muted" },
+  { t: "→ support-flows automation", c: "muted" },
+  { t: "map intent, order, transcript", c: "muted" },
+  { t: "needs a human → escalate", c: "muted" },
+  { t: "✓ landed in Zendesk", c: "ok" },
+  { t: "✓ 4/4 call scenarios pass", c: "ok" },
+];
+
+export function Terminal({ lines = TERMINAL }: { lines?: { t: string; c: string }[] }) {
   const [ref, on] = useLive();
   const still = useStill();
   const [n, setN] = useState(0);
-  useEffect(() => { setN(still || !on ? TERMINAL.length : 0); }, [still, on]); // paused: the finished scan; hovered: replay it
+  useEffect(() => { setN(still || !on ? lines.length : 0); }, [still, on, lines]); // paused: the finished run; hovered: replay it
   useEffect(() => {
     if (!on || still) return;
-    const id = setInterval(() => setN((v) => (v >= TERMINAL.length + 3 ? 0 : v + 1)), 700);
+    const id = setInterval(() => setN((v) => (v >= lines.length + 3 ? 0 : v + 1)), 700);
     return () => clearInterval(id);
-  }, [on, still]);
+  }, [on, still, lines]);
   return (
     <div ref={ref} className={`${s.live} ${s.ink} ${s.term}`} aria-hidden="true">
-      {TERMINAL.slice(0, n).map((l) => <span key={l.t} className={s[l.c]}>{l.t}</span>)}
+      {lines.slice(0, n).map((l) => <span key={l.t} className={s[l.c]}>{l.t}</span>)}
       <span className={s.caret} />
     </div>
   );
@@ -152,6 +164,36 @@ export function DecoderDemo() {
           </motion.div>
         )}
       </AnimatePresence>
+    </div>
+  );
+}
+
+// Where declines come from: one decline rate, broken down by gateway, then decline code, then 3DS, until one
+// source stands out. Demo gateways, demo shares; no real numbers. Paused: the last breakdown, source found.
+const DD = [
+  { by: "gateway", q: "declines by {gateway}", rows: [["Gateway A", 22], ["Gateway B", 18], ["Gateway C", 60]] },
+  { by: "decline code", q: "declines{gateway:c} by {code}", rows: [["05 do not honor", 64], ["51 no funds", 24], ["54 expired", 12]] },
+  { by: "3DS", q: "declines{code:05} by {3ds}", rows: [["challenged", 15], ["frictionless", 20], ["no 3DS", 65]] },
+] as const;
+export function DeclinesDemo() {
+  const [ref, on] = useLive();
+  const t = useTick(DD.length * STEPS, 750, on);
+  const g = Math.floor(t / STEPS);
+  const k = t % STEPS;
+  const top = Math.max(...DD[g].rows.map((r) => r[1]));
+  return (
+    <div ref={ref} className={`${s.live} ${s.white} ${s.stack} ${s.pd}`}>
+      <div className={s.pdTabs}>{DD.map((d, i) => <span key={d.by} data-on={i === g || undefined}>{d.by}</span>)}</div>
+      <span className={s.field}>{DD[g].q}</span>
+      <div className={s.pdBody}>
+        {DD[g].rows.map(([label, v]) => (
+          <div key={label} className={s.pdRow}>
+            <code>{label}</code>
+            <span className={s.ddTrack}><motion.i className={s.ddFill} data-top={(k >= 2 && v === top) || undefined} initial={false} animate={{ width: k >= 1 ? `${v}%` : "0%" }} transition={{ duration: 0.5 }} /></span>
+          </div>
+        ))}
+      </div>
+      <motion.span className={s.pdNote} animate={{ opacity: k >= 2 ? 1 : 0 }}>{g === DD.length - 1 ? "Source: gateway C, code 05, no 3DS." : `Stands out: ${DD[g].rows.find((r) => r[1] === top)![0]}. Next: drill in.`}</motion.span>
     </div>
   );
 }

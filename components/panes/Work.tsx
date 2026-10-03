@@ -140,7 +140,7 @@ export default function Work(_: { ui: UI }) {
   return (
     <div className={p.column}>
       <div className={s.head}>
-        <h1 className={p.title}><BlurText text="Things that didn’t exist" animateBy="words" delay={60} /></h1>
+        <h1 className={p.title}><BlurText text="What I built, and what I own" animateBy="words" delay={60} /></h1>
       </div>
 
       {sections.map((sec) => (

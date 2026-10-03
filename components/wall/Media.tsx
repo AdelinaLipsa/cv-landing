@@ -2,7 +2,7 @@
 import { useEffect, useRef } from "react";
 import { useInView } from "motion/react";
 import type { Tile } from "@/content/wall";
-import { BiteDemo, ChangeLogDemo, Checkout, DecoderDemo, Flow, Gateways, MobileApp, Terminal, ThisSite } from "./Live";
+import { BiteDemo, ChangeLogDemo, Checkout, DeclinesDemo, DecoderDemo, Flow, Gateways, MobileApp, SUPPORT_RUN, Terminal, ThisSite } from "./Live";
 
 // A screen recording: plays by itself whenever it's on screen, pauses when scrolled away.
 function Recording({ src, poster, label }: { src: string; poster: string; label: string }) {
@@ -22,6 +22,8 @@ const LIVE: Record<string, () => React.ReactNode> = {
   gateways: () => <Gateways />,
   apms: () => <Checkout />,
   "change-log": () => <ChangeLogDemo />,
+  "support-flows": () => <Terminal lines={SUPPORT_RUN} />,
+  declines: () => <DeclinesDemo />,
   "ruined-saints": () => <Recording src="/media/ruined-saints.mp4" poster="/media/ruined-saints.jpg" label="The Ruined Saints site: the PRAY? gate, then the hero" />,
   pipeline: () => <Flow steps={["Vendor file → S3", "Laravel job, with retries", "SFTP to the partner", "Results → Caspio · Slack alert"]} accent="var(--broth)" />,
 };

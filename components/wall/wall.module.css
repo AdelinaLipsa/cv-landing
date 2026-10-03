@@ -144,6 +144,9 @@
 .pdUrl { white-space: normal; word-break: break-all; line-height: 1.5; }
 .pdUrl b { color: #1d8a52; font-weight: 600; }
 .pdNote { font-size: 10.5px; color: var(--steam); }
+.ddTrack { height: 8px; border-radius: 999px; background: var(--surface-2); overflow: hidden; align-self: center; }
+.ddFill { display: block; height: 100%; border-radius: inherit; background: var(--line); transition: background-color 0.3s; }
+.ddFill[data-top] { background: #3355ff; }
 [data-theme="dark"] .pdOk, [data-theme="dark"] .pdUrl b { color: #3ddc84; }
 [data-theme="dark"] .pdBad { color: #ff7a7a; }
 .mono { font-family: var(--font-mono), monospace; font-size: 12px; color: var(--body-2); gap: 6px; }

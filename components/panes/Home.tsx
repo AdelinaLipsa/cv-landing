@@ -31,9 +31,9 @@ import RoadmapButton from "../Roadmap";
 import p from "./pane.module.css";
 import s from "./Home.module.css";
 
-// The Work wall's teaser: three pieces that explain themselves and cover the range,
-// a tool she built, her open-source project, the payments product she owns. Same tiles as the Work page.
-const preview = ["decoder", "hookwarden", "gateways"].map((id) => tiles.find((t) => t.id === id)!);
+// The Work wall's teaser: three things she built that explain themselves at a glance (her creations only,
+// it sits under "Things that didn’t exist"). Same tiles as the Work page.
+const preview = ["bite", "decoder", "hookwarden"].map((id) => tiles.find((t) => t.id === id)!);
 
 export const Play = () => (
   <span className={p.playDot}>
