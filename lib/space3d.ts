@@ -316,16 +316,17 @@ export async function mountSpace(canvas: HTMLCanvasElement, W: number, H: number
       player.position.set(X(f.ship.x), Y(H - 6.5), 0);
       player.rotation.set(-0.35, bank, 0);
       // Each frame the history shifts back and falls behind (the ship flies "up" through space).
+      trailColor.set(f.ship.trim).lerp(flameTint, 0.6);
       for (let s = 0; s < 2; s++) {
-        const h = hist[s], ex = X(f.ship.x) + (s ? 1.45 : -1.45) * Math.cos(bank), ey = Y(H - 6.5) - 4.6;
-        if (Math.abs(h[0].x - ex) > 20 || h[0].y < -500) for (const p of h) p.set(ex, ey); // first frame, or a new game re-centring the ship: no streak
-        for (let i = TRAIL - 1; i > 0; i--) h[i].set(h[i - 1].x, h[i - 1].y - 26 * dt * f.warp);
-        h[0].set(ex, ey);
+        const trail = hist[s], ex = X(f.ship.x) + (s ? 1.45 : -1.45) * Math.cos(bank), ey = Y(H - 6.5) - 4.6;
+        if (Math.abs(trail[0].x - ex) > 20 || trail[0].y < -500) for (const p of trail) p.set(ex, ey); // first frame, or a new game re-centring the ship: no streak
+        for (let i = TRAIL - 1; i > 0; i--) trail[i].set(trail[i - 1].x, trail[i - 1].y - 26 * dt * f.warp);
+        trail[0].set(ex, ey);
         for (let i = 0; i < TRAIL; i++) {
           const w = 0.55 * (1 - i / TRAIL), k = f.ship.visible ? (1 - i / TRAIL) ** 1.6 * 2.2 : 0, a = (s * TRAIL + i) * 2;
-          trailPos.set([h[i].x - w, h[i].y, -0.5, h[i].x + w, h[i].y, -0.5], a * 3);
-          trailColor.set(f.ship.trim).lerp(flameTint, 0.6).multiplyScalar(k);
-          trailCol.set([trailColor.r, trailColor.g, trailColor.b, trailColor.r, trailColor.g, trailColor.b], a * 3);
+          const o = a * 3, x = trail[i].x, y = trail[i].y, P = trailPos, C = trailCol;
+          P[o] = x - w; P[o + 1] = y; P[o + 2] = -0.5; P[o + 3] = x + w; P[o + 4] = y; P[o + 5] = -0.5;
+          C[o] = C[o + 3] = trailColor.r * k; C[o + 1] = C[o + 4] = trailColor.g * k; C[o + 2] = C[o + 5] = trailColor.b * k;
         }
       }
       trailGeo.attributes.position.needsUpdate = trailGeo.attributes.color.needsUpdate = true;
