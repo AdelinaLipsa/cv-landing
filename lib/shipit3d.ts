@@ -196,6 +196,35 @@ export async function mountShipIt(canvas: HTMLCanvasElement, W: number, H: numbe
   const beacons = beaconAt.map((x) => { const b = new THREE.Mesh(new THREE.SphereGeometry(1.1, 12, 8), beaconMat); b.position.set(x, -(13 * TS) + 1.1, -DEPTH + 1.5); scene.add(b); return b; });
   const beaconLights = [0, 1, 2].map(() => { const l = new THREE.PointLight(0xffb347, 0, 46, 0); scene.add(l); return l; });
 
+  // Scorch marks where shots hit walls: dark soft discs on the block faces, fading over 8 seconds.
+  const scorchCanvas = document.createElement("canvas");
+  scorchCanvas.width = scorchCanvas.height = 64;
+  const sg = scorchCanvas.getContext("2d")!, sr = sg.createRadialGradient(32, 32, 2, 32, 32, 30);
+  sr.addColorStop(0, "rgba(10,8,20,0.9)"); sr.addColorStop(0.5, "rgba(20,14,30,0.5)"); sr.addColorStop(1, "rgba(0,0,0,0)");
+  sg.fillStyle = sr; sg.fillRect(0, 0, 64, 64);
+  const scorchTex = new THREE.CanvasTexture(scorchCanvas);
+  textures.push(scorchTex);
+  const scorches = Array.from({ length: 40 }, () => {
+    const m = new THREE.Mesh(new THREE.PlaneGeometry(5, 5), new THREE.MeshBasicMaterial({ map: scorchTex, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2 }));
+    m.visible = false; scene.add(m); return m;
+  });
+  // Wall-hit sparks of our own (the game's sparks don't know about walls).
+  const hitSparks = st.sparks(160, 1.6);
+  let wallSparks: { x: number; y: number; vx: number; vy: number; life: number }[] = [];
+  const seenImpacts = new WeakSet<object>(); // two hits in one frame share a timestamp, so track them by identity
+
+  // Dust rings: a flat ring that races outward along the floor when something heavy lands.
+  const rings = Array.from({ length: 4 }, () => {
+    const m = new THREE.Mesh(new THREE.TorusGeometry(1, 0.35, 8, 40), new THREE.MeshBasicMaterial({ color: 0xb8b0c8, transparent: true, opacity: 0, depthWrite: false }));
+    m.rotation.x = Math.PI / 2; m.visible = false; scene.add(m);
+    return { m, age: 99 };
+  });
+  const dust = (x: number, y: number, size: number) => {
+    const r = rings.reduce((a, b) => (a.age > b.age ? a : b));
+    r.age = 0; r.m.position.set(x, y, -DEPTH / 2); r.m.userData.size = size; r.m.visible = true;
+  };
+  let heroWasGround = true, heroVy = 0;
+
   // Materials for the bodies.
   const gloss = (hex: string, metal = 0.15) => new THREE.MeshPhysicalMaterial({ color: hex, metalness: metal, roughness: 0.32, clearcoat: 1, clearcoatRoughness: 0.15 });
   const joint = new THREE.MeshStandardMaterial({ color: 0x2a2d40, metalness: 0.8, roughness: 0.4 });
@@ -241,6 +270,19 @@ export async function mountShipIt(canvas: HTMLCanvasElement, W: number, H: numbe
   const heroLight = new THREE.PointLight(0x7fe3ff, 0, 40, 0);
   scene.add(heroLight);
   const beam = new THREE.Mesh(new THREE.CylinderGeometry(1.1, 1.1, 1, 12), glowMat(hot("#7fe3ff", 2.5)));
+
+  // The beam-in: a column of light with scanning rings, replacing the plain cylinder.
+  const beamMat = new THREE.ShaderMaterial({
+    uniforms: { t: { value: 0 } },
+    transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide,
+    vertexShader: "varying vec2 vUv; void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }",
+    fragmentShader: `varying vec2 vUv; uniform float t;
+      void main() { float bands = 0.55 + 0.45 * step(0.5, fract(vUv.y * 14.0 - t * 6.0)); float core = pow(sin(vUv.x * 3.14159), 3.0);
+        gl_FragColor = vec4(vec3(0.5, 0.9, 1.0) * 2.4 * bands * core, 1.0); }`,
+  });
+  beam.material = beamMat as unknown as T.MeshBasicMaterial;
+  beam.geometry.dispose();
+  beam.geometry = new THREE.CylinderGeometry(2.4, 2.4, 1, 24, 1, true);
   scene.add(beam);
 
   // The real hero: a rigged CC0 robot with idle, run, jump, punch and thumbs-up clips, painted in the game's
@@ -466,6 +508,7 @@ export async function mountShipIt(canvas: HTMLCanvasElement, W: number, H: numbe
       // Scope Creep: stretches as it leaps, squashes on landing, flashes white when angry.
       boss.visible = !!f.boss;
       if (f.boss) {
+        if (f.boss.ground && lastBossVy > 50) dust(X(f.boss.x + 8), Y(f.boss.y + 13), 24);
         const sq = squash(bossSquash, f.boss.ground && lastBossVy > 50, f.boss.ground, f.boss.vy, dt);
         bossSquash = sq.s;
         lastBossVy = f.boss.ground ? 0 : f.boss.vy;
@@ -496,6 +539,37 @@ export async function mountShipIt(canvas: HTMLCanvasElement, W: number, H: numbe
       const n = Math.min(f.sparks.length, sparks.max);
       for (let i = 0; i < n; i++) { const s = f.sparks[i]; sparks.set(i, X(s.x), Y(s.y), Z + 2, s.color, Math.min(1, s.life * 2) * 2.2); }
       sparks.commit(n);
+
+      // New wall impacts: a scorch mark and a spray of sparks. `impacts` holds the last 40, oldest first.
+      for (const im of f.impacts) if (!seenImpacts.has(im)) {
+        seenImpacts.add(im);
+        const s = scorches.reduce((a, b) => ((a.userData.at ?? -1) < (b.userData.at ?? -1) ? a : b));
+        s.position.set(X(im.x), Y(im.y), 0.05); s.userData.at = t; s.visible = true; s.rotation.z = Math.random() * Math.PI;
+        for (let i = 0; i < 7; i++) { const a = Math.PI / 2 + (Math.random() - 0.5) * 2.4; wallSparks.push({ x: X(im.x), y: Y(im.y), vx: Math.cos(a) * 40 * Math.sign(-(f.p.face || 1)), vy: Math.sin(a) * 40, life: 0.35 + Math.random() * 0.25 }); }
+      }
+      for (const s of scorches) if (s.visible) { const age = t - s.userData.at; (s.material as T.MeshBasicMaterial).opacity = Math.max(0, 1 - age / 8); if (age > 8) s.visible = false; }
+      wallSparks = wallSparks.filter((s) => ((s.x += s.vx * dt), (s.y += s.vy * dt), (s.vy -= 90 * dt), (s.life -= dt) > 0));
+      const hs = Math.min(wallSparks.length, hitSparks.max);
+      for (let i = 0; i < hs; i++) hitSparks.set(i, wallSparks[i].x, wallSparks[i].y, 1, "#fff1a8", wallSparks[i].life * 4);
+      hitSparks.commit(hs);
+
+      // Dust when the hero lands from a real fall, and when Scope Creep lands.
+      if (p.ground && !heroWasGround && heroVy > 140 && p.visible) dust(X(p.x + 5), Y(p.y + 14), 9);
+      heroWasGround = p.ground; heroVy = p.ground ? 0 : p.vy;
+      for (const r of rings) {
+        if (!r.m.visible) continue;
+        r.age += dt;
+        const k = Math.min(1, r.age / 0.6);
+        r.m.scale.setScalar(1 + k * r.m.userData.size);
+        (r.m.material as T.MeshBasicMaterial).opacity = (1 - k) * 0.6;
+        if (k >= 1) r.m.visible = false;
+      }
+
+      // Scope Creep telegraphs a leap: a crouch and a red glow in the half second before it jumps.
+      if (f.boss && f.boss.ground && f.boss.cool < 0.45) { bossArmor.emissive.set("#ff3b3b"); bossArmor.emissiveIntensity = 0.25 + Math.sin(t * 30) * 0.15; boss.scale.y *= 0.9; }
+      else if (f.boss && !f.boss.hit) bossArmor.emissive.set(0xffffff);
+
+      beamMat.uniforms.t.value = t;
 
       st.render(dt);
     },
