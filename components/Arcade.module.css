@@ -79,7 +79,9 @@
 .menu { gap: 18px; }
 .hero { display: flex; flex-direction: column; align-items: center; gap: 4px; padding-top: 8px; }
 .tagline { margin: 0; font-family: var(--font-mono), monospace; font-size: 13px; letter-spacing: 0.2em; color: #F5B53F; }
-.progress { position: relative; display: flex; flex-direction: column; gap: 6px; font-family: var(--font-mono), monospace; font-size: 12.5px; color: #b9b6e0; }
+.progress { position: relative; display: flex; flex-direction: column; gap: 6px; padding: 0; border: 0; background: none; text-align: left; font-family: var(--font-mono), monospace; font-size: 12.5px; color: #b9b6e0; cursor: pointer; }
+.open { margin-left: 8px; color: #F5B53F; font-weight: 700; }
+.progress:hover .open, .progress:focus-visible .open { text-decoration: underline; text-underline-offset: 3px; }
 .progress::after { content: ""; height: 4px; border-radius: 4px; background: #1d1a44; }
 .progress i { position: absolute; left: 0; bottom: 0; height: 4px; border-radius: 4px; background: linear-gradient(90deg, #F5B53F, #ff7ac6); }
 .grid { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }

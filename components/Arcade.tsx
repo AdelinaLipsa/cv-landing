@@ -15,6 +15,7 @@ import SpaceGame from "./SpaceGame";
 import ShipIt from "./ShipIt";
 import SprintFighter from "./SprintFighter";
 import HighScores from "./HighScores";
+import TrophyCase from "./TrophyCase";
 import s from "./Arcade.module.css";
 
 // The nav's gamepad opens this: a full-screen arcade of its own (not a sheet, so touches go to the game,
@@ -40,7 +41,7 @@ const GAMES = [
   },
 ];
 
-export default function Arcade({ onClose }: { onClose: () => void }) {
+export default function Arcade({ onClose, contact }: { onClose: () => void; contact: () => void }) {
   const [on, setOn] = useState<string | null>(null);
   const [last, setLast] = useState<number | null>(null); // the latest final score, for the leaderboard
   const [quiet, setQuiet] = useState(false);
@@ -71,7 +72,7 @@ export default function Arcade({ onClose }: { onClose: () => void }) {
     <div className={s.overlay} role="dialog" aria-modal="true" aria-label="Arcade">
       {!game && <div className={s.rays} aria-hidden="true"><SideRays rayColor1="#3355FF" rayColor2="#ff7ac6" speed={1} intensity={1.6} opacity={0.55} origin="top-left" /></div>}
       <header className={s.head}>
-        {game ? <button type="button" className={s.back} onClick={() => { setOn(null); setLast(null); }}>← Arcade</button> : <b className={s.title}>Arcade</b>}
+        {on ? <button type="button" className={s.back} onClick={() => { setOn(null); setLast(null); }}>← Arcade</button> : <b className={s.title}>Arcade</b>}
         <span className={s.headRight}>
           <button type="button" className={s.sound} onClick={toggle} aria-pressed={!quiet} title="Sound and vibration (M)">
             <span aria-hidden="true">{quiet ? "🔇" : "🔊"}</span> {quiet ? "Sound off" : "Sound on"}
@@ -89,6 +90,8 @@ export default function Arcade({ onClose }: { onClose: () => void }) {
             <p className={s.tips}>{game.tips}</p>
             <HighScores game={game.id} score={last} />
           </div>
+        ) : on === "trophies" ? (
+          <TrophyCase contact={contact} />
         ) : (
           <div className={s.menu}>
             {/* React Bits all the way: glitchy title, decrypting tagline, tilting glare cards with sparks */}
@@ -96,10 +99,10 @@ export default function Arcade({ onClose }: { onClose: () => void }) {
               <FuzzyText fontSize="clamp(2.8rem, 13vw, 5.5rem)" fontWeight={900} fontFamily="ui-monospace, monospace" color="#5fd0ff" baseIntensity={0.08} hoverIntensity={0.3} glitchMode glitchInterval={3200}>ARCADE</FuzzyText>
               <p className={s.tagline}><DecryptedText text="INSERT COIN · PICK A GAME" animateOn="view" speed={45} maxIterations={12} sequential revealDirection="start" /></p>
             </div>
-            <div className={s.progress} title="Type achievements() in the console for the full list">
-              <span>🏆 {found}/{total} achievements found</span>
+            <button type="button" className={s.progress} onClick={() => setOn("trophies")}>
+              <span>🏆 {found}/{total} achievements found <b className={s.open}>open the trophy case →</b></span>
               <i style={{ width: `${(found / total) * 100}%` }} />
-            </div>
+            </button>
             <div className={s.grid}>
               {GAMES.map((g) => (
                 <ClickSpark key={g.id} sparkColor="#F5B53F" sparkSize={10} sparkRadius={22} sparkCount={10} duration={450}>

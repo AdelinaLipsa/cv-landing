@@ -255,7 +255,7 @@ export default function Shell({ code, character }: { code: Snippets; character: 
 
       {touring && <Tour code={code} onStep={onStep} onClose={endTour} />}
       <EasterEggs contact={ui.contact} terminal={ui.terminal} arcade={() => setArcade(true)} />
-      {arcade && <Arcade onClose={() => setArcade(false)} />}
+      {arcade && <Arcade onClose={() => setArcade(false)} contact={() => { setArcade(false); ui.contact(); }} />}
       <Toasts />
       <Clock />
       {!touring && <Cat />}
