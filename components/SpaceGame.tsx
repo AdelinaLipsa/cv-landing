@@ -274,7 +274,7 @@ export default function SpaceGame({ mode: want, onLost, onEnd }: { mode: Mode; o
         t, dt, warp, shake: calm ? 0 : shake,
         ship: { x: ship, visible: state !== "over" && (invuln <= 0 || Math.floor(t * 12) % 2 === 1), trim: triple > 0 ? "#F5B53F" : rapid > 0 ? "#b6ffcf" : "#5fd897", shield },
         aliens, kind: Math.min(Math.max(wave, 0), WAVES.length - 1),
-        boss: boss && { x: boss.x, y: boss.y, hit: boss.hp < BOSS_HP / 2 && Math.floor(t * 8) % 2 === 1 },
+        boss: boss && { x: boss.x, y: boss.y, hit: boss.hp < BOSS_HP / 2 && Math.floor(t * 8) % 2 === 1, hp: boss.hp / BOSS_HP },
         shots, bombs, sparks,
         drops: drops.map((d) => ({ x: d.x, y: d.y, color: DROPS[d.type] })),
       });

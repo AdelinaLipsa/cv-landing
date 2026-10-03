@@ -8,7 +8,7 @@ export type SpaceFrame = {
   t: number; dt: number; warp: number; shake: number;
   ship: { x: number; visible: boolean; trim: string; shield: boolean };
   aliens: { x: number; y: number; alive: boolean; diving: boolean }[]; kind: number;
-  boss: { x: number; y: number; hit: boolean } | null;
+  boss: { x: number; y: number; hit: boolean; hp: number } | null;
   shots: { x: number; y: number; vx: number; vy: number }[];
   bombs: { x: number; y: number }[];
   drops: { x: number; y: number; color: string }[];
@@ -215,6 +215,13 @@ export async function mountSpace(canvas: HTMLCanvasElement, W: number, H: number
   eye.position.y = -1.6;
   boss.add(mother, bossRing, eye);
   for (let i = 0; i < 16; i++) { const l = new THREE.Mesh(new THREE.SphereGeometry(0.32, 8, 6), glowMat(hot(bossColor, 2.6))); const a = (i / 16) * Math.PI * 2; l.position.set(Math.cos(a) * 7.2, 0.6, Math.sin(a) * 7.2); boss.add(l); }
+  const pods = [-1, 1].map((s) => {
+    const p = new THREE.Group();
+    const pod = new THREE.Mesh(new THREE.CylinderGeometry(1.1, 1.4, 4.2, 16), gunmetal); pod.rotation.z = Math.PI / 2;
+    const glowTip = new THREE.Mesh(new THREE.SphereGeometry(0.7, 10, 8), glowMat(hot(bossColor, 2.5))); glowTip.position.x = s * 2.3;
+    p.add(pod, glowTip); p.position.set(s * 10.2, 0, 0); boss.add(p);
+    return { p, s, off: false, vx: 0, vy: 0, spin: 0 };
+  });
   boss.scale.setScalar(1.25);
   boss.visible = false;
   scene.add(boss);
@@ -363,7 +370,19 @@ export async function mountSpace(canvas: HTMLCanvasElement, W: number, H: number
         boss.rotation.set(0.5, t * 0.5, Math.sin(t * 0.9) * 0.12); // tilted toward you, turning, rocking
         bossHull.emissiveIntensity = f.boss.hit ? 0.8 : 0;
         eye.scale.setScalar(1 + Math.sin(t * 6) * 0.12);
-      }
+        if (f.boss.hp > 0.95) for (const pd of pods) if (pd.off) { pd.off = false; boss.add(pd.p); pd.p.position.set(pd.s * 10.2, 0, 0); pd.p.rotation.set(0, 0, 0); }
+        pods.forEach((pd, i) => {
+          if (!pd.off && f.boss!.hp < (i ? 0.33 : 0.66)) {
+            pd.off = true; scene.attach(pd.p); pd.vx = pd.s * 14; pd.vy = 6; pd.spin = 3 + Math.random() * 3;
+            explode(pd.p.position.x, pd.p.position.y, bossColor, 1.2);
+          }
+          if (pd.off) { pd.vy -= 30 * dt; pd.p.position.x += pd.vx * dt; pd.p.position.y += pd.vy * dt; pd.p.rotation.z += pd.spin * dt; }
+        });
+        if (f.boss.hp < 0.5 && Math.random() < dt * 12) {
+          const p = puffState[puffNext]; puffNext = (puffNext + 1) % PUFFS;
+          Object.assign(p, { x: boss.position.x + (Math.random() - 0.5) * 12, y: boss.position.y + 2, vx: (Math.random() - 0.5) * 3, vy: 8 + Math.random() * 6, life: 0, max: 1.4, size: 7 });
+        }
+      } else for (const pd of pods) if (pd.off) { pd.p.position.y -= 40 * dt; }
 
       shots.count = Math.min(f.shots.length, MAX);
       for (let i = 0; i < shots.count; i++) {
