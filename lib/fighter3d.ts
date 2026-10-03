@@ -4,6 +4,7 @@
 import type * as T from "three";
 import { stage } from "./arcade3d";
 import { POSES, PO, SH, poseName, lerpPose, framing, type Look, type Pose } from "./fighterMotion";
+import { buildFighter, type Rig } from "./fighterModel";
 
 export type FighterFrame = {
   t: number; dt: number; shake: number; pause: number; halloween: boolean; christmas: boolean;
@@ -76,7 +77,7 @@ export async function mountFighter(canvas: HTMLCanvasElement, W: number, H: numb
     for (let i = 0; i < 900; i++) { g.fillStyle = `rgba(255,255,255,${Math.random() * 0.04})`; g.fillRect(Math.random() * 256, Math.random() * 64, 1, 1); }
   });
   seams.wrapS = seams.wrapT = THREE.RepeatWrapping; seams.repeat.set(4, 2);
-  const floor = new THREE.Mesh(new THREE.PlaneGeometry(W + 240, 140), new THREE.MeshPhysicalMaterial({ map: seams, color: 0x9b6fd6, envMapIntensity: 0.2, roughness: 0.35, metalness: 0.15, clearcoat: 0.8, clearcoatRoughness: 0.12 }));
+  const floor = new THREE.Mesh(new THREE.PlaneGeometry(W + 240, 140), new THREE.MeshPhysicalMaterial({ map: seams, color: 0x8f5ed6, envMapIntensity: 0.15, roughness: 0.35, metalness: 0.15, clearcoat: 0.8, clearcoatRoughness: 0.12 }));
   floor.rotation.x = -Math.PI / 2; floor.position.set(W / 2, Y(GROUND), -30); floor.receiveShadow = true;
   scene.add(floor);
   const rail = new THREE.Mesh(new THREE.BoxGeometry(W + 240, 1.6, 1.2), new THREE.MeshStandardMaterial({ color: 0x3a2350, metalness: 0.8, roughness: 0.35 }));
@@ -88,53 +89,15 @@ export async function mountFighter(canvas: HTMLCanvasElement, W: number, H: numb
   for (let i = 0; i < CROWD; i++) crowd.setColorAt(i, crowdCol[i % 3]);
   scene.add(crowd);
 
-  // A jointed fighter: hips → torso → shoulders → arms, hips → legs; head on the torso. Built facing +x.
-  // Pivots point down; rotation.z = angle reproduces Retro's "from straight down, + forward" angles.
-  const tint = (hex: string, rough = 0.75) => new THREE.MeshPhysicalMaterial({ color: hex, roughness: rough, sheen: 0.6, sheenRoughness: 0.6, sheenColor: new THREE.Color(hex) });
-  type Rig = {
-    root: T.Group; hips: T.Group; torso: T.Group; head: T.Group; mats: T.MeshPhysicalMaterial[];
-    arms: { sh: T.Group; el: T.Group }[]; legs: { hip: T.Group; knee: T.Group }[];
-    pose: Pose; wasAir: boolean; lying: number;
-  };
-  const capsule = (r: number, len: number, mat: T.Material) => { const m = new THREE.Mesh(new THREE.CapsuleGeometry(r, len, 6, 12), mat); m.castShadow = st.shadows; return m; };
-  const segment = (r: number, len: number, mat: T.Material) => { const g = new THREE.Group(); const m = capsule(r, len - r, mat); m.position.y = -len / 2; g.add(m); return g; };
-  const makeFighter = (look: Look): Rig => {
-    const skin = tint(look.skin, 0.55), top = tint(look.top), sleeve = tint(look.sleeve), legs = tint(look.legs), hair = tint(look.hair, 0.9);
-    const extra = new THREE.MeshPhysicalMaterial({ color: look.extra, roughness: 0.5 });
-    const root = new THREE.Group(), hips = new THREE.Group(), torso = new THREE.Group(), head = new THREE.Group();
-    hips.position.y = 13; root.add(hips); hips.add(torso);
-    const chest = capsule(2.7, 5.5, top); chest.scale.set(1, 1, 0.75); chest.position.y = 5; torso.add(chest);
-    head.position.y = 12.5; torso.add(head);
-    const skull = new THREE.Mesh(new THREE.SphereGeometry(2.6, 24, 18), skin); skull.castShadow = st.shadows;
-    const cap = new THREE.Mesh(new THREE.SphereGeometry(2.75, 24, 12, 0, Math.PI * 2, 0, Math.PI / 2.2), hair); cap.rotation.z = 0.35;
-    const eye = new THREE.Mesh(new THREE.SphereGeometry(0.35, 8, 6), new THREE.MeshBasicMaterial({ color: 0x17153a })); eye.position.set(2.35, 0.3, 0.9);
-    head.add(skull, cap, eye);
-    if (look === PO) { const band = new THREE.Mesh(new THREE.TorusGeometry(2.7, 0.35, 8, 24), extra); band.rotation.x = Math.PI / 2; band.position.y = 0.6; head.add(band); }
-    else { const tie = new THREE.Mesh(new THREE.BoxGeometry(0.5, 4.5, 0.4), extra); tie.position.set(2.2, 7.5, 0); torso.add(tie); }
-    const arm = (z: number) => {
-      const sh = new THREE.Group(); sh.position.set(0, 8, z); torso.add(sh);
-      const upper = segment(1.1, 6, sleeve); sh.add(upper);
-      const el = new THREE.Group(); el.position.y = -6; sh.add(el);
-      const fore = segment(0.95, 6, skin); el.add(fore);
-      const fist = new THREE.Mesh(new THREE.SphereGeometry(1.15, 12, 10), skin); fist.position.y = -6; fist.castShadow = st.shadows; el.add(fist);
-      return { sh, el };
-    };
-    const leg = (z: number) => {
-      const hip = new THREE.Group(); hip.position.set(0, 0, z); hips.add(hip);
-      hip.add(segment(1.45, 7, legs));
-      const knee = new THREE.Group(); knee.position.y = -7; hip.add(knee);
-      knee.add(segment(1.25, 7, legs));
-      const shoe = new THREE.Mesh(new THREE.BoxGeometry(3.4, 1.4, 2), new THREE.MeshStandardMaterial({ color: 0x17153a, roughness: 0.6 })); shoe.position.set(0.9, -7.2, 0); shoe.castShadow = st.shadows; knee.add(shoe);
-      return { hip, knee };
-    };
-    // Front limbs nearer the camera (+z), drawn last in Retro; mirroring with scale.x keeps them near when facing left.
-    const arms = [arm(2.6), arm(-2.6)], legsR = [leg(1.4), leg(-1.4)];
-    scene.add(root);
-    return { root, hips, torso, head, mats: [skin, top, sleeve, legs, hair, extra], arms, legs: legsR, pose: POSES.idle, wasAir: false, lying: 0 };
-  };
-  const rigs = [makeFighter(PO), makeFighter(SH)];
+  // The fighters (lib/fighterModel): The PO in a gi, The Stakeholder in a suit, jointed to the game's poses.
+  type Fighter = Rig & { pose: Pose; wasAir: boolean; lying: number };
+  const rigs: Fighter[] = [PO, SH].map((look) => {
+    const r = buildFighter(THREE, look, look === PO, st.shadows);
+    scene.add(r.root);
+    return { ...r, pose: POSES.idle, wasAir: false, lying: 0 };
+  });
 
-  const apply = (r: Rig, p: Pose) => {
+  const apply = (r: Fighter, p: Pose) => {
     const [lean, fa, ba, fl, bl, drop] = p;
     r.hips.position.y = 13 - drop;
     r.torso.rotation.z = -lean;
@@ -196,11 +159,12 @@ export async function mountFighter(canvas: HTMLCanvasElement, W: number, H: numb
         const target = POSES[s.act === "ko" && s.y === 0 ? "hit" : poseName(s, t)] ?? POSES.idle;
         r.pose = lerpPose(r.pose, target, f.pause > 0 ? 0 : Math.min(1, dt * 20));
         apply(r, r.pose);
+        r.wave(t, Math.abs(s.x - (r.root.position.x || s.x)) / Math.max(dt, 1e-3));
         r.lying += ((s.act === "ko" && s.y === 0 ? 1 : 0) - r.lying) * Math.min(1, dt * 10);
         r.root.position.set(X(s.x), Y(GROUND + s.y) + r.lying * 2.4, 0);
         r.root.scale.x = s.face;
         r.root.rotation.set(0, -0.35 * s.face, s.face * (Math.PI / 2) * r.lying);
-        const flash = s.act === "hit" && Math.floor(t * 20) % 2 ? 0.6 : 0;
+        const flash = s.act === "hit" && Math.floor(t * 20) % 2 ? 0.3 : 0;
         for (const m of r.mats) { m.emissive.set(0xff3b3b); m.emissiveIntensity = flash; }
       });
 
@@ -255,7 +219,7 @@ export async function mountFighter(canvas: HTMLCanvasElement, W: number, H: numb
       const sx = f.shake > 0 ? (Math.random() - 0.5) * 3 : 0, sy = f.shake > 0 ? (Math.random() - 0.5) * 2 : 0;
       // On a KO the camera circles the fight's midpoint a little; reduced motion keeps it still.
       const loser = f.fighters.find((s) => s.act === "ko");
-      const orbit = !st.calm && f.state === "ko" && loser ? Math.min(0.35, (3 - f.stateT) * 0.12) : 0;
+      const orbit = !st.calm && f.state === "ko" && loser ? Math.min(0.25, (3 - f.stateT) * 0.1) : 0;
       const dist = D / cam.zoom;
       const px = orbit ? cam.x + Math.sin(orbit) * dist : cam.x + sx, pz = orbit ? Math.cos(orbit) * dist : dist;
       camera.position.set(px, cam.y + sy, pz);
