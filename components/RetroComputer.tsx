@@ -3,6 +3,7 @@ import { useEffect, useRef } from "react";
 import type * as T from "three";
 import { createBattle, draw, step, W, H } from "@/lib/battle";
 import { buildHobbies } from "@/lib/hobbyModels";
+import { marquee, teaser } from "@/lib/bootTeaser";
 import s from "./RetroComputer.module.css";
 
 // A beige late-90s computer in three.js. The screen is a canvas texture running the pixel battle.
@@ -510,20 +511,10 @@ async function mount(el: HTMLElement, character: boolean, onScreen: () => void) 
       ctx.fillRect(W * (0.5 - k * 0.5), (H - h) / 2, W * k, h);
       return;
     }
+    const on = t - ARRIVE - POWER; // seconds since the screen switched on
+    if (teaser(ctx, on, W, H)) return; // attract mode: a tiny Windows 98 shows what clicking does
     draw(ctx, battle);
-    bootLine(Math.floor(t * 2) % 2 === 0);
-  };
-  // An old "PRESS START" along the bottom of the screen: clicking the screen boots Windows 98.
-  const bootLine = (on: boolean) => {
-    ctx.fillStyle = "rgba(7, 6, 26, 0.85)";
-    ctx.fillRect(0, H - 13, W, 13);
-    if (!on) return;
-    ctx.font = "bold 8px monospace";
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    ctx.fillStyle = "#F5B53F";
-    ctx.fillText("CLICK TO BOOT ▶", W / 2, H - 6);
-    ctx.textAlign = "left";
+    marquee(ctx, on, W, H);
   };
 
   let camDist = 1;
@@ -634,7 +625,7 @@ async function mount(el: HTMLElement, character: boolean, onScreen: () => void) 
     poseKid(LOOP - 0.01);
     kid.rotation.y = Math.PI;
     draw(ctx, battle);
-    bootLine(true); // steady, no blinking
+    marquee(ctx, 0, W, H, true); // still: no scrolling, no teaser
     tex.needsUpdate = true;
     renderer.render(scene, camera);
     placeNote();
