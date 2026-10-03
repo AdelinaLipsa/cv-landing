@@ -14,7 +14,7 @@ export type FighterFrame = {
 };
 export type FighterView = { draw(f: FighterFrame): void; dispose(): void };
 
-export async function mountFighter(canvas: HTMLCanvasElement, W: number, H: number, GROUND: number, onLost?: () => void): Promise<FighterView> {
+export async function mountFighter(canvas: HTMLCanvasElement, W: number, H: number, GROUND: number, f0Season: { halloween: boolean; christmas: boolean }, onLost?: () => void): Promise<FighterView> {
   const st = await stage(canvas, W, H, { shadows: true, env: 0.5, onLost });
   const { THREE, scene, camera, D, hot, glowMat } = st;
   const X = (x: number) => x, Y = (y: number) => -y;
@@ -153,6 +153,39 @@ export async function mountFighter(canvas: HTMLCanvasElement, W: number, H: numb
   const ballCore = hot("#ffffff", 3), ballMine = hot("#5fd0ff", 2.2), ballTheirs = hot("#ff7ac6", 2.2);
   const sparks = st.sparks(320, 1.8);
 
+  // Each ball leaves a trail of fading sparks; a big one also carries a lens flare.
+  const trail = st.sparks(200, 2.4);
+  const trailPts: { x: number; y: number; c: string; life: number }[] = [];
+  const flareTex = paint(128, 128, (g) => {
+    const r = g.createRadialGradient(64, 64, 0, 64, 64, 64); r.addColorStop(0, "rgba(255,255,255,1)"); r.addColorStop(0.2, "rgba(255,255,255,0.35)"); r.addColorStop(1, "rgba(255,255,255,0)");
+    g.fillStyle = r; g.fillRect(0, 0, 128, 128);
+    g.fillStyle = "rgba(255,255,255,0.5)"; g.fillRect(0, 62, 128, 4); // the streak
+  });
+  const flares = balls.map(() => {
+    const m = new THREE.Mesh(new THREE.PlaneGeometry(26, 26), new THREE.MeshBasicMaterial({ map: flareTex, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, toneMapped: false, color: new THREE.Color(2, 2, 2) }));
+    m.visible = false; scene.add(m); return m;
+  });
+
+  // Dust rings where a fighter lands.
+  const rings = Array.from({ length: 4 }, () => {
+    const m = new THREE.Mesh(new THREE.TorusGeometry(1, 0.3, 8, 40), new THREE.MeshBasicMaterial({ color: 0xd8c8e8, transparent: true, opacity: 0, depthWrite: false }));
+    m.rotation.x = Math.PI / 2; m.visible = false; scene.add(m); return { m, age: 99 };
+  });
+
+  // Seasons: a Halloween moon and cape, a Christmas hat for The PO.
+  if (f0Season.halloween) {
+    skyMat.uniforms.top.value.set("#07041a"); skyMat.uniforms.mid.value.set("#3b1a5a"); skyMat.uniforms.bot.value.set("#ff8c1a");
+    sunDisc.material = glowMat(hot("#f3f0d0", 1.6)); sunDisc.position.set(W / 2 + 60, -30, -400); sunStripes.visible = false;
+    const cape = new THREE.Mesh(new THREE.PlaneGeometry(6, 18), new THREE.MeshStandardMaterial({ color: 0x2a0a1a, side: THREE.DoubleSide, roughness: 0.6 }));
+    cape.position.set(-2.4, 2, 0); cape.rotation.y = Math.PI / 2; rigs[1].torso.add(cape);
+  }
+  if (f0Season.christmas) {
+    const hat = new THREE.Group();
+    const cone = new THREE.Mesh(new THREE.ConeGeometry(2.6, 5, 16), new THREE.MeshStandardMaterial({ color: 0xff3b3b, roughness: 0.7 }));
+    const brim = new THREE.Mesh(new THREE.TorusGeometry(2.6, 0.6, 8, 20), new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.9 }));
+    cone.position.y = 3.6; brim.rotation.x = Math.PI / 2; brim.position.y = 1.3; hat.add(cone, brim); rigs[0].head.add(hat);
+  }
+
   const cam = { x: W / 2, y: -H / 2, zoom: 1 };
   return {
     draw(f) {
@@ -173,12 +206,33 @@ export async function mountFighter(canvas: HTMLCanvasElement, W: number, H: numb
 
       balls.forEach((o, i) => {
         const b = f.balls[i];
-        o.g.visible = !!b;
+        o.g.visible = flares[i].visible = !!b;
         if (!b) return;
+        const c = b.mine ? "#5fd0ff" : "#ff7ac6";
         o.core.color.copy(ballCore); o.halo.color.copy(b.mine ? ballMine : ballTheirs);
         o.g.position.set(X(b.x), Y(b.y), 2);
         o.g.scale.setScalar((b.big ? 1.7 : 1) * (1 + Math.sin(t * 30 + i) * 0.08));
+        if (dt > 0) trailPts.push({ x: X(b.x) - Math.sign(b.vx) * 2, y: Y(b.y) + (Math.random() - 0.5) * 2, c, life: 0.35 });
+        flares[i].visible = b.big;
+        flares[i].position.set(X(b.x), Y(b.y), 3); flares[i].rotation.z = t * 2;
       });
+      for (const p of trailPts) p.life -= dt;
+      while (trailPts.length && trailPts[0].life <= 0) trailPts.shift();
+      const tn = Math.min(trailPts.length, trail.max);
+      for (let i = 0; i < tn; i++) { const p = trailPts[trailPts.length - 1 - i]; trail.set(i, p.x, p.y, 1.5, p.c, p.life * 5); }
+      trail.commit(tn);
+
+      f.fighters.forEach((s, i) => {
+        const r = rigs[i], air = s.y < 0;
+        if (r.wasAir && !air && s.act !== "ko") { const ring = rings.reduce((a, b) => (a.age > b.age ? a : b)); ring.age = 0; ring.m.position.set(X(s.x), Y(GROUND) + 0.3, 0); ring.m.visible = true; }
+        r.wasAir = air;
+      });
+      for (const ring of rings) {
+        if (!ring.m.visible) continue;
+        ring.age += dt; const k2 = Math.min(1, ring.age / 0.5);
+        ring.m.scale.setScalar(1 + k2 * 9); (ring.m.material as T.MeshBasicMaterial).opacity = (1 - k2) * 0.55;
+        if (k2 >= 1) ring.m.visible = false;
+      }
 
       const n = Math.min(f.sparks.length, sparks.max);
       for (let i = 0; i < n; i++) { const s = f.sparks[i]; sparks.set(i, X(s.x), Y(s.y), 4, s.color, Math.min(1, s.life * 3) * 2.4); }
@@ -193,12 +247,19 @@ export async function mountFighter(canvas: HTMLCanvasElement, W: number, H: numb
 
       // Camera: frame the fight. Reduced motion: no zoom changes.
       const me = f.fighters[0], cpu = f.fighters[1];
-      const fr = st.calm ? { x: W / 2, y: -H / 2, zoom: 1 } : framing(me.x, cpu.x, W, H);
-      const k = Math.min(1, dt * 4);
+      let fr = st.calm ? { x: W / 2, y: -H / 2, zoom: 1 } : framing(me.x, cpu.x, W, H);
+      if (!st.calm && f.state === "intro") fr = { ...fr, zoom: fr.zoom * (1 - Math.min(1, Math.max(0, f.stateT - 1)) * 0.12) }; // starts wide, settles in
+      if (!st.calm && f.pause > 0) fr = { ...fr, zoom: fr.zoom * 1.04 }; // a punch-in on every hit-stop
+      const k = Math.min(1, Math.max(f.dt, 1 / 120) * 4);
       cam.x += (fr.x - cam.x) * k; cam.y += (fr.y - cam.y) * k; cam.zoom += (fr.zoom - cam.zoom) * k;
       const sx = f.shake > 0 ? (Math.random() - 0.5) * 3 : 0, sy = f.shake > 0 ? (Math.random() - 0.5) * 2 : 0;
-      camera.position.set(cam.x + sx, cam.y + sy, D / cam.zoom);
-      camera.lookAt(cam.x + sx, cam.y + sy, 0);
+      // On a KO the camera circles the fallen fighter a little; reduced motion keeps it still.
+      const loser = f.fighters.find((s) => s.act === "ko");
+      const orbit = !st.calm && f.state === "ko" && loser ? Math.min(0.35, (3 - f.stateT) * 0.12) : 0;
+      const dist = D / cam.zoom, lx = loser ? X(loser.x) : cam.x;
+      const px = orbit ? lx + Math.sin(orbit) * dist : cam.x + sx, pz = orbit ? Math.cos(orbit) * dist : dist;
+      camera.position.set(px, cam.y + sy, pz);
+      camera.lookAt(orbit ? lx : cam.x + sx, cam.y + sy, 0);
 
       st.render(dt);
     },

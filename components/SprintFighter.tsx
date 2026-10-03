@@ -63,7 +63,7 @@ export default function SprintFighter({ mode: want = "hd", onLost, onEnd }: { mo
     };
     if (want === "retro") view = retroFighter(ctx, W, H, GROUND);
     else import("@/lib/fighter3d")
-      .then((m) => (gone ? null : m.mountFighter(stage.current!, W, H, GROUND, drop)))
+      .then((m) => (gone ? null : m.mountFighter(stage.current!, W, H, GROUND, { halloween: SEASON === "halloween", christmas: SEASON === "christmas" }, drop)))
       .then((v) => { if (!v) return; if (gone || dropped) v.dispose(); else view = v; })
       .catch(drop);
 
