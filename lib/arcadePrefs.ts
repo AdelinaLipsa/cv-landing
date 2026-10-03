@@ -1,11 +1,11 @@
-// The arcade remembers HD or Retro, and an optional quality tier (?tier=low|medium|high, for testing).
+// The arcade remembers HD or Retro (Retro by default), and an optional quality tier (?tier=low|medium|high, for testing).
 export type Mode = "hd" | "retro";
 export type Store = Pick<Storage, "getItem" | "setItem">;
-const MODE = "cv-arcade-mode", TIER = "cv-arcade-tier";
+const MODE = "cv-arcade-mode-v2", TIER = "cv-arcade-tier";
 
 export function getMode(store: Store | null, webgl: boolean): Mode {
   if (!webgl) return "retro";
-  try { return store?.getItem(MODE) === "retro" ? "retro" : "hd"; } catch { return "hd"; }
+  try { return store?.getItem(MODE) === "hd" ? "hd" : "retro"; } catch { return "retro"; }
 }
 export function setMode(store: Store | null, m: Mode) {
   try { store?.setItem(MODE, m); } catch { }
