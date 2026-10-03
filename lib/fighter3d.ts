@@ -64,8 +64,8 @@ export async function mountFighter(canvas: HTMLCanvasElement, W: number, H: numb
   const towers = new THREE.InstancedMesh(new THREE.BoxGeometry(1, 1, 1), towerMat, 46);
   const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), v = new THREE.Vector3(), sc = new THREE.Vector3();
   for (let i = 0; i < 46; i++) {
-    const z = -140 - (i % 3) * 60, w = 16 + ((i * 13) % 20), h = 40 + ((i * 37) % 90);
-    towers.setMatrixAt(i, m4.compose(v.set(-180 + i * 12.5 + ((i * 7) % 9), -GROUND - 20 + h / 2, z), q, sc.set(w, h, 14)));
+    const z = -260 - (i % 3) * 70, w = 14 + ((i * 13) % 16), h = 18 + ((i * 37) % 48);
+    towers.setMatrixAt(i, m4.compose(v.set(-260 + i * 17 + ((i * 7) % 9), Y(GROUND) - 30 + h / 2, z), q, sc.set(w, h, 14)));
   }
   scene.add(towers);
 
@@ -76,14 +76,14 @@ export async function mountFighter(canvas: HTMLCanvasElement, W: number, H: numb
     for (let i = 0; i < 900; i++) { g.fillStyle = `rgba(255,255,255,${Math.random() * 0.04})`; g.fillRect(Math.random() * 256, Math.random() * 64, 1, 1); }
   });
   seams.wrapS = seams.wrapT = THREE.RepeatWrapping; seams.repeat.set(4, 2);
-  const floor = new THREE.Mesh(new THREE.PlaneGeometry(W + 240, 140), new THREE.MeshPhysicalMaterial({ map: seams, roughness: 0.28, metalness: 0.15, clearcoat: 1, clearcoatRoughness: 0.08 }));
+  const floor = new THREE.Mesh(new THREE.PlaneGeometry(W + 240, 140), new THREE.MeshPhysicalMaterial({ map: seams, color: 0xb08ad8, envMapIntensity: 0.35, roughness: 0.35, metalness: 0.15, clearcoat: 0.8, clearcoatRoughness: 0.12 }));
   floor.rotation.x = -Math.PI / 2; floor.position.set(W / 2, Y(GROUND), -30); floor.receiveShadow = true;
   scene.add(floor);
   const rail = new THREE.Mesh(new THREE.BoxGeometry(W + 240, 1.6, 1.2), new THREE.MeshStandardMaterial({ color: 0x3a2350, metalness: 0.8, roughness: 0.35 }));
   rail.position.set(W / 2, Y(GROUND) + 10, -24);
   scene.add(rail);
   const CROWD = 40;
-  const crowd = new THREE.InstancedMesh(new THREE.CapsuleGeometry(2.2, 5, 4, 10), new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.9 }), CROWD);
+  const crowd = new THREE.InstancedMesh(new THREE.CapsuleGeometry(1.5, 3.2, 4, 10), new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.9 }), CROWD);
   const crowdCol = ["#2a1f4f", "#33255e", "#241a45"].map((c) => new THREE.Color(c));
   for (let i = 0; i < CROWD; i++) crowd.setColorAt(i, crowdCol[i % 3]);
   scene.add(crowd);
@@ -150,6 +150,7 @@ export async function mountFighter(canvas: HTMLCanvasElement, W: number, H: numb
     g.add(core, halo); g.visible = false; scene.add(g);
     return { g, core: core.material as T.MeshBasicMaterial, halo: halo.material as T.MeshBasicMaterial };
   });
+  const ballCore = hot("#ffffff", 3), ballMine = hot("#5fd0ff", 2.2), ballTheirs = hot("#ff7ac6", 2.2);
   const sparks = st.sparks(320, 1.8);
 
   const cam = { x: W / 2, y: -H / 2, zoom: 1 };
@@ -174,8 +175,7 @@ export async function mountFighter(canvas: HTMLCanvasElement, W: number, H: numb
         const b = f.balls[i];
         o.g.visible = !!b;
         if (!b) return;
-        const c = b.mine ? "#5fd0ff" : "#ff7ac6";
-        o.core.color.copy(hot("#ffffff", 3)); o.halo.color.copy(hot(c, 2.2));
+        o.core.color.copy(ballCore); o.halo.color.copy(b.mine ? ballMine : ballTheirs);
         o.g.position.set(X(b.x), Y(b.y), 2);
         o.g.scale.setScalar((b.big ? 1.7 : 1) * (1 + Math.sin(t * 30 + i) * 0.08));
       });
@@ -187,7 +187,7 @@ export async function mountFighter(canvas: HTMLCanvasElement, W: number, H: numb
       // The crowd bobs, harder on a KO.
       for (let i = 0; i < CROWD; i++) {
         const h = 1 + ((i * 7) % 4) * 0.12, bob = Math.sin(t * 6 + i * 0.7) * (f.state === "ko" ? 1.6 : 0.7);
-        crowd.setMatrixAt(i, m4.compose(v.set(-10 + i * 5.4, Y(GROUND) + 14 + bob, -30 - (i % 3) * 3), q, sc.set(1, h, 1)));
+        crowd.setMatrixAt(i, m4.compose(v.set(-10 + i * 5.4, Y(GROUND) + 9.5 + bob, -30 - (i % 3) * 3), q, sc.set(1, h, 1)));
       }
       crowd.instanceMatrix.needsUpdate = true;
 
