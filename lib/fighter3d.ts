@@ -159,7 +159,7 @@ export async function mountFighter(canvas: HTMLCanvasElement, W: number, H: numb
         const target = POSES[s.act === "ko" && s.y === 0 ? "hit" : poseName(s, t)] ?? POSES.idle;
         r.pose = lerpPose(r.pose, target, f.pause > 0 ? 0 : Math.min(1, dt * 20));
         apply(r, r.pose);
-        r.wave(t, Math.abs(s.x - (r.root.position.x || s.x)) / Math.max(dt, 1e-3));
+        r.wave(t, Math.min(150, Math.abs(s.x - (r.root.position.x || s.x)) / Math.max(dt, 1 / 60))); // clamped: a round reset teleports
         r.lying += ((s.act === "ko" && s.y === 0 ? 1 : 0) - r.lying) * Math.min(1, dt * 10);
         r.root.position.set(X(s.x), Y(GROUND + s.y) + r.lying * 2.4, 0);
         r.root.scale.x = s.face;

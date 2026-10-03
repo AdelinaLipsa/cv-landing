@@ -24,12 +24,14 @@ export function buildFighter(THREE: Three, look: Look, gi: boolean, shadows: boo
   const dark = new THREE.MeshPhysicalMaterial({ color: gi ? "#111018" : "#1b1a24", roughness: gi ? 0.8 : 0.25, clearcoat: gi ? 0 : 1, clearcoatRoughness: 0.15 });
   const trim = gi ? cloth(new THREE.Color(look.top).offsetHSL(0, 0.05, -0.12).getStyle()) : cloth("#3b3f52");
   const shirt = cloth("#f2f0ea", 0.7);
-  const mats = [skin, top, sleeve, legs, hair, extra, trim];
+  const mats = [skin, top, sleeve, legs, hair, extra, trim, dark, shirt]; // everything the hit flash tints
 
   const mesh = (geo: T.BufferGeometry, mat: T.Material) => { const m = new THREE.Mesh(geo, mat); m.castShadow = shadows; m.receiveShadow = shadows; return m; };
   // A limb segment hanging from its pivot: a lathe profile from the pivot (y = 0) down to -len.
+  // Lathe profiles must run bottom to top for outward-facing triangles; limbs are written top-down, so flip those.
   const lathe = (profile: [number, number][], mat: T.Material, depth = 1, seg = 18) => {
-    const m = mesh(new THREE.LatheGeometry(profile.map(([r, y]) => V(r, y)), seg), mat);
+    const up = profile[0][1] <= profile[profile.length - 1][1] ? profile : [...profile].reverse();
+    const m = mesh(new THREE.LatheGeometry(up.map(([r, y]) => V(r, y)), seg), mat);
     m.scale.set(depth, 1, 1);
     return m;
   };
@@ -50,7 +52,7 @@ export function buildFighter(THREE: Three, look: Look, gi: boolean, shadows: boo
     // The open V of the chest, then the crossed lapels framing it.
     const v = new THREE.Shape([V(-1.5, 0), V(1.5, 0), V(0, -4.2)]);
     const chest = mesh(new THREE.ExtrudeGeometry(v, { depth: 0.12, bevelEnabled: false }), skin);
-    chest.rotation.y = Math.PI / 2; chest.position.set(2.42, 9.2, 0); torso.add(chest);
+    chest.rotation.y = Math.PI / 2; chest.position.set(2.32, 8.3, 0); torso.add(chest);
     front(0.7, 6.4, trim, 2.42, 6.3, 0.36, 0.95, 0.22);
     front(0.7, 6.4, trim, 2.46, 6.1, -0.36, -0.95, 0.22);
     // The belt, its knot and two tails that sway.
@@ -60,9 +62,9 @@ export function buildFighter(THREE: Three, look: Look, gi: boolean, shadows: boo
     // Shirt, tie, and lapels of the jacket; two buttons.
     const v = new THREE.Shape([V(-1.2, 0), V(1.2, 0), V(0, -4.8)]);
     const s = mesh(new THREE.ExtrudeGeometry(v, { depth: 0.12, bevelEnabled: false }), shirt);
-    s.rotation.y = Math.PI / 2; s.position.set(2.3, 9.3, 0); torso.add(s);
+    s.rotation.y = Math.PI / 2; s.position.set(2.26, 8.4, 0); torso.add(s);
     const tie = mesh(new THREE.ExtrudeGeometry(new THREE.Shape([V(-0.32, 0), V(0.32, 0), V(0.55, -3.6), V(0, -4.4), V(-0.55, -3.6)]), { depth: 0.14, bevelEnabled: false }), extra);
-    tie.rotation.y = Math.PI / 2; tie.position.set(2.45, 9.0, 0); torso.add(tie);
+    tie.rotation.y = Math.PI / 2; tie.position.set(2.4, 8.2, 0); torso.add(tie);
     front(0.8, 5.6, trim, 2.4, 6.6, 0.3, 0.85, 0.24);
     front(0.8, 5.6, trim, 2.44, 6.4, -0.3, -0.85, 0.24);
     for (const y of [3.2, 1.6]) { const b = mesh(new THREE.CylinderGeometry(0.22, 0.22, 0.15, 10), dark); b.rotation.z = Math.PI / 2; b.position.set(1.95, y, -0.35); torso.add(b); }
