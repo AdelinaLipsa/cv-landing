@@ -548,6 +548,23 @@ async function mount(el: HTMLElement, character: boolean, onScreen: () => void) 
 
   // Sways slowly by itself; drag it to turn it. The turn is clamped so the room stays in frame.
   let yaw = 0, sway = 0, turn = 0, drag: { x: number; y: number; yaw: number; px: number; py: number } | null = null;
+  // Zooming aims at a spot, like a map: the part of the room under the cursor (or between two fingers) stays put.
+  const MAX_ZOOM = 3.5;
+  // Room units per screen pixel at zoom 1, from the camera itself; divide by the zoom for any other.
+  const perPx = () => (2 * camDist * Math.tan(THREE.MathUtils.degToRad(camera.fov) / 2)) / Math.max(el.clientHeight, 1);
+  const clampPan = () => {
+    const lim = sphere.radius * Math.max(0, 1 - 1 / zoomTo);
+    pan.set(Math.max(-lim, Math.min(lim, pan.x)), Math.max(-lim, Math.min(lim, pan.y)));
+  };
+  const offset = (x: number, y: number) => { const r = el.getBoundingClientRect(); return [x - r.left - r.width / 2, y - r.top - r.height / 2]; };
+  const zoomAbout = (x: number, y: number, z: number) => {
+    const [ox, oy] = offset(x, y), k = perPx(), z0 = zoomTo, z1 = Math.max(0.7, Math.min(MAX_ZOOM, z));
+    pan.x += ox * k * (1 / z0 - 1 / z1);
+    pan.y -= oy * k * (1 / z0 - 1 / z1);
+    zoomTo = z1;
+    clampPan();
+  };
+
   // Two fingers on a touch screen pinch-zoom, like the trackpad pinch below; one finger turns or pans.
   const touches = new Map<number, { x: number; y: number }>();
   let pinch: { d: number; z: number } | null = null;
@@ -573,13 +590,18 @@ async function mount(el: HTMLElement, character: boolean, onScreen: () => void) 
   };
   const onMove = (e: PointerEvent) => {
     if (touches.has(e.pointerId)) touches.set(e.pointerId, { x: e.clientX, y: e.clientY });
-    if (pinch && touches.size === 2) { zoomTo = Math.max(0.7, Math.min(2.2, pinch.z * (spread() / pinch.d))); return; }
+    if (pinch && touches.size === 2) {
+      const [a, b] = [...touches.values()];
+      zoomAbout((a.x + b.x) / 2, (a.y + b.y) / 2, pinch.z * (spread() / pinch.d));
+      return;
+    }
     if (!drag) { el.style.cursor = onScreenAt(e) ? "pointer" : "grab"; return; }
     const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
     if (zoom > 1.05) {
       // Zoomed in: drag the view, like a map. Kept within the room.
-      const k = (sphere.radius * 2) / (el.clientWidth * zoom), lim = sphere.radius * (1 - 1 / zoom);
-      pan.set(Math.max(-lim, Math.min(lim, drag.px - dx * k)), Math.max(-lim, Math.min(lim, drag.py + dy * k)));
+      const k = perPx() / zoom; // the room follows the finger exactly
+      pan.set(drag.px - dx * k, drag.py + dy * k);
+      clampPan();
     } else yaw = Math.max(-0.9, Math.min(0.9, drag.yaw + (dx / el.clientWidth) * 2.5));
   };
   let lastTap = 0;
@@ -599,9 +621,11 @@ async function mount(el: HTMLElement, character: boolean, onScreen: () => void) 
   // Double-click (or double-tap): zoom in on that spot, or back out to the whole room.
   const zoomAt = (x: number, y: number) => {
     if (zoomTo > 1.3) { zoomTo = 1; return; }
-    zoomTo = 2;
-    const r = el.getBoundingClientRect(), k = (sphere.radius * 2) / r.width, lim = sphere.radius * (1 - 1 / zoomTo);
-    pan.set(Math.max(-lim, Math.min(lim, (x - r.left - r.width / 2) * k)), Math.max(-lim, Math.min(lim, -(y - r.top - r.height / 2) * k)));
+    const [ox, oy] = offset(x, y), k = perPx() / zoomTo;
+    pan.x += ox * k; // bring the clicked spot to the middle…
+    pan.y -= oy * k;
+    zoomTo = 2.5; // …and close in on it
+    clampPan();
   };
   const onDbl = (e: MouseEvent) => { if (!onScreenAt(e as PointerEvent)) zoomAt(e.clientX, e.clientY); };
   // The first time someone reaches for the room, a small note says how to zoom, then fades.
@@ -623,7 +647,7 @@ async function mount(el: HTMLElement, character: boolean, onScreen: () => void) 
     if (!e.ctrlKey) return;
     e.preventDefault(); // otherwise the browser zooms the whole page
     hinted = true; delete tip.dataset.on; // found it already
-    zoomTo = Math.max(0.7, Math.min(2.2, zoomTo * Math.exp(-e.deltaY * 0.01)));
+    zoomAbout(e.clientX, e.clientY, zoomTo * Math.exp(-e.deltaY * 0.01));
   };
   el.addEventListener("wheel", onWheel, { passive: false });
   el.addEventListener("dblclick", onDbl);
