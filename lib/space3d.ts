@@ -108,10 +108,12 @@ export async function mountSpace(canvas: HTMLCanvasElement, W: number, H: number
   const ROCKS = Math.round(70 * st.settings.particles);
   const rockGeo = new THREE.IcosahedronGeometry(1, 1);
   const rp = rockGeo.attributes.position as T.BufferAttribute;
-  for (let i = 0; i < rp.count; i++) { const k = 0.75 + Math.random() * 0.5; rp.setXYZ(i, rp.getX(i) * k, rp.getY(i) * k, rp.getZ(i) * k); }
-  rockGeo.computeVertexNormals();
+  // Jitter by position (the geometry is non-indexed), so shared corners move together and leave no cracks.
+  const h = (x: number, y: number, z: number) => { const s = Math.sin(Math.round(x * 1000) * 12.9898 + Math.round(y * 1000) * 78.233 + Math.round(z * 1000) * 37.719) * 43758.5453; return s - Math.floor(s); };
+  for (let i = 0; i < rp.count; i++) { const x = rp.getX(i), y = rp.getY(i), z = rp.getZ(i), k = 0.75 + h(x, y, z) * 0.5; rp.setXYZ(i, x * k, y * k, z * k); }
   const rocks = new THREE.InstancedMesh(rockGeo, new THREE.MeshStandardMaterial({ color: 0x6b6478, roughness: 0.95, metalness: 0.05, flatShading: true }), ROCKS);
   const rockState = Array.from({ length: ROCKS }, (_, i) => ({ x: -160 + Math.random() * 320, y: -30 + Math.random() * 70, z: -60 - Math.random() * 60, s: 0.8 + Math.random() * 3.2, rx: Math.random() * 6, ry: Math.random() * 6, spin: 0.2 + Math.random() * 0.8, v: 3 + (i % 5) }));
+  rocks.frustumCulled = false; // instances move across a stale bounding sphere
   scene.add(rocks);
 
   // The player's ship: a lathed fuselage, swept wings, a glass canopy, twin engines.
