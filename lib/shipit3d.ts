@@ -4,7 +4,8 @@
 // Blocks stand from z = 0 back to z = -DEPTH; their front faces sit exactly on the game grid.
 import type * as T from "three";
 import { stage } from "./arcade3d";
-import { lookAhead, squash } from "./shipitMotion";
+import { loadModel } from "./assets";
+import { heroClip, lookAhead, squash, type Clip } from "./shipitMotion";
 
 export type Level = { tile: (c: number, r: number) => string; rows: number; cols: number; size: number; arena: number };
 export type ShipItFrame = {
@@ -188,6 +189,51 @@ export async function mountShipIt(canvas: HTMLCanvasElement, W: number, H: numbe
   const beam = new THREE.Mesh(new THREE.CylinderGeometry(1.1, 1.1, 1, 12), glowMat(hot("#7fe3ff", 2.5)));
   scene.add(beam);
 
+  // The real hero: a rigged CC0 robot with idle, run, jump, punch and thumbs-up clips, painted in the game's
+  // blues, an arm cannon on its right hand. If it can't load, the procedural robot above stays.
+  let disposed = false;
+  type Robot = { root: T.Group; mixer: T.AnimationMixer; actions: Partial<Record<Clip | "Punch", T.AnimationAction>>; current: Clip | "Punch"; muzzle: T.MeshBasicMaterial };
+  let robot: Robot | null = null;
+  loadModel("/arcade/shipit/robot.glb").then(({ scene: model, animations }) => {
+    if (disposed) return;
+    model.traverse((o) => {
+      const m = o as T.Mesh;
+      if (!m.isMesh) return;
+      m.castShadow = st.shadows;
+      const mat = (m.material as T.MeshStandardMaterial).clone(); // clones share the cached material: never tint it in place
+      if (mat.name === "Main") mat.color.set("#2f6bff");
+      if (mat.name === "Grey") mat.color.set("#7fe3ff");
+      mat.metalness = 0.35; mat.roughness = 0.35;
+      m.material = mat;
+    });
+    const box = new THREE.Box3().setFromObject(model);
+    model.scale.setScalar(15 / (box.max.y - box.min.y)); // as tall as the hitbox, a touch over
+    const root = new THREE.Group();
+    root.add(model);
+    const mixer = new THREE.AnimationMixer(model);
+    const actions: Robot["actions"] = {};
+    for (const c of animations) if (["Idle", "Running", "Jump", "ThumbsUp", "Punch"].includes(c.name)) actions[c.name as Clip | "Punch"] = mixer.clipAction(c);
+    actions.Jump?.setLoop(THREE.LoopOnce, 1); if (actions.Jump) actions.Jump.clampWhenFinished = true;
+    actions.Idle?.play();
+    // The arm cannon rides the right hand bone; its muzzle glows hotter as you charge.
+    const muzzle = glowMat(hot("#7fe3ff", 2));
+    let hand = null as T.Object3D | null; // assigned inside the traverse callback; the cast stops TS narrowing it to null
+    model.traverse((o) => { if ((o as T.Bone).isBone && o.name === "Hand.R") hand = o; });
+    if (hand) {
+      const gun = new THREE.Group();
+      const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.5, 1.3, 16), gloss("#2f6bff"));
+      const ring = new THREE.Mesh(new THREE.TorusGeometry(0.32, 0.1, 8, 16), muzzle);
+      ring.position.y = 0.7; ring.rotation.x = Math.PI / 2;
+      gun.add(barrel, ring);
+      gun.scale.setScalar(1 / model.scale.x); // undo the model's scale so the cannon keeps its size in world units
+      gun.position.y = 0.5 / model.scale.x;
+      (hand as T.Object3D).add(gun);
+    }
+    scene.add(shadowed(root));
+    hero.visible = false;
+    robot = { root, mixer, actions, current: "Idle", muzzle };
+  }).catch(() => { }); // keep the procedural robot
+
   // Enemies, one model per kind.
   const red = gloss("#ff5a5a", 0.2), amber = gloss("#F5B53F", 0.3), steelGrey = gloss("#8c94c9", 0.7);
   const eyeMat = (hex: string) => glowMat(hot(hex, 3));
@@ -301,6 +347,24 @@ export async function mountShipIt(canvas: HTMLCanvasElement, W: number, H: numbe
       cannonGlow.color.copy(charged && Math.floor(t * 16) % 2 ? hot("#fff1a8", 4) : hot("#7fe3ff", 1 + Math.min(p.charge, 0.7) * 3));
       heroLight.intensity = aiming ? 1 + Math.min(p.charge, 1) * 3 : 0;
       heroLight.position.set(X(p.x + 5 + p.face * 8), Y(p.y + 8), Z + 4);
+      if (robot) {
+        hero.visible = false;
+        robot.root.visible = p.visible;
+        robot.root.position.set(X(p.x + 5), Y(p.y + 14), Z);
+        robot.root.rotation.y = p.face * (Math.PI / 2 - 0.6);
+        // Shooting while standing holds the punch's extended arm; running or jumping keeps the run or jump.
+        const base = heroClip({ won: p.won, ground: p.ground, vx: p.vx });
+        const want: Clip | "Punch" = aiming && base === "Idle" && robot.actions.Punch ? "Punch" : base;
+        if (want !== robot.current && robot.actions[want]) {
+          const next = robot.actions[want]!, prev = robot.actions[robot.current];
+          next.reset().play();
+          if (want === "Punch") { next.time = 0.28; next.timeScale = 0; } else next.timeScale = 1;
+          if (prev) prev.crossFadeTo(next, 0.15, false);
+          robot.current = want;
+        }
+        robot.mixer.update(robot.current === "Running" ? dt * Math.min(1.6, Math.abs(p.vx) / 45) : dt);
+        robot.muzzle.color.copy(charged && Math.floor(t * 16) % 2 ? hot("#fff1a8", 4) : hot("#7fe3ff", 1 + Math.min(p.charge, 0.7) * 3));
+      }
       beam.visible = p.beam !== null;
       if (p.beam !== null) { const top = 0, bottom = p.beam; beam.scale.y = Math.max(1, bottom - top); beam.position.set(X(p.x + 5), Y((top + bottom) / 2), Z); }
 
@@ -357,6 +421,6 @@ export async function mountShipIt(canvas: HTMLCanvasElement, W: number, H: numbe
 
       st.render(dt);
     },
-    dispose: () => st.dispose(...textures),
+    dispose: () => { disposed = true; st.dispose(...textures); },
   };
 }
