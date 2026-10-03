@@ -70,7 +70,7 @@ class Component extends DCLogic {
       ubisoft: { label: 'Ubisoft QA platform', built: ['JavaScript', 'Vue', 'PHP', 'Laravel', 'Kubernetes', 'Rancher', 'Kibana', 'GitLab'], owned: ['Requirements'], note: 'Ubisoft: the internal platform testers used daily. Built full-stack, shipped to Kubernetes, requirements gathered with the QA teams.' },
       eligibility: { label: 'Eligibility pipeline', built: ['AWS'], owned: ['Requirements', 'Stakeholders', 'Laravel', 'SFTP'], note: 'SiteRocket Labs: set up per-vendor S3 and IAM hands-on, wrote the Laravel pipeline requirements, ran the vendor escalations.' },
       decoder: { label: 'Param Decoder', built: ['JavaScript'], owned: [], note: 'A browser tool for reading affiliate links and postbacks. Built for the support and affiliate teams. [TBC: full stack]' },
-      payments: { label: 'Payment analysis', built: ['SQL', 'Datadog'], owned: [], note: 'Yomali: showed payment success held at 43–45% from June to August, so the conversion drop sat before payment.' }
+      payments: { label: 'Payment analysis', built: ['SQL', 'Datadog'], owned: [], note: 'Yomali: approval rates, declines and checkout conversion, analysed with SQL and Datadog.' }
     };
     const cur = things[this.state.thing];
     const isAll = this.state.thing === 'all';

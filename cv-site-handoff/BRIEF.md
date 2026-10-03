@@ -71,8 +71,6 @@ Screens are horizontal, swipeable panes with a tab bar:
 | CS reporting dashboard (replaced a 1.5 to 2 hour daily manual report) | video, demo data | Built | [TBC recording] |
 | Checkout change log in ClickUp | video, demo data | Built | [TBC recording] |
 | BITE Chrome extension | video, demo data | Built | [TBC] |
-| Payment success held at 43–45% Jun to Aug | live chart, no account data | Analysed | CV figure only |
-| What actually moved conversion, 25 accounts | live small multiples, fully anonymised | Analysed | CV figure only |
 | Refund and return journey | live flow diagram | Owned | |
 | AI voice agent to human escalation | live flow diagram | Owned | |
 | Self-service refund flow | live flow diagram | Owned | |

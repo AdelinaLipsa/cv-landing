@@ -69,7 +69,6 @@ export const jobs: Job[] = [
     branch: "product",
     lines: [
       "Owns the payments product: gateway and acquirer integrations, 3DS/SCA, alternative payment methods, and the product side of Kount fraud monitoring, chargebacks and disputes.",
-      "Showed payment success held at 43–45% from June to August, placing a platform-wide conversion decline before the payment step.",
       "Product manager for the core engineering team and manager of the technical support team. Runs PRDs, standups, weekly reporting and the change log in ClickUp.",
       // Adelina's own words, 2026-10-01.
       "Wrote SOPs for BuyGoods, the platform Yomali owns, and moved HR operations from spreadsheets to Factorial.",
@@ -161,7 +160,7 @@ export const stillShipping = {
     // Adelina's own words, 2026-09-30.
     "Built BITE (BuyGoods Internal Tools), a Chrome extension that checks whether BuyGoods tracking is on a page, including injected and network-fired tracking.",
     "Built the reporting pipeline and dashboard that replaced a 1.5 to 2 hour manual daily report.",
-    "Built 3DS rollout tracking in ClickUp and analysed 25 accounts to separate the 3DS effect from the wider conversion decline.",
+    "Built 3DS rollout tracking in ClickUp and analysed a 25-account sample to measure the rollout’s effect.",
   ],
   stack: ["Dashboards", "SQL", "ClickUp", "JavaScript"],
 };
