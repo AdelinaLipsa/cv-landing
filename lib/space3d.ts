@@ -84,6 +84,36 @@ export async function mountSpace(canvas: HTMLCanvasElement, W: number, H: number
     return { pts, half, speed: L.speed * (D - L.z) / D };
   });
 
+  // A gas giant low on the right, behind everything: banded surface, an atmosphere glowing at its rim, rings.
+  const planetMat = new THREE.ShaderMaterial({
+    uniforms: { t: { value: 0 }, sun: { value: new THREE.Vector3(-0.6, 0.5, 0.6).normalize() } },
+    vertexShader: "varying vec3 vN; varying vec3 vP; void main() { vN = normalize(normalMatrix * normal); vP = position; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }",
+    fragmentShader: `varying vec3 vN; varying vec3 vP; uniform float t; uniform vec3 sun;
+      void main() { float lat = vP.y / 40.0; float bands = sin(lat * 18.0 + sin(vP.x * 0.08 + t * 0.05) * 1.5) * 0.5 + 0.5;
+        vec3 base = mix(vec3(0.22, 0.12, 0.38), vec3(0.55, 0.28, 0.5), bands);
+        float light = max(dot(vN, sun), 0.0); float rim = pow(1.0 - max(vN.z, 0.0), 3.0);
+        gl_FragColor = vec4(base * (0.15 + light * 0.9) + vec3(0.35, 0.55, 1.0) * rim * 1.4, 1.0); }`,
+  });
+  const planet = new THREE.Mesh(new THREE.SphereGeometry(40, 64, 40), planetMat);
+  planet.position.set(110, -75, -170);
+  const rings = new THREE.Mesh(new THREE.RingGeometry(52, 78, 96), new THREE.ShaderMaterial({
+    transparent: true, depthWrite: false, side: THREE.DoubleSide,
+    vertexShader: "varying vec2 vP; void main() { vP = position.xy; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }",
+    fragmentShader: "varying vec2 vP; void main() { float r = length(vP); float b = sin(r * 1.3) * 0.5 + 0.5; gl_FragColor = vec4(vec3(0.75, 0.62, 0.8) * (0.4 + b * 0.6), (0.18 + b * 0.25) * smoothstep(52.0, 56.0, r) * (1.0 - smoothstep(74.0, 78.0, r))); }",
+  }));
+  rings.position.copy(planet.position); rings.rotation.set(1.25, 0.2, 0.35);
+  scene.add(planet, rings);
+
+  // An asteroid belt drifting across the middle distance: lumpy, lit rocks.
+  const ROCKS = Math.round(70 * st.settings.particles);
+  const rockGeo = new THREE.IcosahedronGeometry(1, 1);
+  const rp = rockGeo.attributes.position as T.BufferAttribute;
+  for (let i = 0; i < rp.count; i++) { const k = 0.75 + Math.random() * 0.5; rp.setXYZ(i, rp.getX(i) * k, rp.getY(i) * k, rp.getZ(i) * k); }
+  rockGeo.computeVertexNormals();
+  const rocks = new THREE.InstancedMesh(rockGeo, new THREE.MeshStandardMaterial({ color: 0x6b6478, roughness: 0.95, metalness: 0.05, flatShading: true }), ROCKS);
+  const rockState = Array.from({ length: ROCKS }, (_, i) => ({ x: -160 + Math.random() * 320, y: -30 + Math.random() * 70, z: -60 - Math.random() * 60, s: 0.8 + Math.random() * 3.2, rx: Math.random() * 6, ry: Math.random() * 6, spin: 0.2 + Math.random() * 0.8, v: 3 + (i % 5) }));
+  scene.add(rocks);
+
   // The player's ship: a lathed fuselage, swept wings, a glass canopy, twin engines.
   const player = new THREE.Group();
   const fuselage = new THREE.Mesh(new THREE.LatheGeometry([[0, -4], [1.1, -3.6], [1.5, -1.2], [1.25, 1.8], [0.55, 3.9], [0, 4.7]].map(([x, y]) => new THREE.Vector2(x, y)), 28), hull);
@@ -253,6 +283,14 @@ export async function mountSpace(canvas: HTMLCanvasElement, W: number, H: number
         for (let i = 0; i < p.count; i++) { let y = p.getY(i) - L.speed * f.warp * dt; if (y < -L.half) y += L.half * 2; p.setY(i, y); }
         p.needsUpdate = true;
       }
+      planetMat.uniforms.t.value = t; planet.rotation.y = t * 0.01;
+      rockState.forEach((r, i) => {
+        r.x += r.v * dt * f.warp; if (r.x > 170) r.x -= 340;
+        r.rx += r.spin * dt; r.ry += r.spin * 0.6 * dt;
+        q.setFromEuler(eul.set(r.rx, r.ry, 0));
+        rocks.setMatrixAt(i, m4.compose(v.set(r.x, r.y, r.z), q, pulse.setScalar(r.s)));
+      });
+      rocks.instanceMatrix.needsUpdate = true;
 
       // The ship banks into its turns and its engines flicker.
       player.visible = f.ship.visible;
