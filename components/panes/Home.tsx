@@ -100,7 +100,7 @@ export default function Home({ ui }: { ui: UI }) {
   const originRef = useRef<HTMLOListElement>(null);
   const originOn = useInView(originRef, { once: true, amount: 0.25 });
   const drop = (at: number) => (stage < at ? { "data-drop": "" } : {});
-  const quick = <button type="button" className={`${p.primary} ${s.quick} water`} onClick={() => ui.sheet("The 30-second version", <QuickRead contact={ui.contact} />)}><DecryptedText text="Busy? Read the 30-second version →" animateOn="hover" speed={40} maxIterations={8} /></button>;
+  const quick = <button type="button" className={`${p.primary} ${s.quick}`} onClick={() => ui.sheet("The 30-second version", <QuickRead contact={ui.contact} />)}><DecryptedText text="Busy? Read the 30-second version →" animateOn="hover" speed={40} maxIterations={8} /></button>;
   const buildLabel = touring ? "Stop the build" : ui.returning ? "Replay the build" : "Watch me build it";
 
   return (
@@ -112,7 +112,7 @@ export default function Home({ ui }: { ui: UI }) {
           <Magnet padding={24} magnetStrength={3} disabled={!!reduce}><a href={profile.linkedin} target="_blank" rel="noopener" aria-label="LinkedIn" className={`${s.icon} ${s.linkedin} water`}><LinkedInIcon /></a></Magnet>
           <Magnet padding={24} magnetStrength={3} disabled={!!reduce}><button type="button" onClick={ui.contact} aria-label="Message me" className={`${s.icon} ${s.whatsapp} water`}><WhatsAppIcon size={18} /></button></Magnet>
           <ThemeToggle className={`${s.icon} water`} />
-          <Magnet padding={24} magnetStrength={3} disabled={!!reduce}><a href={profile.pdf} download className={`${s.pdf} water`} aria-label="Download CV as PDF">
+          <Magnet padding={24} magnetStrength={3} disabled={!!reduce}><a href={profile.pdf} download className={s.pdf} aria-label="Download CV as PDF">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 4v11m0 0-4.5-4.5M12 15l4.5-4.5M5 20h14" /></svg>
             <span>PDF</span>
           </a></Magnet>
@@ -166,8 +166,8 @@ export default function Home({ ui }: { ui: UI }) {
           </p>
           <p className={s.about}><Rich text={about[0]} /></p>
           <div className={s.actions}>
-            <Magnet padding={40} magnetStrength={4} disabled={!!reduce}><button type="button" className={`${p.primary} ${s.buildBtn} water`} onClick={ui.build} data-tour="build"><Play />{buildLabel}</button></Magnet>
-            <button type="button" className={`${s.messageBtn} water`} onClick={ui.contact}><WhatsAppIcon size={17} /><DecryptedText text="Message me" animateOn="hover" speed={40} maxIterations={8} /></button>
+            <Magnet padding={40} magnetStrength={4} disabled={!!reduce}><button type="button" className={`${p.primary} ${s.buildBtn}`} onClick={ui.build} data-tour="build"><Play />{buildLabel}</button></Magnet>
+            <button type="button" className={s.messageBtn} onClick={ui.contact}><WhatsAppIcon size={17} /><DecryptedText text="Message me" animateOn="hover" speed={40} maxIterations={8} /></button>
           </div>
           {/* Skip the cutscene: the whole CV in 30 seconds, for the busy */}
           {!touring && (

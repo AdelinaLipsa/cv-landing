@@ -30,8 +30,8 @@ export default function QuickRead({ contact }: { contact: () => void }) {
       <p className={s.meta}>{certifications[0]} · {profile.location}</p>
       <p className={s.meta}><b>Looking for:</b> {profile.lookingFor}</p>
       <div className={s.cta}>
-        <a href={profile.pdf} download className={`${s.primary} water`}>Download the PDF</a>
-        <button type="button" className={`${s.secondary} water`} onClick={contact}>Message me</button>
+        <a href={profile.pdf} download className={s.primary}>Download the PDF</a>
+        <button type="button" className={s.secondary} onClick={contact}>Message me</button>
       </div>
     </div>
   );

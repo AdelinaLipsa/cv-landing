@@ -227,7 +227,7 @@ export default function Shell({ code, character }: { code: Snippets; character: 
             <button
               key={t}
               type="button"
-              className={`${s.tab}${i === pane ? "" : " water"}`} // the other tabs fill with water on hover, like the buttons beside them
+              className={s.tab}
               aria-current={i === pane ? "page" : undefined}
               onClick={() => ui.go(i)}
             >

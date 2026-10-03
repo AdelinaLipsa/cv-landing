@@ -17,6 +17,7 @@
   cursor: pointer;
 }
 .pdf span { display: none; }
+.pdf:hover, .pdf:focus-visible { color: var(--blueprint); border-color: var(--blueprint); }
 /* LinkedIn fills in with its own blue on hover */
 .linkedin svg, .linkedin svg * { transition: color 0.3s var(--ease), fill 0.3s var(--ease), stroke 0.3s var(--ease); }
 /* Hover fills each icon with its own colour: LinkedIn blue, WhatsApp green (globals.css .water) */
@@ -26,7 +27,6 @@
 
 /* "Message me": a real secondary button next to the primary, not a text link */
 .messageBtn { display: inline-flex; align-items: center; gap: 8px; height: 46px; padding: 0 18px 0 14px; border: 1.5px solid var(--ink); border-radius: 999px; background: transparent; color: var(--ink); font-size: 15px; font-weight: 600; cursor: pointer; transition: background-color 0.3s var(--ease), color 0.3s var(--ease), transform 0.3s var(--ease); }
-.messageBtn { --water: var(--blueprint); }
 .messageBtn:hover, .messageBtn:focus-visible { transform: translateY(-1px); }
 .messageBtn svg { flex-shrink: 0; }
 

@@ -4,6 +4,7 @@
 .read ul { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 6px; font-size: 14px; line-height: 1.45; }
 .meta { margin: 0; font-size: 13.5px; color: var(--body-2); }
 .cta { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
-.primary, .secondary { display: inline-flex; align-items: center; height: 44px; padding: 0 18px; border-radius: 999px; font-size: 14.5px; font-weight: 700; text-decoration: none; cursor: pointer; }
+.primary, .secondary { display: inline-flex; align-items: center; height: 44px; padding: 0 18px; border-radius: 999px; font-size: 14.5px; font-weight: 700; text-decoration: none; cursor: pointer; transition: transform 0.3s var(--ease); }
+:is(.primary, .secondary):hover, :is(.primary, .secondary):focus-visible { transform: translateY(-1px); }
 .primary { background: var(--night); color: var(--on-night); border: 0; }
 .secondary { background: transparent; color: var(--ink); border: 1.5px solid var(--ink); }

@@ -27,7 +27,9 @@
   text-decoration: none;
   cursor: pointer;
   box-shadow: var(--shadow-btn);
+  transition: transform 0.3s var(--ease);
 }
+.primary:hover, .primary:focus-visible { transform: translateY(-1px); }
 
 .playDot {
   width: 22px;
