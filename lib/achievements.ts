@@ -20,6 +20,8 @@ export const ACHIEVEMENTS = {
   roles: { name: "Four hats", hint: "Open all four roles in the hero card" },
   chaos: { name: "Chaos engineer", hint: "Break the checkout all five ways" },
   win98: { name: "Plug and play", hint: "Boot the retro computer" },
+  bsod: { name: "Fatal exception", hint: "Crash the old computer" },
+  pipes: { name: "Screen saver", hint: "Leave the old computer alone for 30 seconds" },
   mines: { name: "Scope swept", hint: "Clear Scope Mines on the old computer" },
   solitaire: { name: "Bouncing cards", hint: "Win Solitaire on the old computer" },
   lost: { name: "Lost and found", hint: "Find the 404 page" },

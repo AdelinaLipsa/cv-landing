@@ -102,6 +102,8 @@ export const sfx = {
     [1318.51, 1108.73, 880, 659.25].forEach((n, i) => bell(n, i * 0.18, 0.16));
     pad([146.83, 220, 293.66], 0.2, 2.2, 0.11, 1200);
   },
+  // The messenger's "uh-oh": a voice-ish two-note drop, up then down.
+  uhoh: () => { tone(380, 420, 0.13, "triangle", 0.55); tone(300, 230, 0.24, "triangle", 0.55, 0.17); },
   laser: () => tone(1400, 380, 0.07, "square", 0.12),
   blast: () => tone(900, 200, 0.09, "square", 0.22),
   charged: () => { tone(220, 1400, 0.18, "sawtooth", 0.3); noise(0.15, 0.25, 4000); },

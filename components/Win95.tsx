@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import dynamic from "next/dynamic";
 import { jobs, ventures } from "@/content/cv";
 import { unlock } from "@/lib/achievements";
 import { sfx } from "@/lib/sfx";
@@ -8,20 +9,27 @@ import { useCalm } from "@/lib/useCalm";
 import { flag, newBoard, reveal, type Board } from "@/lib/mines";
 import s from "./Win95.module.css";
 import Solitaire from "./Solitaire";
+import { Assistant, Bsod, Messenger, Player } from "./Win95Apps";
+
+const Pipes = dynamic(() => import("./Pipes"), { ssr: false }); // three.js loads only when the screen saver starts
 
 // The retro computer boots: a Windows 95 desktop with her CV as files, Solitaire, Minesweeper renamed Scope Mines,
-// and a Recycle Bin full of what this site deleted. Start → Shut Down ends on the famous orange line.
-type App = "readme" | "career" | "saints" | "mines" | "solitaire" | "bin";
+// a Recycle Bin full of what this site deleted, a music player, a messenger, an office assistant, a screen saver,
+// and DONT_CLICK.exe. Start → Shut Down ends on the famous orange line.
+type App = "readme" | "career" | "saints" | "mines" | "solitaire" | "player" | "messenger" | "crash" | "bin";
 type Win = { id: App; x: number; y: number; z: number };
 
 // Tiny pixel icons, drawn from maps like the arcade sprites. Letters pick colours from PAL.
-const PAL: Record<string, string> = { k: "#000", w: "#fff", g: "#c0c0c0", d: "#808080", y: "#ffd700", b: "#000080", c: "#00a0a0", r: "#c00000", l: "#5fd0ff", o: "#ff8000" };
+const PAL: Record<string, string> = { k: "#000", w: "#fff", g: "#c0c0c0", d: "#808080", y: "#ffd700", b: "#000080", c: "#00a0a0", r: "#c00000", l: "#5fd0ff", o: "#ff8000", n: "#2ce02c", e: "#e83030" };
 const ICONS: Record<App, string[]> = {
   readme: ["kkkkkkkk..", "kwwwwwwkk.", "kwkkkkwwkk", "kwwwwwwwwk", "kwkkkkkkwk", "kwwwwwwwwk", "kwkkkkkkwk", "kwwwwwwwwk", "kwkkkkwwwk", "kkkkkkkkkk"],
   career: ["kkkkkkkk..", "kwwwwwwkk.", "kwbbbbwwkk", "kwwwwwwwwk", "kwbbbbbbwk", "kwwwwwwwwk", "kwbbbbbbwk", "kwwwwwwwwk", "kwbbbwwwwk", "kkkkkkkkkk"],
   saints: ["kkkkkkkkkk", "kllllllllk", "kllllyylk.", "klllllllk.", "kllcclllk.", "klcccclllk", "kcccccccck", "kcccccccck", "kcccccccck", "kkkkkkkkkk"],
   mines: ["gggggggggg", "gwwwwwwwwd", "gwg.k.gggd", "gwgkkkkggd", "gw.kwkk.gd", "gwgkkkkggd", "gwg.k.gggd", "gwggggggd.", "gwggggggd.", "dddddddddd"],
   solitaire: ["..kkkkkk..", ".kwwwwwwk.", "kwrwwwkkwk", "kwrrwkwwwk", "kwwrwkkkwk", "kkkkkkwwwk", "kwbbbbkkwk", "kwbbbbkwwk", "kwbbbbkkk.", "kkkkkkk..."],
+  player: ["kkkkkkkkkk", "kddddddddk", "kdkkkkkkdk", "kdknknnkdk", "kdkkkkkkdk", "kddddddddk", "kdgdgdgdgk", "kddddddddk", "kdoooooodk", "kkkkkkkkkk"],
+  messenger: ["....nn....", "...nnnn...", ".nn.nn.nn.", "nnnneennnn", ".nneeeenn.", ".nneeeenn.", "nnnneennnn", ".nn.nn.nn.", "...nnnn...", "....nn...."],
+  crash: ["kkkkkkkkkk", "kbbbbbbbbk", "kwwwwwwwwk", "kwrwwwwrwk", "kwwrwwrwwk", "kwwwrrwwwk", "kwwwrrwwwk", "kwwrwwrwwk", "kwrwwwwrwk", "kkkkkkkkkk"],
   bin: ["..kkkkkk..", ".kggggggk.", "kkkkkkkkkk", ".kwgwgwgk.", ".kwgwgwgk.", ".kwgwgwgk.", ".kwgwgwgk.", ".kwgwgwgk.", ".kwgwgwgk.", "..kkkkkk.."],
 };
 const Icon = ({ app, size = 32 }: { app: App; size?: number }) => (
@@ -30,9 +38,9 @@ const Icon = ({ app, size = 32 }: { app: App; size?: number }) => (
   </svg>
 );
 
-const NAMES: Record<App, string> = { readme: "README.txt", career: "Career.txt", saints: "Ruined_Saints.bmp", mines: "Scope Mines", solitaire: "Solitaire", bin: "Recycle Bin" };
-const TITLES: Record<App, string> = { readme: "README.txt - Notepad", career: "Career.txt - Notepad", saints: "Ruined_Saints.bmp - Paint", mines: "Scope Mines", solitaire: "Solitaire", bin: "Recycle Bin" };
-const DESKTOP: App[] = ["readme", "career", "saints", "mines", "solitaire", "bin"];
+const NAMES: Record<App, string> = { readme: "README.txt", career: "Career.txt", saints: "Ruined_Saints.bmp", mines: "Scope Mines", solitaire: "Solitaire", player: "RamenAmp", messenger: "ISeekYou", crash: "DONT_CLICK.exe", bin: "Recycle Bin" };
+const TITLES: Record<App, string> = { readme: "README.txt - Notepad", career: "Career.txt - Notepad", saints: "Ruined_Saints.bmp - Paint", mines: "Scope Mines", solitaire: "Solitaire", player: "RamenAmp", messenger: "ISeekYou", crash: "DONT_CLICK.exe", bin: "Recycle Bin" };
+const DESKTOP: App[] = ["readme", "career", "saints", "mines", "solitaire", "player", "messenger", "crash", "bin"];
 
 function Readme() {
   return (
@@ -48,6 +56,10 @@ Have a look around.
   Solitaire          the real one. Win it.
   Scope Mines        Minesweeper, except every
                      mine is a scope change
+  RamenAmp           music to eat ramen in the dark to
+  ISeekYou           say hi. I answer.
+
+Don't open DONT_CLICK.exe.
 
 Don't open the Recycle Bin.
 (You will.)`}</pre>
@@ -116,7 +128,7 @@ function Mines() {
   );
 }
 
-const BODY: Record<App, () => React.ReactNode> = { readme: Readme, career: Career, saints: Saints, mines: Mines, solitaire: Solitaire, bin: Bin };
+const BODY: Record<App, () => React.ReactNode> = { readme: Readme, career: Career, saints: Saints, mines: Mines, solitaire: Solitaire, player: Player, messenger: Messenger, crash: () => null, bin: Bin };
 
 // The sky behind the splash and on the desktop: value noise, five octaves, painted small and scaled up so it blurs soft.
 function Clouds({ className }: { className?: string }) {
@@ -207,27 +219,71 @@ export default function Win95({ onClose, contact }: { onClose: () => void; conta
   const [start, setStart] = useState(false);
   const [wins, setWins] = useState<Win[]>([{ id: "readme", x: 140, y: 40, z: 1 }]);
   const [clock, setClock] = useState("");
+  const [bsod, setBsod] = useState(false);
+  const [crashes, setCrashes] = useState(0);
+  const [saver, setSaver] = useState(false);
   const top = useRef(1);
   const quit = useRef(onClose); // a ref, so a parent re-render never restarts the boot or the clock
   quit.current = onClose;
+  const timers = useRef<number[]>([]);
+
+  // Power on: the BIOS text, the splash, then the desktop. Also how the machine comes back from a blue screen.
+  const boot = () => {
+    timers.current.forEach(clearTimeout); // clears the typing interval too: they share one id pool
+    sfx.boot(); // the startup chime (opening it was a click, so the browser lets it play)
+    if (calm) { setBooting(false); return; }
+    setLines(0); setBooting("post");
+    const post = POST.length * 170 + 400;
+    const typing = window.setInterval(() => setLines((n) => n + 1), 170);
+    timers.current = [typing, window.setTimeout(() => { clearInterval(typing); setBooting((b) => b && "splash"); }, post), window.setTimeout(() => setBooting(false), post + 1400)];
+  };
+  const crash = () => { setStart(false); setBsod(true); unlock("bsod"); };
+  const reboot = () => { setBsod(false); setWins([{ id: "readme", x: 140, y: 40, z: 1 }]); setCrashes((n) => n + 1); boot(); };
+  const keys = useRef({ bsod, reboot });
+  keys.current = { bsod, reboot };
 
   useEffect(() => {
     unlock("win98");
-    sfx.boot(); // the startup chime (opening it was a click, so the browser lets it play)
-    const post = POST.length * 170 + 400;
-    const typing = setInterval(() => setLines((n) => n + 1), 170);
-    const t1 = setTimeout(() => { clearInterval(typing); setBooting((b) => b && "splash"); }, post);
-    const t = setTimeout(() => setBooting(false), post + 1400);
+    boot();
     const tick = () => setClock(new Date().toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" }));
     tick();
     const id = setInterval(tick, 15000);
-    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") quit.current(); };
+    const onKey = (e: KeyboardEvent) => {
+      if (keys.current.bsod) { e.preventDefault(); keys.current.reboot(); return; } // "Press any key"
+      if (e.key === "Escape") quit.current();
+    };
     window.addEventListener("keydown", onKey);
-    return () => { clearInterval(typing); clearTimeout(t1); clearTimeout(t); clearInterval(id); window.removeEventListener("keydown", onKey); };
+    return () => { timers.current.forEach(clearTimeout); clearInterval(id); window.removeEventListener("keydown", onKey); };
   }, []);
+
+  // The screen saver: 30 seconds of nobody touching the desktop starts the pipes; touching anything stops them.
+  useEffect(() => {
+    if (booting || off || bsod || saver || calm) return;
+    let last = Date.now();
+    const poke = () => { last = Date.now(); };
+    const id = setInterval(() => { if (Date.now() - last > 30000) setSaver(true); }, 1000);
+    const evs = ["pointermove", "pointerdown", "keydown", "wheel"] as const;
+    evs.forEach((e) => window.addEventListener(e, poke));
+    return () => { clearInterval(id); evs.forEach((e) => window.removeEventListener(e, poke)); };
+  }, [booting, off, bsod, saver, calm]);
+  useEffect(() => {
+    if (!saver) return;
+    unlock("pipes");
+    let moved = 0, armed = false, px = -1, py = -1;
+    const arm = setTimeout(() => { armed = true; }, 600); // the click that started it doesn't also stop it
+    const wake = () => { if (armed) setSaver(false); };
+    const move = (e: PointerEvent) => {
+      if (px >= 0) moved += Math.abs(e.clientX - px) + Math.abs(e.clientY - py);
+      px = e.clientX; py = e.clientY;
+      if (moved > 24) wake();
+    };
+    window.addEventListener("pointermove", move); window.addEventListener("pointerdown", wake); window.addEventListener("keydown", wake, true);
+    return () => { clearTimeout(arm); window.removeEventListener("pointermove", move); window.removeEventListener("pointerdown", wake); window.removeEventListener("keydown", wake, true); };
+  }, [saver]);
 
   const open = (id: App) => {
     setStart(false);
+    if (id === "crash") { crash(); return; }
     setWins((ws) => {
       top.current += 1;
       const had = ws.find((w) => w.id === id);
@@ -250,7 +306,9 @@ export default function Win95({ onClose, contact }: { onClose: () => void; conta
     window.addEventListener("pointerup", up);
   };
 
-  const screen = off ? (
+  const screen = bsod ? (
+    <Bsod onKey={reboot} />
+  ) : off ? (
     <button type="button" className={s.off} onClick={onClose} aria-label="Close">It’s now safe to turn off your computer.</button>
   ) : booting === "post" ? (
     <pre className={s.post} onClick={() => setBooting(false)}>{POST.slice(0, lines).join("\n")}<span className={s.caret}>_</span></pre>
@@ -288,11 +346,14 @@ export default function Win95({ onClose, contact }: { onClose: () => void; conta
           <ul>
             {DESKTOP.map((id) => <li key={id}><button type="button" onClick={() => open(id)}><Icon app={id} size={20} />{NAMES[id]}</button></li>)}
             <li className={s.sep} />
+            <li><button type="button" onClick={() => { setStart(false); setSaver(true); }}><span className={s.menuGlyph}>▦</span>Screen Saver</button></li>
             <li><button type="button" onClick={() => { onClose(); contact(); }}><span className={s.menuGlyph}>✉</span>Message Adelina…</button></li>
             <li><button type="button" onClick={() => { sfx.shutdown(); setOff(true); }}><span className={s.menuGlyph}>⏻</span>Shut Down…</button></li>
           </ul>
         </nav>
       )}
+
+      <Assistant crashed={crashes} onMessage={() => { onClose(); contact(); }} />
 
       <footer className={s.taskbar}>
         <button type="button" className={`${s.btn} ${s.start}`} data-on={start || undefined} onClick={() => setStart((v) => !v)}><b>⊞</b> Start</button>
@@ -304,5 +365,5 @@ export default function Win95({ onClose, contact }: { onClose: () => void; conta
     </div>
   );
 
-  return createPortal(<div className={s.overlay} role="dialog" aria-modal="true" aria-label="Windows 95">{screen}</div>, document.body);
+  return createPortal(<div className={s.overlay} role="dialog" aria-modal="true" aria-label="Windows 95">{screen}{saver && <Pipes />}</div>, document.body);
 }
