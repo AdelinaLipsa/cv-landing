@@ -332,6 +332,9 @@ const Shuffle: React.FC<ShuffleProps> = ({
           strip.replaceChildren(real);
           strip.style.transform = 'none';
           strip.style.willChange = 'auto';
+          // Landed: drop the reel's fixed, clipped cell so nothing can crop the letter (it was cutting headings off at the bottom)
+          Object.assign(w.style, { overflow: 'visible', width: '', height: '', marginTop: '', marginBottom: '', verticalAlign: '' });
+          Object.assign(real.style, { display: 'inline', height: '', width: '', lineHeight: '' });
         });
       };
 

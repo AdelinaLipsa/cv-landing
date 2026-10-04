@@ -28,7 +28,6 @@ import DecryptedText from "../DecryptedText";
 import ElectricBorder from "../ElectricBorder";
 import QuickRead from "../QuickRead";
 import GuestbookButton from "../Guestbook";
-import RoadmapButton from "../Roadmap";
 import p from "./pane.module.css";
 import s from "./Home.module.css";
 
@@ -232,7 +231,6 @@ export default function Home({ ui }: { ui: UI }) {
             <p className={s.offLine}>{about[1]}</p>
             <ul className={s.tags}>{OFF.map((t) => <li key={t}>{t}</li>)}</ul>
             <GuestbookButton open={ui.sheet} />
-            <RoadmapButton open={ui.sheet} />
           </Land>
 
           {/* Things I believe: hover one */}

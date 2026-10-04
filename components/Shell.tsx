@@ -10,7 +10,6 @@ import Toasts from "./Toasts";
 import Clock from "./Clock";
 import Cat from "./Cat";
 import { unlock } from "@/lib/achievements";
-import { pixelBurst } from "@/lib/pixelBurst";
 import { fromQuery, type Challenge } from "@/lib/challenge";
 import Arcade from "./Arcade";
 import Sheet from "./Sheet";
@@ -123,17 +122,6 @@ export default function Shell({ code, character }: { code: Snippets; character: 
     animate(x, -i * w, how);
     history.replaceState(null, "", i ? `#${TABS[i].toLowerCase()}` : location.pathname);
   }, [w, x]);
-  // Tabs and links change page behind a pixel burst (lib/pixelBurst, after React Bits PixelTransition):
-  // the pixels cover the page, it jumps, they clear. Swipes and the tour still slide; calm mode just jumps.
-  const bursting = useRef(false);
-  const burstTo = (i: number) => {
-    const el = viewport.current;
-    if (i === at.current.pane || !el || reduce || document.hidden) return go(i, reduce ? { duration: 0 } : track);
-    if (bursting.current) return;
-    bursting.current = true;
-    // z 15: under the tab bar (z 20), so the pill stays in view
-    pixelBurst(el, { z: 15, onCover: () => go(i, { duration: 0 }) }).then(() => { bursting.current = false; });
-  };
   const goRef = useRef(go);
   goRef.current = go;
   const at = useRef({ pane, touring });
@@ -200,7 +188,7 @@ export default function Shell({ code, character }: { code: Snippets; character: 
   const stage = touring ? steps[step].stage : STAGE.all;
 
   const ui: UI = {
-    go: (i) => { if (touring) endTour(); burstTo(i); },
+    go: (i) => { if (touring) endTour(); go(i, reduce ? { duration: 0 } : track); },
     sheet: (label, body) => setSheet({ label, body }),
     contact: () => { if (touring) endTour(); setSheet({ label: "Contact", body: <Contact /> }); },
     build: () => (touring ? endTour() : startTour()),
