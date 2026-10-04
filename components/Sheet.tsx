@@ -2,6 +2,8 @@
 import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useRef } from "react";
 import { glide } from "@/lib/motion";
+import { useCalm } from "@/lib/useCalm";
+import { pixelBurst } from "@/lib/pixelBurst";
 import s from "./Sheet.module.css";
 
 // ponytail: two snap points (open, closed). Add a half-height snap if a sheet ever gets long enough to need it.
@@ -12,6 +14,11 @@ export default function Sheet({ open, onClose, label, children }: {
   children: React.ReactNode;
 }) {
   const panel = useRef<HTMLDivElement>(null);
+  const calm = useCalm();
+  // Opening: the sheet arrives covered in pixels that dissolve away at random (lib/pixelBurst, after React Bits PixelTransition).
+  useEffect(() => {
+    if (open && !calm && panel.current && !document.hidden) pixelBurst(panel.current, { reveal: true, cell: 38, step: 0.42, hold: 0.08, z: 5 });
+  }, [open, calm]);
 
   useEffect(() => {
     if (!open) return;
@@ -49,8 +56,8 @@ export default function Sheet({ open, onClose, label, children }: {
             dragElastic={{ top: 0.06, bottom: 0.9 }}
             dragMomentum={false}
             onDragEnd={(_, i) => (i.offset.y > 140 || i.velocity.y > 600) && onClose()}
-            initial={{ y: "100%" }}
-            animate={{ y: 0 }}
+            initial={calm ? { y: "100%" } : { y: 36, scale: 0.97 }}
+            animate={{ y: 0, scale: 1 }}
             exit={{ y: "100%" }}
             transition={glide}
           >

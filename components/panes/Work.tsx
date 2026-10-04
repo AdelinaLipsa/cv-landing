@@ -13,6 +13,8 @@ import SpotlightCard from "../SpotlightCard";
 import Tilt from "../Tilt";
 import DecryptedText from "../DecryptedText";
 import { glide } from "@/lib/motion";
+import { pixelBurst } from "@/lib/pixelBurst";
+import { useCalm } from "@/lib/useCalm";
 import p from "./pane.module.css";
 import s from "../wall/wall.module.css";
 
@@ -81,6 +83,10 @@ function Viewer({ list, at, onMove, onClose }: { list: Tile[]; at: number; onMov
   const go = (d: number) => { setDir(d); onMove((at + d + list.length) % list.length); };
   const api = useRef({ go, onClose });
   api.current = { go, onClose };
+  // Opens covered in pixels that dissolve away at random (lib/pixelBurst, after React Bits PixelTransition).
+  const panel = useRef<HTMLDivElement>(null);
+  const calm = useCalm();
+  useEffect(() => { if (!calm && panel.current && !document.hidden) pixelBurst(panel.current, { reveal: true, cell: 44, step: 0.45, hold: 0.08, z: 5 }); }, [calm]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -103,6 +109,7 @@ function Viewer({ list, at, onMove, onClose }: { list: Tile[]; at: number; onMov
     <>
       <motion.div className={s.backdrop} onClick={onClose} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.4 }} />
       <motion.div
+        ref={panel}
         className={s.viewer}
         role="dialog"
         aria-modal="true"
