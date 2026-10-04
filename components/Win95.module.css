@@ -15,9 +15,13 @@
 .clouds { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 0; }
 .boot { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; background: #3a6ea5; color: #fff; cursor: pointer; text-shadow: 2px 2px 0 rgba(0, 0, 40, 0.45); }
 .boot > :not(canvas) { position: relative; }
-.boot b { font: italic 800 54px/1 "Franklin Gothic Medium", "Arial Black", sans-serif; letter-spacing: -1px; }
-.boot sup { font-size: 24px; color: #ffd700; }
 .boot span { font-size: 14px; }
+/* The 95 logo: the flag, then a thin white word over a heavy black one with a light 95 beside it */
+.flag { width: clamp(220px, 32vw, 380px); height: auto; overflow: visible; }
+.logo { display: flex; flex-direction: column; align-items: flex-start; line-height: 1; text-shadow: none; }
+.logo small { margin-left: 4px; font: 400 clamp(20px, 3vw, 34px)/1 Arial, Helvetica, sans-serif; color: #fff; letter-spacing: -0.5px; }
+.logo b { font: 900 clamp(40px, 6.5vw, 76px)/1 "Arial Black", "Franklin Gothic Heavy", Helvetica, sans-serif; color: #000; letter-spacing: -2px; }
+.logo em { margin-left: 4px; font: 400 0.9em/1 Arial, Helvetica, sans-serif; font-style: normal; color: #fff; letter-spacing: -1px; }
 .boot i { width: 220px; height: 10px; background: repeating-linear-gradient(90deg, #3a6ea5 0 14px, #fff 14px 18px); animation: boot 1.4s linear forwards; clip-path: inset(0 100% 0 0); }
 @keyframes boot { to { clip-path: inset(0 0 0 0); } }
 .off { position: absolute; inset: 0; width: 100%; border: 0; background: #000; color: #ff8000; font: 700 clamp(18px, 3vw, 30px) "Courier New", monospace; text-align: center; padding: 20px; cursor: pointer; }
@@ -25,11 +29,9 @@
 /* Desktop */
 .desk { position: absolute; inset: 0; background: #3a6ea5; overflow: hidden; }
 .wallpaper { position: absolute; inset: 0; z-index: 0; display: grid; place-items: center; pointer-events: none; }
-.brand { position: relative; display: flex; flex-direction: column; align-items: center; gap: 8px; color: #fff; text-align: center; text-shadow: 2px 2px 0 rgba(0, 0, 40, 0.45); }
-.brand b { font: italic 800 clamp(40px, 7vw, 72px)/1 "Franklin Gothic Medium", "Arial Black", sans-serif; letter-spacing: -1px; }
-.brand sup { font-size: 0.45em; color: #ffd700; }
-.brand span { font-size: clamp(16px, 2vw, 22px); font-weight: 700; }
-.brand small { font-size: 12px; opacity: 0.9; }
+.brand { position: relative; display: flex; flex-direction: column; align-items: center; gap: 6px; color: #fff; text-align: center; text-shadow: 2px 2px 0 rgba(0, 0, 40, 0.45); }
+.brand > span { font-size: clamp(16px, 2vw, 22px); font-weight: 700; }
+.brand > small { font-size: 12px; opacity: 0.9; }
 .icons { position: relative; list-style: none; margin: 0; padding: 10px 6px; display: flex; flex-direction: column; flex-wrap: wrap; gap: 14px; max-height: calc(100% - 40px); align-content: flex-start; }
 .icon { display: flex; flex-direction: column; align-items: center; gap: 4px; width: 78px; padding: 2px; border: 0; background: none; color: #fff; font: inherit; cursor: default; text-align: center; }
 .icon svg { image-rendering: pixelated; }

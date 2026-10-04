@@ -148,6 +148,42 @@ function Clouds({ className }: { className?: string }) {
   return <canvas ref={cv} className={`${s.clouds} ${className ?? ""}`} aria-hidden="true" />;
 }
 
+// The waving four-pane flag from the 95 splash, drawn on a bent grid: (u, v) across the flag maps to a point on the wave,
+// so every pane and trailing square curves with it. Built once, as path strings.
+const wave = (u: number, v: number): [number, number] => [70 + 112 * u - 26 * v + 5 * Math.sin(Math.PI * v), 34 + 112 * v - 26 * u - 12 * Math.sin(Math.PI * u * 1.1)];
+const quad = (u0: number, v0: number, u1: number, v1: number, n = 8) => {
+  const pts: [number, number][] = [];
+  for (let k = 0; k <= n; k++) pts.push(wave(u0 + ((u1 - u0) * k) / n, v0));
+  for (let k = 0; k <= n; k++) pts.push(wave(u1, v0 + ((v1 - v0) * k) / n));
+  for (let k = n; k >= 0; k--) pts.push(wave(u0 + ((u1 - u0) * k) / n, v1));
+  for (let k = n; k >= 0; k--) pts.push(wave(u0, v0 + ((v1 - v0) * k) / n));
+  return "M" + pts.map(([x, y]) => `${x.toFixed(1)},${y.toFixed(1)}`).join("L") + "Z";
+};
+const FLAG = {
+  frame: quad(0, 0, 1, 1),
+  panes: [
+    { d: quad(0.08, 0.07, 0.47, 0.46), fill: "#f05a22" },
+    { d: quad(0.55, 0.07, 0.93, 0.46), fill: "#5fb53a" },
+    { d: quad(0.08, 0.54, 0.47, 0.93), fill: "#2f78d6" },
+    { d: quad(0.55, 0.54, 0.93, 0.93), fill: "#ffc20e" },
+  ],
+  // The trail: five columns of squares behind the flag, smaller and further apart as they go, coloured in the middle rows.
+  trail: Array.from({ length: 5 }, (_, c) => Array.from({ length: 8 }, (_, row) => {
+    const size = 0.1 * (1 - c * 0.13), u = -0.02 - size - c * 0.13 - c * c * 0.008, v = 0.01 + row * 0.125 + (0.1 - size) / 2;
+    const fill = row === 1 || row === 2 ? "#f05a22" : row === 5 || row === 6 ? "#2f78d6" : "#000";
+    return { d: quad(u, v, u + size, v + size * 0.9, 2), fill, o: 1 - c * 0.1 };
+  })).flat(),
+};
+const Flag = ({ className }: { className?: string }) => (
+  <svg className={className} viewBox="-10 -10 200 170" aria-hidden="true">
+    <g style={{ filter: "drop-shadow(4px 6px 3px rgba(0, 0, 40, 0.35))" }}>
+      {FLAG.trail.map((t, k) => <path key={k} d={t.d} fill={t.fill} opacity={t.o} />)}
+      <path d={FLAG.frame} fill="#000" />
+      {FLAG.panes.map((p) => <path key={p.fill} d={p.d} fill={p.fill} />)}
+    </g>
+  </svg>
+);
+
 // The power-on self test, white on black, before Windows starts. One line every 170ms.
 const POST = [
   "AL-BIOS (C) 1995 Adelina Lipșa, Bucharest",
@@ -219,13 +255,13 @@ export default function Win95({ onClose, contact }: { onClose: () => void; conta
   ) : booting === "post" ? (
     <pre className={s.post} onClick={() => setBooting(false)}>{POST.slice(0, lines).join("\n")}<span className={s.caret}>_</span></pre>
   ) : booting ? (
-    <div className={s.boot} onClick={() => setBooting(false)}><Clouds /><b>Windows<sup>95</sup></b><span>Starting Windows 95…</span><i /></div>
+    <div className={s.boot} onClick={() => setBooting(false)}><Clouds /><Flag className={s.flag} /><div className={s.logo}><small>Microsoft</small><b>Windows<em>95</em></b></div><span>Starting Windows 95…</span><i /></div>
   ) : (
     <div className={s.desk} onPointerDown={(e) => { if (e.target === e.currentTarget) setStart(false); }}>
       {/* The wallpaper: the clouds, with this machine's own splash in the middle */}
       <div className={s.wallpaper} aria-hidden="true">
         <Clouds />
-        <div className={s.brand}><b>Adelina<sup>95</sup></b><span>You should hire me.</span><small>Plug and play. No drivers needed.</small></div>
+        <div className={s.brand}><Flag className={s.flag} /><div className={s.logo}><small>Adelina</small><b>Lipșa<em>95</em></b></div><span>You should hire me.</span><small>Plug and play. No drivers needed.</small></div>
       </div>
       <ul className={s.icons}>
         {DESKTOP.map((id) => (
