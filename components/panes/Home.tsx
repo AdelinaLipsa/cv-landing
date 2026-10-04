@@ -263,6 +263,7 @@ export default function Home({ ui }: { ui: UI }) {
           <a className={s.messageBtn} href={profile.pdf} download><DecryptedText text="Download the PDF" animateOn="hover" speed={40} maxIterations={8} /></a>
           <a className={s.messageBtn} href={profile.linkedin} target="_blank" rel="noreferrer"><LinkedInIcon /><DecryptedText text="LinkedIn" animateOn="hover" speed={40} maxIterations={8} /></a>
         </div>
+        <RoadmapButton open={ui.sheet} />
       </Land>
     </div>
   );
