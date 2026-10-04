@@ -2,7 +2,7 @@ import { AnimatePresence, motion, useInView } from "motion/react";
 import { useRef, useState } from "react";
 import type { UI } from "../Shell";
 import { certifications, education, jobs, languages, stillShipping, ventures, type Branch } from "@/content/cv";
-import BlurText from "../BlurText";
+import ShuffleHeading from "../ShuffleHeading";
 import { Rich } from "../Keyword";
 import CountUp from "../CountUp";
 import SpotlightCard from "../SpotlightCard";
@@ -93,7 +93,7 @@ export default function Career({ ui }: { ui: UI }) {
   return (
     <div className={p.column}>
       <div className={s.head}>
-        <h1 className={p.title}><BlurText text="Career" animateBy="words" delay={60} /></h1>
+        <h1 className={p.title}><ShuffleHeading text="Career" /></h1>
         <div className={s.legend}>
           <span><i style={{ background: COLOR.dev }} />dev</span>
           <span><i style={{ background: COLOR.product }} />product</span>

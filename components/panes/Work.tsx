@@ -7,7 +7,7 @@ import { sections, tiles, type Tile } from "@/content/wall";
 import { useMedia } from "@/lib/useMedia";
 import Media from "../wall/Media";
 import { Play } from "../wall/play";
-import BlurText from "../BlurText";
+import ShuffleHeading from "../ShuffleHeading";
 import SpotlightCard from "../SpotlightCard";
 import Tilt from "../Tilt";
 import DecryptedText from "../DecryptedText";
@@ -154,13 +154,13 @@ export default function Work(_: { ui: UI }) {
   return (
     <div className={p.column}>
       <div className={s.head}>
-        <h1 className={p.title}><BlurText text="What I built, and what I own" animateBy="words" delay={60} /></h1>
+        <h1 className={p.title}><ShuffleHeading text="What I built, and what I own" /></h1>
       </div>
 
       {sections.map((sec) => (
         <section key={sec.id} className={s.section}>
           <div className={s.sectionHead}>
-            <h2 className={s.sectionTitle}>{sec.title}</h2>
+            <h2 className={s.sectionTitle}><ShuffleHeading text={sec.title} /></h2>
             <p className={s.sectionLede}>{sec.lede}</p>
           </div>
           <div className={s.grid}>

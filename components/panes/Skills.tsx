@@ -4,7 +4,7 @@ import { useState } from "react";
 import type { UI } from "../Shell";
 import { layers, things } from "@/content/skills";
 import { drift, slow } from "@/lib/motion";
-import BlurText from "../BlurText";
+import ShuffleHeading from "../ShuffleHeading";
 import SpotlightCard from "../SpotlightCard";
 import p from "./pane.module.css";
 import s from "./Skills.module.css";
@@ -29,7 +29,7 @@ export default function Skills(_: { ui: UI }) {
   return (
     <div className={p.column}>
       <div className={s.head}>
-        <h1 className={p.title}><BlurText text="The whole stack" animateBy="words" delay={60} /></h1>
+        <h1 className={p.title}><ShuffleHeading text="The whole stack" /></h1>
         {/* A hand-drawn nudge, like the music button's, until a role is picked */}
         {all && (
           <span className={s.nudge} aria-hidden="true">

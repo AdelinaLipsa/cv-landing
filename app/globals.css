@@ -97,3 +97,8 @@ html[data-built] .gate-boot, html:not([data-built]) .gate-shell { display: none;
 .water:hover svg, .water:focus-visible svg { fill: currentColor; }
 @keyframes water-wave { to { transform: translateX(12px); } }
 @media (prefers-reduced-motion: reduce) { .water::after { animation: none; } }
+
+/* React Bits Shuffle inside the site's headings: take the heading's own type, not Shuffle's pixel font */
+.shuffle-heading { display: inline-block; }
+.shuffle-heading .shuffle-parent { font: inherit; font-size: inherit; line-height: inherit; letter-spacing: inherit; text-transform: none; font-stretch: inherit; font-variation-settings: inherit; }
+.shuffle-heading .shuffle-char { line-height: inherit; }

@@ -17,7 +17,7 @@ import VariableProximity from "../VariableProximity";
 import RotatingText from "../RotatingText";
 import Counter from "../Counter";
 import Mark from "../Mark";
-import BlurText from "../BlurText";
+import ShuffleHeading from "../ShuffleHeading";
 import Workbench from "../Workbench";
 import { Rich } from "../Keyword";
 import EqualizerRing from "../EqualizerRing";
@@ -197,7 +197,7 @@ export default function Home({ ui }: { ui: UI }) {
 
       <section className={s.preview}>
         <div className={s.previewHead}>
-          <h2 className={s.h2}><BlurText text="Things that didn’t exist" animateBy="words" delay={60} /></h2>
+          <h2 className={s.h2}><ShuffleHeading text="Things that didn’t exist" /></h2>
           <button type="button" className={s.seeAll} onClick={() => ui.go(1)}><DecryptedText text="See all" animateOn="hover" speed={40} maxIterations={8} /></button>
         </div>
         <div className={s.tiles} data-tour="preview">
@@ -214,7 +214,7 @@ export default function Home({ ui }: { ui: UI }) {
 
       <section className={`${s.offDuty} ${s.dropper}`} {...drop(STAGE.offDuty)}>
         <div className={s.offText} data-tour="offduty">
-          <h2 className={s.h2}><BlurText text="Off duty" animateBy="words" delay={60} /></h2>
+          <h2 className={s.h2}><ShuffleHeading text="Off duty" /></h2>
 
           {/* Where it started: the road to the dev branch, on a line that draws itself */}
           <ol ref={originRef} className={s.origin} data-on={originOn || undefined}>
