@@ -58,7 +58,50 @@ const buzz = (pattern: number | number[]) => { if (!muted) try { navigator.vibra
 const arp = (notes: number[], step: number, type: OscillatorType = "square", vol = 0.35) =>
   notes.forEach((n, i) => tone(n, n, step * 1.6, type, vol, i * step));
 
+// A soft synth pad for the retro computer's startup and shutdown: an original chime in the spirit of the old
+// OS startup sounds (not a copy of any of them). Detuned saws through a low-pass that opens, then a long release,
+// into a small echo so it blooms. `notes` in Hz, `at` seconds from now.
+const pad = (notes: number[], at: number, dur: number, vol = 0.16, open = 2600) => {
+  const c = out();
+  if (!c || !master) return;
+  const t = c.currentTime + at;
+  const f = c.createBiquadFilter(), g = c.createGain(), echo = c.createDelay(), fb = c.createGain(), wet = c.createGain();
+  f.type = "lowpass";
+  f.frequency.setValueAtTime(320, t);
+  f.frequency.exponentialRampToValueAtTime(open, t + dur * 0.45);
+  f.frequency.exponentialRampToValueAtTime(500, t + dur);
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(vol, t + dur * 0.3);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  echo.delayTime.value = 0.23; fb.gain.value = 0.38; wet.gain.value = 0.45;
+  f.connect(g);
+  g.connect(master);
+  g.connect(echo).connect(fb).connect(echo);
+  echo.connect(wet).connect(master);
+  for (const n of notes) for (const cents of [-7, 7]) {
+    const o = c.createOscillator();
+    o.type = "sawtooth";
+    o.frequency.value = n;
+    o.detune.value = cents;
+    o.connect(f);
+    o.start(t);
+    o.stop(t + dur + 0.05);
+  }
+};
+const bell = (n: number, at: number, vol = 0.22) => { tone(n, n, 1.4, "sine", vol, at); tone(n * 2, n * 2, 0.7, "sine", vol * 0.25, at); };
+
 export const sfx = {
+  // Startup: a Dmaj9 swell, a rising sparkle of bells, and a low D to settle on. About four seconds.
+  boot: () => {
+    pad([146.83, 220, 277.18, 329.63, 369.99], 0, 3.6, 0.14); // D3 A3 C#4 E4 F#4
+    [880, 1108.73, 1318.51, 1479.98].forEach((n, i) => bell(n, 0.7 + i * 0.22)); // A5 C#6 E6 F#6
+    pad([73.42, 110], 1.6, 2.6, 0.12, 900); // D2 A2 underneath
+  },
+  // Shutdown: the same colours, falling and closing.
+  shutdown: () => {
+    [1318.51, 1108.73, 880, 659.25].forEach((n, i) => bell(n, i * 0.18, 0.16));
+    pad([146.83, 220, 293.66], 0.2, 2.2, 0.11, 1200);
+  },
   laser: () => tone(1400, 380, 0.07, "square", 0.12),
   blast: () => tone(900, 200, 0.09, "square", 0.22),
   charged: () => { tone(220, 1400, 0.18, "sawtooth", 0.3); noise(0.15, 0.25, 4000); },

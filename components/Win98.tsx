@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { jobs, ventures } from "@/content/cv";
 import { unlock } from "@/lib/achievements";
+import { sfx } from "@/lib/sfx";
 import { useCalm } from "@/lib/useCalm";
 import { flag, newBoard, reveal, type Board } from "@/lib/mines";
 import s from "./Win98.module.css";
@@ -128,6 +129,7 @@ export default function Win98({ onClose, contact }: { onClose: () => void; conta
 
   useEffect(() => {
     unlock("win98");
+    sfx.boot(); // the startup chime (opening it was a click, so the browser lets it play)
     const t = setTimeout(() => setBooting(false), 1400);
     const tick = () => setClock(new Date().toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" }));
     tick();
@@ -193,7 +195,7 @@ export default function Win98({ onClose, contact }: { onClose: () => void; conta
             {DESKTOP.map((id) => <li key={id}><button type="button" onClick={() => open(id)}><Icon app={id} size={20} />{NAMES[id]}</button></li>)}
             <li className={s.sep} />
             <li><button type="button" onClick={() => { onClose(); contact(); }}><span className={s.menuGlyph}>✉</span>Message Adelina…</button></li>
-            <li><button type="button" onClick={() => setOff(true)}><span className={s.menuGlyph}>⏻</span>Shut Down…</button></li>
+            <li><button type="button" onClick={() => { sfx.shutdown(); setOff(true); }}><span className={s.menuGlyph}>⏻</span>Shut Down…</button></li>
           </ul>
         </nav>
       )}
