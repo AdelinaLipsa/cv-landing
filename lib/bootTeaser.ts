@@ -1,9 +1,9 @@
 // The retro computer's attract mode, drawn on its 160 × 144 screen between battle rounds.
-// A rainbow marquee runs along the bottom; then the picture glitches into a tiny Windows 98 desktop where a pixel
+// A rainbow marquee runs along the bottom; then the picture glitches into a tiny Windows 95 desktop where a pixel
 // cursor glides over and clicks BOOT ME: it shows what clicking the screen does instead of only saying it.
 // `s` is seconds since the screen switched on. Everything is drawn from the clock: no state to keep.
 const RAINBOW = ["#ff5a5a", "#F5B53F", "#fff1a8", "#5fd897", "#5fd0ff", "#b46bff", "#ff7ac6"];
-const MARQUEE = "★ CLICK THE SCREEN ★ THERE'S A WINDOWS 98 IN HERE ★ ";
+const MARQUEE = "★ CLICK THE SCREEN ★ THERE'S A WINDOWS 95 IN HERE ★ ";
 export const TEASE_AT = 4.2, TEASE_END = 7.6; // when the desktop takes over, and hands back
 
 // The classic arrow, 7 × 11: k outline, w fill.
@@ -60,7 +60,7 @@ function desktop(ctx: CanvasRenderingContext2D, s: number, W: number, H: number)
   ctx.textAlign = "center";
   ctx.textBaseline = "top";
   ctx.fillStyle = "#fff";
-  ctx.fillText("Windows 98", W / 2, 70);
+  ctx.fillText("Windows 95", W / 2, 70);
 
   // The cursor glides in from the corner, lands on the button, clicks twice.
   const t = s - TEASE_AT;

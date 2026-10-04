@@ -12,7 +12,7 @@ export type IdeaId = (typeof ideas)[number]["id"];
 
 // Release notes: what already shipped, newest first.
 export const shipped = [
-  { v: "v3.5", title: "A Win98 desktop inside the retro computer" },
+  { v: "v3.5", title: "A Windows 95 desktop inside the retro computer, with Solitaire" },
   { v: "v3.4", title: "Arcade challenges: send your score, they try to beat it" },
   { v: "v3.3", title: "The trophy case: every achievement on a shelf" },
   { v: "v3.2", title: "Break my checkout: five ways to break the $49 payment" },

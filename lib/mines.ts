@@ -1,4 +1,4 @@
-// Scope Mines: Minesweeper on the Win98 desktop, where every mine is a scope change.
+// Scope Mines: Minesweeper on the Win95 desktop, where every mine is a scope change.
 // Pure: a board is plain data, every move returns a new one. The first click is always safe (mines are laid after it).
 export type Cell = { mine: boolean; open: boolean; flag: boolean; near: number };
 export type Board = { w: number; h: number; mines: number; cells: Cell[]; laid: boolean; state: "play" | "won" | "lost" };

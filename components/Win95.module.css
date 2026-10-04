@@ -1,4 +1,4 @@
-/* Windows 98, by hand: teal desktop, grey bevels, navy title bars. Pixel icons, Tahoma-ish type. */
+/* Windows 95, by hand: teal desktop, grey bevels, navy title bars. Pixel icons, Tahoma-ish type. */
 .overlay { position: fixed; inset: 0; z-index: 66; font: 12px/1.35 Tahoma, "MS Sans Serif", Geneva, Verdana, sans-serif; color: #000; -webkit-font-smoothing: none; user-select: none; -webkit-user-select: none; }
 .overlay * { box-sizing: border-box; }
 
@@ -33,6 +33,7 @@
 .title span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .x { min-height: 16px; width: 18px; padding: 0; justify-content: center; font-size: 10px; font-weight: 700; }
 .winBody { margin-top: 3px; }
+.win[data-app="solitaire"] { max-width: calc(100vw - 16px); }
 .notepad { margin: 0; max-height: 52vh; overflow: auto; padding: 6px 8px; background: #fff; font: 13px/1.4 "Fixedsys", "Courier New", monospace; white-space: pre; box-shadow: inset -1px -1px #fff, inset 1px 1px #808080, inset -2px -2px #dfdfdf, inset 2px 2px #000; user-select: text; -webkit-user-select: text; }
 .paint { display: flex; flex-direction: column; gap: 6px; padding: 6px; background: #808080; }
 .paint img { display: block; width: 100%; max-width: 480px; image-rendering: auto; box-shadow: 2px 2px 0 #000; }

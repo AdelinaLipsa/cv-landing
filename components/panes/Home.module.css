@@ -87,7 +87,7 @@
 .offDuty { position: relative; display: flex; flex-direction: column; gap: 24px; margin-top: 56px; }
 .offText { display: flex; flex-direction: column; gap: 14px; }
 .retro { order: -1; position: relative; height: 320px; margin: 0 -24px; }
-/* Clicking the screen boots Windows 98 (the screen itself says so). This is the same for keyboards:
+/* Clicking the screen boots Windows 95 (the screen itself says so). This is the same for keyboards:
    invisible until it gets focus, so it never sits on the models. */
 .bootBtn { position: absolute; left: 50%; top: 8px; transform: translateX(-50%); z-index: 2; padding: 4px 10px; border: 1px solid var(--blueprint); border-radius: 999px; background: var(--surface); color: var(--blueprint); font: 700 12px var(--font-mono), monospace; white-space: nowrap; cursor: pointer; opacity: 0; pointer-events: none; }
 .bootBtn:focus-visible { opacity: 1; pointer-events: auto; }

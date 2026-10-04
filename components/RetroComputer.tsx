@@ -192,7 +192,7 @@ async function mount(el: HTMLElement, character: boolean, onScreen: () => void) 
   const NOTES = [
     { text: "my passions", at: new THREE.Vector3(3.9, 2.4, -0.4) }, // just right of the guitar, the iPad and the gloves
     { text: "my childhood", at: new THREE.Vector3(4.3, 1.1, 1.8) }, // just right of the Digivice, the hat and the figures
-    { text: "boot me up", at: new THREE.Vector3(0.72, 2.32, 0.7) }, // the screen's top-right corner: clicking the screen boots Windows 98
+    { text: "boot me up", at: new THREE.Vector3(0.72, 2.32, 0.7) }, // the screen's top-right corner: clicking the screen boots Windows 95
   ].map((n) => {
     const node = document.createElement("div");
     node.className = s.note;
@@ -513,7 +513,7 @@ async function mount(el: HTMLElement, character: boolean, onScreen: () => void) 
       return;
     }
     const on = t - ARRIVE - POWER; // seconds since the screen switched on
-    if (teaser(ctx, on, W, H)) return; // attract mode: a tiny Windows 98 shows what clicking does
+    if (teaser(ctx, on, W, H)) return; // attract mode: a tiny Windows 95 shows what clicking does
     draw(ctx, battle);
     marquee(ctx, on, W, H);
   };
@@ -580,7 +580,7 @@ async function mount(el: HTMLElement, character: boolean, onScreen: () => void) 
     drag = { x: e.clientX, y: e.clientY, yaw, px: pan.x, py: pan.y };
     el.style.cursor = "grabbing";
   };
-  // A click (not a drag) on the monitor's screen boots it: Windows 98 (components/Win98).
+  // A click (not a drag) on the monitor's screen boots it: Windows 95 (components/Win95).
   const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
   const onScreenAt = (e: PointerEvent) => {
     const r = el.getBoundingClientRect();

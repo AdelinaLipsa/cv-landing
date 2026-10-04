@@ -6,11 +6,12 @@ import { unlock } from "@/lib/achievements";
 import { sfx } from "@/lib/sfx";
 import { useCalm } from "@/lib/useCalm";
 import { flag, newBoard, reveal, type Board } from "@/lib/mines";
-import s from "./Win98.module.css";
+import s from "./Win95.module.css";
+import Solitaire from "./Solitaire";
 
-// The retro computer boots: a Windows 98 desktop with her CV as files, Minesweeper renamed Scope Mines,
+// The retro computer boots: a Windows 95 desktop with her CV as files, Solitaire, Minesweeper renamed Scope Mines,
 // and a Recycle Bin full of what this site deleted. Start → Shut Down ends on the famous orange line.
-type App = "readme" | "career" | "saints" | "mines" | "bin";
+type App = "readme" | "career" | "saints" | "mines" | "solitaire" | "bin";
 type Win = { id: App; x: number; y: number; z: number };
 
 // Tiny pixel icons, drawn from maps like the arcade sprites. Letters pick colours from PAL.
@@ -20,6 +21,7 @@ const ICONS: Record<App, string[]> = {
   career: ["kkkkkkkk..", "kwwwwwwkk.", "kwbbbbwwkk", "kwwwwwwwwk", "kwbbbbbbwk", "kwwwwwwwwk", "kwbbbbbbwk", "kwwwwwwwwk", "kwbbbwwwwk", "kkkkkkkkkk"],
   saints: ["kkkkkkkkkk", "kllllllllk", "kllllyylk.", "klllllllk.", "kllcclllk.", "klcccclllk", "kcccccccck", "kcccccccck", "kcccccccck", "kkkkkkkkkk"],
   mines: ["gggggggggg", "gwwwwwwwwd", "gwg.k.gggd", "gwgkkkkggd", "gw.kwkk.gd", "gwgkkkkggd", "gwg.k.gggd", "gwggggggd.", "gwggggggd.", "dddddddddd"],
+  solitaire: ["..kkkkkk..", ".kwwwwwwk.", "kwrwwwkkwk", "kwrrwkwwwk", "kwwrwkkkwk", "kkkkkkwwwk", "kwbbbbkkwk", "kwbbbbkwwk", "kwbbbbkkk.", "kkkkkkk..."],
   bin: ["..kkkkkk..", ".kggggggk.", "kkkkkkkkkk", ".kwgwgwgk.", ".kwgwgwgk.", ".kwgwgwgk.", ".kwgwgwgk.", ".kwgwgwgk.", ".kwgwgwgk.", "..kkkkkk.."],
 };
 const Icon = ({ app, size = 32 }: { app: App; size?: number }) => (
@@ -28,9 +30,9 @@ const Icon = ({ app, size = 32 }: { app: App; size?: number }) => (
   </svg>
 );
 
-const NAMES: Record<App, string> = { readme: "README.txt", career: "Career.txt", saints: "Ruined_Saints.bmp", mines: "Scope Mines", bin: "Recycle Bin" };
-const TITLES: Record<App, string> = { readme: "README.txt - Notepad", career: "Career.txt - Notepad", saints: "Ruined_Saints.bmp - Paint", mines: "Scope Mines", bin: "Recycle Bin" };
-const DESKTOP: App[] = ["readme", "career", "saints", "mines", "bin"];
+const NAMES: Record<App, string> = { readme: "README.txt", career: "Career.txt", saints: "Ruined_Saints.bmp", mines: "Scope Mines", solitaire: "Solitaire", bin: "Recycle Bin" };
+const TITLES: Record<App, string> = { readme: "README.txt - Notepad", career: "Career.txt - Notepad", saints: "Ruined_Saints.bmp - Paint", mines: "Scope Mines", solitaire: "Solitaire", bin: "Recycle Bin" };
+const DESKTOP: App[] = ["readme", "career", "saints", "mines", "solitaire", "bin"];
 
 function Readme() {
   return (
@@ -43,6 +45,7 @@ Game Boy games I couldn't get.
 Have a look around.
   Career.txt         the short version of my CV
   Ruined_Saints.bmp  my streetwear label
+  Solitaire          the real one. Win it.
   Scope Mines        Minesweeper, except every
                      mine is a scope change
 
@@ -114,9 +117,9 @@ function Mines() {
   );
 }
 
-const BODY: Record<App, () => React.ReactNode> = { readme: Readme, career: Career, saints: Saints, mines: Mines, bin: Bin };
+const BODY: Record<App, () => React.ReactNode> = { readme: Readme, career: Career, saints: Saints, mines: Mines, solitaire: Solitaire, bin: Bin };
 
-export default function Win98({ onClose, contact }: { onClose: () => void; contact: () => void }) {
+export default function Win95({ onClose, contact }: { onClose: () => void; contact: () => void }) {
   const calm = useCalm();
   const [booting, setBooting] = useState(!calm);
   const [off, setOff] = useState(false);
@@ -166,7 +169,7 @@ export default function Win98({ onClose, contact }: { onClose: () => void; conta
   const screen = off ? (
     <button type="button" className={s.off} onClick={onClose} aria-label="Close">It’s now safe to turn off your computer.</button>
   ) : booting ? (
-    <div className={s.boot} onClick={() => setBooting(false)}><b>Windows<sup>98</sup></b><span>Starting Windows 98…</span><i /></div>
+    <div className={s.boot} onClick={() => setBooting(false)}><b>Windows<sup>95</sup></b><span>Starting Windows 95…</span><i /></div>
   ) : (
     <div className={s.desk} onPointerDown={(e) => { if (e.target === e.currentTarget) setStart(false); }}>
       <ul className={s.icons}>
@@ -190,7 +193,7 @@ export default function Win98({ onClose, contact }: { onClose: () => void; conta
 
       {start && (
         <nav className={s.menu} aria-label="Start menu">
-          <span className={s.menuSide}><b>Windows</b>98</span>
+          <span className={s.menuSide}><b>Windows</b>95</span>
           <ul>
             {DESKTOP.map((id) => <li key={id}><button type="button" onClick={() => open(id)}><Icon app={id} size={20} />{NAMES[id]}</button></li>)}
             <li className={s.sep} />
@@ -210,5 +213,5 @@ export default function Win98({ onClose, contact }: { onClose: () => void; conta
     </div>
   );
 
-  return createPortal(<div className={s.overlay} role="dialog" aria-modal="true" aria-label="Windows 98">{screen}</div>, document.body);
+  return createPortal(<div className={s.overlay} role="dialog" aria-modal="true" aria-label="Windows 95">{screen}</div>, document.body);
 }
