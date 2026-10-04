@@ -44,6 +44,8 @@
   object-fit: cover;
   display: block;
 }
+.photo.night { position: absolute; inset: 0; opacity: 0; transition: opacity 0.8s var(--ease), border-radius 1.8s var(--ease), border-color 1.8s var(--ease), border-width 1.8s var(--ease), box-shadow 1.8s var(--ease); } /* beats the eras' transition list below */
+:global([data-theme="dark"]) .photo.night { opacity: 1; }
 .portraitLabel { left: calc(100% + 20px); top: 50%; transform: translateY(-50%); }
 .desktopOnly { display: none; }
 

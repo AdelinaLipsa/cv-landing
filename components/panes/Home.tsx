@@ -128,6 +128,8 @@ export default function Home({ ui }: { ui: UI }) {
           <div className={s.portrait} data-tour="portrait" data-marks-off={stage < STAGE.portrait || undefined}>
             <EqualizerRing className={s.ring} />
             <Image className={s.photo} src="/adelina.jpg" alt="Adelina Lipșa" width={132} height={132} sizes="(min-width: 1000px) 132px, 96px" priority />
+            {/* Dark mode: the night photo on the mountain fades in over the day one */}
+            <Image className={`${s.photo} ${s.night}`} src="/adelina-night.jpg" alt="" aria-hidden="true" width={132} height={132} sizes="(min-width: 1000px) 132px, 96px" />
             {touring && <span className={`${p.specLabel} ${s.portraitLabel}`}><span className={s.mobileOnly}>96 × 96, radius 28</span><span className={s.desktopOnly}>132 × 132, radius 36</span></span>}
           </div>
           <motion.h1
