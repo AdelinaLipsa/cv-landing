@@ -4,7 +4,7 @@
 .btn { min-height: 22px; padding: 2px 12px; border: 0; background: #c0c0c0; font: inherit; cursor: pointer; box-shadow: inset -1px -1px #000, inset 1px 1px #fff, inset -2px -2px #808080, inset 2px 2px #dfdfdf; }
 .btn:active { box-shadow: inset -1px -1px #fff, inset 1px 1px #000, inset -2px -2px #dfdfdf, inset 2px 2px #808080; }
 
-.felt { --cw: 71px; --ch: 96px; --gap: 8px; position: relative; width: calc(var(--cw) * 7 + var(--gap) * 6 + 24px); height: 420px; padding: 12px; background: #008000; overflow: hidden; box-shadow: inset 1px 1px #808080; }
+.felt { --cw: 71px; --ch: 96px; --gap: 8px; position: relative; width: calc(var(--cw) * 7 + var(--gap) * 6 + 24px); min-height: 420px; padding: 12px; background: #008000; overflow: hidden; touch-action: none; box-shadow: inset 1px 1px #808080; }
 .top { display: flex; gap: var(--gap); margin-bottom: 14px; }
 .gap { width: var(--cw); }
 .slot { position: relative; width: var(--cw); height: var(--ch); padding: 0; border: 1px solid #00a000; border-radius: 4px; background: transparent; cursor: pointer; }
@@ -12,7 +12,7 @@
 .recycle { display: grid; place-items: center; height: 100%; color: #8cff8c; font-size: 34px; }
 
 .tab { display: flex; gap: var(--gap); }
-.col { position: relative; width: var(--cw); min-height: var(--ch); height: 280px; cursor: pointer; }
+.col { position: relative; width: var(--cw); min-height: var(--ch); cursor: pointer; }
 .stackCard { position: absolute; left: 0; padding: 0; border: 0; background: none; cursor: pointer; }
 .stackCard:focus-visible, .slot:focus-visible, .hit:focus-visible { outline: 2px dotted #ff0; outline-offset: 1px; }
 
@@ -25,13 +25,14 @@
 /* the Windows 95 back: navy with a woven pattern inside a white border */
 .back { background-color: #fff; background-image: repeating-linear-gradient(45deg, #0000a8 0 3px, #2a52ff 3px 6px), repeating-linear-gradient(-45deg, #0000a8 0 3px, #2a52ff 3px 6px); background-blend-mode: multiply; background-size: auto; background-clip: content-box; padding: 4px; }
 
+.ghost { position: absolute; z-index: 5; width: var(--cw); pointer-events: none; filter: drop-shadow(2px 3px 0 rgba(0, 0, 0, 0.35)); }
+.ghostCard { position: absolute; left: 0; }
 .party { position: absolute; inset: 0; pointer-events: none; opacity: 0; }
 .party[data-on] { opacity: 1; }
 
 /* phones: smaller cards so seven piles fit */
 @media (max-width: 640px) {
-  .felt { --cw: 44px; --ch: 60px; --gap: 4px; height: 320px; padding: 8px; }
+  .felt { --cw: 44px; --ch: 60px; --gap: 4px; min-height: 320px; padding: 8px; }
   .card { font-size: 10px; }
   .pip { font-size: 20px; }
-  .col { height: 220px; }
 }

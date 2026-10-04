@@ -118,9 +118,55 @@ function Mines() {
 
 const BODY: Record<App, () => React.ReactNode> = { readme: Readme, career: Career, saints: Saints, mines: Mines, solitaire: Solitaire, bin: Bin };
 
+// The sky behind the splash and on the desktop: value noise, five octaves, painted small and scaled up so it blurs soft.
+function Clouds({ className }: { className?: string }) {
+  const cv = useRef<HTMLCanvasElement>(null);
+  useEffect(() => {
+    const c = cv.current!, W = (c.width = 192), H = (c.height = 120), ctx = c.getContext("2d")!;
+    let seed = 95;
+    const rand = () => ((seed = (seed * 16807) % 2147483647) - 1) / 2147483646;
+    const G = 64, grid = Array.from({ length: G * G }, rand);
+    const at = (x: number, y: number) => grid[(((y % G) + G) % G) * G + (((x % G) + G) % G)];
+    const smooth = (t: number) => t * t * (3 - 2 * t);
+    const noise = (x: number, y: number) => {
+      const xi = Math.floor(x), yi = Math.floor(y), u = smooth(x - xi), v = smooth(y - yi);
+      const a = at(xi, yi) + (at(xi + 1, yi) - at(xi, yi)) * u, b = at(xi, yi + 1) + (at(xi + 1, yi + 1) - at(xi, yi + 1)) * u;
+      return a + (b - a) * v;
+    };
+    const img = ctx.createImageData(W, H);
+    for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+      let n = 0, amp = 0.5, f = 1 / 24;
+      for (let o = 0; o < 5; o++) { n += noise(x * f, y * f * 1.6) * amp; amp /= 2; f *= 2; }
+      const cloud = Math.min(1, Math.max(0, (n - 0.42) / 0.3)), sky = y / H, k = (y * W + x) * 4;
+      img.data[k] = 42 + 70 * sky + (255 - 42 - 70 * sky) * cloud;
+      img.data[k + 1] = 92 + 80 * sky + (255 - 92 - 80 * sky) * cloud;
+      img.data[k + 2] = 184 + 50 * sky + (255 - 184 - 50 * sky) * cloud;
+      img.data[k + 3] = 255;
+    }
+    ctx.putImageData(img, 0, 0);
+  }, []);
+  return <canvas ref={cv} className={`${s.clouds} ${className ?? ""}`} aria-hidden="true" />;
+}
+
+// The power-on self test, white on black, before Windows starts. One line every 170ms.
+const POST = [
+  "AL-BIOS (C) 1995 Adelina Lipșa, Bucharest",
+  "",
+  "Main Processor : Product Owner @ 75MHz",
+  "Co-Processor   : Full-stack Developer",
+  "Memory Test    : 16384K OK",
+  "",
+  "Detecting Primary Master   ... CV.SYS",
+  "Detecting Primary Slave    ... RAMEN.DAT",
+  "Detecting Secondary Master ... PAYMENTS.DLL",
+  "",
+  "Starting Windows 95...",
+];
+
 export default function Win95({ onClose, contact }: { onClose: () => void; contact: () => void }) {
   const calm = useCalm();
-  const [booting, setBooting] = useState(!calm);
+  const [booting, setBooting] = useState<"post" | "splash" | false>(calm ? false : "post");
+  const [lines, setLines] = useState(0);
   const [off, setOff] = useState(false);
   const [start, setStart] = useState(false);
   const [wins, setWins] = useState<Win[]>([{ id: "readme", x: 140, y: 40, z: 1 }]);
@@ -132,13 +178,16 @@ export default function Win95({ onClose, contact }: { onClose: () => void; conta
   useEffect(() => {
     unlock("win98");
     sfx.boot(); // the startup chime (opening it was a click, so the browser lets it play)
-    const t = setTimeout(() => setBooting(false), 1400);
+    const post = POST.length * 170 + 400;
+    const typing = setInterval(() => setLines((n) => n + 1), 170);
+    const t1 = setTimeout(() => { clearInterval(typing); setBooting((b) => b && "splash"); }, post);
+    const t = setTimeout(() => setBooting(false), post + 1400);
     const tick = () => setClock(new Date().toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" }));
     tick();
     const id = setInterval(tick, 15000);
     const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") quit.current(); };
     window.addEventListener("keydown", onKey);
-    return () => { clearTimeout(t); clearInterval(id); window.removeEventListener("keydown", onKey); };
+    return () => { clearInterval(typing); clearTimeout(t1); clearTimeout(t); clearInterval(id); window.removeEventListener("keydown", onKey); };
   }, []);
 
   const open = (id: App) => {
@@ -167,10 +216,17 @@ export default function Win95({ onClose, contact }: { onClose: () => void; conta
 
   const screen = off ? (
     <button type="button" className={s.off} onClick={onClose} aria-label="Close">It’s now safe to turn off your computer.</button>
+  ) : booting === "post" ? (
+    <pre className={s.post} onClick={() => setBooting(false)}>{POST.slice(0, lines).join("\n")}<span className={s.caret}>_</span></pre>
   ) : booting ? (
-    <div className={s.boot} onClick={() => setBooting(false)}><b>Windows<sup>95</sup></b><span>Starting Windows 95…</span><i /></div>
+    <div className={s.boot} onClick={() => setBooting(false)}><Clouds /><b>Windows<sup>95</sup></b><span>Starting Windows 95…</span><i /></div>
   ) : (
     <div className={s.desk} onPointerDown={(e) => { if (e.target === e.currentTarget) setStart(false); }}>
+      {/* The wallpaper: the clouds, with this machine's own splash in the middle */}
+      <div className={s.wallpaper} aria-hidden="true">
+        <Clouds />
+        <div className={s.brand}><b>Adelina<sup>95</sup></b><span>You should hire me.</span><small>Plug and play. No drivers needed.</small></div>
+      </div>
       <ul className={s.icons}>
         {DESKTOP.map((id) => (
           <li key={id}><button type="button" className={s.icon} onDoubleClick={() => open(id)} onClick={(e) => { if (e.detail === 0 || matchMedia("(pointer: coarse)").matches) open(id); }}><Icon app={id} /><span>{NAMES[id]}</span></button></li>

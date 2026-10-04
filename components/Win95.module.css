@@ -9,7 +9,12 @@
 .btn:focus-visible { outline: 1px dotted #000; outline-offset: -4px; }
 
 /* Boot splash and the shut-down screen */
-.boot { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; background: linear-gradient(#000 0%, #0b1a6b 55%, #3a6ea5 100%); color: #fff; cursor: pointer; }
+.post { position: absolute; inset: 0; margin: 0; padding: clamp(16px, 4vw, 40px); background: #000; color: #fff; font: 17px/1.5 "Courier New", "Fixedsys", monospace; white-space: pre-wrap; cursor: pointer; }
+.caret { animation: blink 0.5s steps(1) infinite; }
+@keyframes blink { 50% { opacity: 0; } }
+.clouds { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 0; }
+.boot { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; background: #3a6ea5; color: #fff; cursor: pointer; text-shadow: 2px 2px 0 rgba(0, 0, 40, 0.45); }
+.boot > :not(canvas) { position: relative; }
 .boot b { font: italic 800 54px/1 "Franklin Gothic Medium", "Arial Black", sans-serif; letter-spacing: -1px; }
 .boot sup { font-size: 24px; color: #ffd700; }
 .boot span { font-size: 14px; }
@@ -18,8 +23,14 @@
 .off { position: absolute; inset: 0; width: 100%; border: 0; background: #000; color: #ff8000; font: 700 clamp(18px, 3vw, 30px) "Courier New", monospace; text-align: center; padding: 20px; cursor: pointer; }
 
 /* Desktop */
-.desk { position: absolute; inset: 0; background: #008080; overflow: hidden; }
-.icons { list-style: none; margin: 0; padding: 10px 6px; display: flex; flex-direction: column; flex-wrap: wrap; gap: 14px; max-height: calc(100% - 40px); align-content: flex-start; }
+.desk { position: absolute; inset: 0; background: #3a6ea5; overflow: hidden; }
+.wallpaper { position: absolute; inset: 0; z-index: 0; display: grid; place-items: center; pointer-events: none; }
+.brand { position: relative; display: flex; flex-direction: column; align-items: center; gap: 8px; color: #fff; text-align: center; text-shadow: 2px 2px 0 rgba(0, 0, 40, 0.45); }
+.brand b { font: italic 800 clamp(40px, 7vw, 72px)/1 "Franklin Gothic Medium", "Arial Black", sans-serif; letter-spacing: -1px; }
+.brand sup { font-size: 0.45em; color: #ffd700; }
+.brand span { font-size: clamp(16px, 2vw, 22px); font-weight: 700; }
+.brand small { font-size: 12px; opacity: 0.9; }
+.icons { position: relative; list-style: none; margin: 0; padding: 10px 6px; display: flex; flex-direction: column; flex-wrap: wrap; gap: 14px; max-height: calc(100% - 40px); align-content: flex-start; }
 .icon { display: flex; flex-direction: column; align-items: center; gap: 4px; width: 78px; padding: 2px; border: 0; background: none; color: #fff; font: inherit; cursor: default; text-align: center; }
 .icon svg { image-rendering: pixelated; }
 .icon span { max-width: 100%; padding: 0 2px; overflow-wrap: anywhere; text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.5); }
@@ -76,4 +87,4 @@
   .title { cursor: default; }
   .notepad { white-space: pre-wrap; font-size: 12px; }
 }
-@media (prefers-reduced-motion: reduce) { .boot i { animation: none; clip-path: none; } }
+@media (prefers-reduced-motion: reduce) { .boot i { animation: none; clip-path: none; } .caret { animation: none; } }
