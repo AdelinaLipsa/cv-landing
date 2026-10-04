@@ -8,6 +8,7 @@ import { useMedia } from "@/lib/useMedia";
 import Media from "../wall/Media";
 import { Play } from "../wall/play";
 import ShuffleHeading from "../ShuffleHeading";
+import Land from "../Land";
 import SpotlightCard from "../SpotlightCard";
 import Tilt from "../Tilt";
 import DecryptedText from "../DecryptedText";
@@ -165,19 +166,12 @@ export default function Work(_: { ui: UI }) {
           </div>
           <div className={s.grid}>
             {tiles.filter((t) => t.section === sec.id).map((t, k) => (
-              <motion.div
-                key={t.id}
-                className={s.tileWrap}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, amount: 0.2 }}
-                transition={{ ...glide, delay: k * 0.06 }}
-              >
+              <Land key={t.id} className={s.tileWrap} delay={(k % 3) * 0.09}>
                 <button type="button" data-key={t.id} className={s.tileBtn} onClick={() => setOpen(list.indexOf(t))} aria-label={`${t.title}: open details`}>
                   <Card tile={t} h={desktop ? 300 : 260} />
                 </button>
                 <TileLinks tile={t} />
-              </motion.div>
+              </Land>
             ))}
           </div>
         </section>

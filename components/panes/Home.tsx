@@ -18,6 +18,7 @@ import RotatingText from "../RotatingText";
 import Counter from "../Counter";
 import Mark from "../Mark";
 import ShuffleHeading from "../ShuffleHeading";
+import Land from "../Land";
 import Workbench from "../Workbench";
 import { Rich } from "../Keyword";
 import EqualizerRing from "../EqualizerRing";
@@ -202,12 +203,12 @@ export default function Home({ ui }: { ui: UI }) {
         </div>
         <div className={s.tiles} data-tour="preview">
           {preview.map((t, i) => (
-            <motion.div key={t.id} className={s.tileWrap} {...rise(i)}>
+            <Land key={t.id} className={s.tileWrap} delay={i * 0.09}>
               <button type="button" className={s.tile} onClick={() => ui.go(1)} aria-label={`${t.title}: see it on the Work tab`}>
                 <span className={`${s.media} ${s.teaser}`}><Card tile={t} h={260} /></span>
               </button>
               <TileLinks tile={t} />
-            </motion.div>
+            </Land>
           ))}
         </div>
       </section>
@@ -224,21 +225,21 @@ export default function Home({ ui }: { ui: UI }) {
           </ol>
 
           {/* Off the clock: one sentence, one row of tags */}
-          <motion.div className={s.offBlock} {...rise(1)}>
+          <Land className={s.offBlock} delay={0.05}>
             <span className={s.offHead}>Off the clock</span>
             <p className={s.offLine}>{about[1]}</p>
             <ul className={s.tags}>{OFF.map((t) => <li key={t}>{t}</li>)}</ul>
             <GuestbookButton open={ui.sheet} />
             <RoadmapButton open={ui.sheet} />
-          </motion.div>
+          </Land>
 
           {/* Things I believe: hover one */}
-          <motion.div className={s.offBlock} {...rise(2)}>
+          <Land className={s.offBlock} delay={0.12}>
             <span className={s.offHead}>Things I believe</span>
             <ul className={s.beliefs}>
               {beliefs.map((b) => <li key={b}><DecryptedText text={b} animateOn="hover" speed={35} maxIterations={10} /></li>)}
             </ul>
-          </motion.div>
+          </Land>
 
           <button type="button" className={s.termLink} onClick={ui.terminal}>
             <span aria-hidden="true">&gt;_</span> psst… there’s a terminal in here<span className={s.termHint}>. Press `</span>

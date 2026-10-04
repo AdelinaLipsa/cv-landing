@@ -3,13 +3,14 @@ import { useRef, useState } from "react";
 import type { UI } from "../Shell";
 import { certifications, education, jobs, languages, stillShipping, ventures, type Branch } from "@/content/cv";
 import ShuffleHeading from "../ShuffleHeading";
+import Land from "../Land";
 import { Rich } from "../Keyword";
 import CountUp from "../CountUp";
 import SpotlightCard from "../SpotlightCard";
 import GlareHover from "../GlareHover";
 import { useMedia } from "@/lib/useMedia";
 import p from "./pane.module.css";
-import { ease, glide } from "@/lib/motion";
+import { ease } from "@/lib/motion";
 import s from "./Career.module.css";
 
 type Row =
@@ -62,8 +63,6 @@ const detail = (r: Row) =>
 // React Bits GlareHover: a light sweeps across cards on hover.
 const GLARE = { width: "auto", height: "auto", background: "var(--surface)", borderColor: "transparent", glareColor: "#3355ff", glareOpacity: 0.16, glareSize: 240, transitionDuration: 800 } as const;
 
-// The lower cards rise one after another.
-const card = (k: number) => ({ initial: { opacity: 0, y: 24 }, whileInView: { opacity: 1, y: 0 }, viewport: { once: true, amount: 0.3 }, transition: { ...glide, delay: k * 0.08 } });
 
 function Commit({ title, meta, lines, stack }: { title: string; meta: string; lines: string[]; stack: string[] }) {
   return (
@@ -176,13 +175,13 @@ export default function Career({ ui }: { ui: UI }) {
       </div>
 
       <div className={s.also}>
-        <motion.section {...card(0)}><GlareHover {...GLARE} borderRadius="22px" className={s.alsoCard}><h3>Also running</h3><ul>{ventures.map((v) => <li key={v.name}><b>{v.name}</b>, {v.role.toLowerCase()}. {v.note}</li>)}</ul></GlareHover></motion.section>
-        <motion.section {...card(1)}><GlareHover {...GLARE} borderRadius="22px" className={s.alsoCard}><h3>Certifications</h3><ul>{certifications.map((c) => <li key={c} className={s.cert}><i aria-hidden="true">✓</i>{c}</li>)}</ul></GlareHover></motion.section>
-        <motion.section {...card(2)}><GlareHover {...GLARE} borderRadius="22px" className={s.alsoCard}><h3>Education</h3><ul>{education.map((e) => <li key={e.what} data-tour={e.what === "Psychology" ? "edu-psychology" : "edu-web"}>{e.what}, {e.where}, {e.when}</li>)}</ul></GlareHover></motion.section>
-        <motion.section {...card(3)}><GlareHover {...GLARE} borderRadius="22px" className={s.alsoCard}><h3>Languages</h3><ul>{languages.map((l) => {
+        <Land as="section" delay={0 * 0.09}><GlareHover {...GLARE} borderRadius="22px" className={s.alsoCard}><h3>Also running</h3><ul>{ventures.map((v) => <li key={v.name}><b>{v.name}</b>, {v.role.toLowerCase()}. {v.note}</li>)}</ul></GlareHover></Land>
+        <Land as="section" delay={1 * 0.09}><GlareHover {...GLARE} borderRadius="22px" className={s.alsoCard}><h3>Certifications</h3><ul>{certifications.map((c) => <li key={c} className={s.cert}><i aria-hidden="true">✓</i>{c}</li>)}</ul></GlareHover></Land>
+        <Land as="section" delay={2 * 0.09}><GlareHover {...GLARE} borderRadius="22px" className={s.alsoCard}><h3>Education</h3><ul>{education.map((e) => <li key={e.what} data-tour={e.what === "Psychology" ? "edu-psychology" : "edu-web"}>{e.what}, {e.where}, {e.when}</li>)}</ul></GlareHover></Land>
+        <Land as="section" delay={3 * 0.09}><GlareHover {...GLARE} borderRadius="22px" className={s.alsoCard}><h3>Languages</h3><ul>{languages.map((l) => {
           const [name, level] = l.split(", ");
           return <li key={l} className={s.lang}><span>{name}<small>{level}</small></span><span className={s.level} aria-label={`${level}, ${LEVEL[level] ?? 1} of 5`}>{[1, 2, 3, 4, 5].map((n) => <i key={n} data-on={n <= (LEVEL[level] ?? 1) || undefined} />)}</span></li>;
-        })}</ul></GlareHover></motion.section>
+        })}</ul></GlareHover></Land>
       </div>
     </div>
   );
