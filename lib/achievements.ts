@@ -19,7 +19,6 @@ export const ACHIEVEMENTS = {
   explorer: { name: "Explorer", hint: "Visit all four tabs" },
   roles: { name: "Four hats", hint: "Open all four roles in the hero card" },
   chaos: { name: "Chaos engineer", hint: "Break the checkout all five ways" },
-  voter: { name: "Stakeholder input", hint: "Vote on the roadmap" },
   win98: { name: "Plug and play", hint: "Boot the retro computer" },
   mines: { name: "Scope swept", hint: "Clear Scope Mines on the old computer" },
   solitaire: { name: "Bouncing cards", hint: "Win Solitaire on the old computer" },
@@ -30,7 +29,8 @@ export const ACHIEVEMENTS = {
 export type AchievementId = keyof typeof ACHIEVEMENTS;
 
 const KEY = "cv-achievements";
-export const unlocked = (): AchievementId[] => { try { return JSON.parse(localStorage.getItem(KEY) || "[]"); } catch { return []; } };
+// Only ids that still exist: retired achievements (e.g. the roadmap vote) stop counting.
+export const unlocked = (): AchievementId[] => { try { return (JSON.parse(localStorage.getItem(KEY) || "[]") as string[]).filter((id): id is AchievementId => id in ACHIEVEMENTS); } catch { return []; } };
 
 export type Toast = { icon: string; title: string; body: string };
 export const toast = (t: Toast) => window.dispatchEvent(new CustomEvent<Toast>("cv:toast", { detail: t }));

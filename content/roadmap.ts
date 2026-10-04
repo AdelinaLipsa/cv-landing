@@ -1,5 +1,5 @@
-// The CV's public roadmap: what I might build on this site next. Visitors vote; nobody else adds items.
-// Edit freely: ids must stay unique and stable (votes are stored by id), titles are what people see.
+// The CV's public roadmap: what I might build on this site next.
+// Edit freely: ids must stay unique, titles are what people see.
 export const ideas = [
   { id: "glossary", title: "A payments glossary for non-payments people", note: "3DS, acquirers, decline codes and chargebacks, in plain words." },
   { id: "checkout-teardown", title: "A checkout teardown: where a payment gets lost", note: "Every step from Pay to the money, and what to measure at each one." },
@@ -10,7 +10,6 @@ export const ideas = [
   { id: "resume-2003", title: "Print the CV as a 2003 résumé", note: "Times New Roman, clip art, a visitor counter on paper." },
   { id: "cat-night", title: "The cat gets night vision in dark mode", note: "Glowing eyes. Still purrs." },
 ] as const;
-export type IdeaId = (typeof ideas)[number]["id"];
 
 // Release notes: what already shipped, newest first.
 export const shipped = [
