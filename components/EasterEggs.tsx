@@ -90,7 +90,7 @@ export default function EasterEggs({ contact, terminal, arcade }: { contact: () 
 
     // The tab misses you.
     const title = document.title;
-    const onVis = () => { document.title = document.hidden ? (season() === "halloween" ? "👻 It’s dark in here without you…" : "🍜 Your ramen is getting cold…") : title; };
+    const onVis = () => { document.title = document.hidden ? "🍜 Your ramen is getting cold…" : title; };
 
     window.addEventListener("keydown", onKey);
     document.addEventListener("visibilitychange", onVis);

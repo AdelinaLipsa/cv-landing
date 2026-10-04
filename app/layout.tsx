@@ -12,7 +12,7 @@ const GATE = `try{var m=localStorage.getItem("cv-theme-v2");var h=new Date().get
 
 export const metadata: Metadata = {
   title: "Adelina Lipșa, Technical Product Owner",
-  description: "Technical Product Owner on payments, and a full-stack developer still shipping code. It didn’t exist, so I built it.",
+  description: "Technical Product Owner on payments, Technical Support Team Manager, and a full-stack developer still shipping code. It didn’t exist, so I built it.",
 };
 
 export const viewport: Viewport = { themeColor: [{ media: "(prefers-color-scheme: light)", color: "#F7F6FB" }, { media: "(prefers-color-scheme: dark)", color: "#0E0D1C" }], width: "device-width", initialScale: 1, viewportFit: "cover" };

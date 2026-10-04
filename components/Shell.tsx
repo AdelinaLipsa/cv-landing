@@ -90,6 +90,18 @@ export default function Shell({ code, character }: { code: Snippets; character: 
     if (c) { setChallenge(c); setArcade(true); history.replaceState(null, "", location.pathname + location.hash); }
   }, []);
 
+  // The dock's hand-drawn nudges ("click me!", "games!") belong to the first screen; past it they'd sit on the content.
+  // The panes scroll, not the window, so listen in the capture phase (scroll doesn't bubble) and read the active one.
+  useEffect(() => {
+    const onScroll = () => {
+      const top = document.querySelector<HTMLElement>("[data-pane][data-active]")?.scrollTop ?? 0;
+      document.documentElement.toggleAttribute("data-scrolled", Math.max(top, scrollY) > 200);
+    };
+    onScroll();
+    addEventListener("scroll", onScroll, { passive: true, capture: true });
+    return () => removeEventListener("scroll", onScroll, { capture: true });
+  }, [pane]);
+
   // Easter egg: ` opens a terminal. The rest live in EasterEggs.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {

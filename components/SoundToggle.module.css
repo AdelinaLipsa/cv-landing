@@ -46,3 +46,6 @@
   .nudgeText { font-size: 13px; margin: 0 -8px 24px -44px; }
   .nudgeArrow { width: 34px; height: 30px; }
 }
+/* Past the first screen the nudge fades out, so it never covers a card */
+.nudge { transition: opacity 0.3s; }
+:global(html[data-scrolled]) .nudge { opacity: 0; }

@@ -117,3 +117,6 @@
 @media (prefers-reduced-motion: reduce) { .gameNudge { animation: none; } }
 /* Phones: the gamepad sits near the screen edge, so the text stacks above the arrow and stays on screen */
 @media (max-width: 640px) { .gameNudge { left: auto; right: calc(50% - 23px); flex-direction: column-reverse; align-items: flex-end; } .gameNudge span { font-size: 13px; margin: 0 4px 0 0; } .gameNudge svg { width: 32px; height: 28px; } }
+/* Past the first screen the nudges fade out, so they never cover a card */
+.gameNudge { transition: opacity 0.3s; }
+:global(html[data-scrolled]) .gameNudge { opacity: 0; }

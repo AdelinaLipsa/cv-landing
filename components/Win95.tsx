@@ -38,7 +38,7 @@ function Readme() {
   return (
     <pre className={s.notepad}>{`Hi, it's Adelina. You booted my old computer.
 
-This is roughly where it started: rooting Windows
+This is roughly where it started: modding Windows, and breaking it
 in high school, and emulating the Nintendo and
 Game Boy games I couldn't get.
 
@@ -63,8 +63,7 @@ function Saints() {
   const v = ventures[0];
   return (
     <div className={s.paint}>
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src="/media/ruined-saints.jpg" alt={`${v.name}: the site’s hero`} />
+      <video src="/media/ruined-saints.mp4" poster="/media/ruined-saints.jpg" autoPlay muted loop playsInline aria-label={`${v.name}: the PRAY? gate, then the site’s hero`} />
       <p>{v.name}: {v.note}</p>
     </div>
   );

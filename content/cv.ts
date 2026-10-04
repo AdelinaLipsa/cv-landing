@@ -22,7 +22,7 @@ export const profile = {
 };
 
 export const about = [
-  "I build the thing that’s missing. Tools, flows, dashboards, and sometimes the clothes I’m wearing. Allergic to letting my tech knowledge expire like milk. Quietly confident, naturally curious, and perpetually improving my chops one shipped thing at a time.",
+  "I build the thing that’s missing. Tools, flows, dashboards, and sometimes the clothes I’m wearing. Allergic to letting my tech knowledge expire like milk, so I keep shipping on both branches: the payments spec and the code.",
   "When I’m not shipping, you’ll find me playing video games and eating ramen in the dark like a raccoon with WiFi.",
   "I believe a few lines of code can save the day, that putting milk in before cereal is a federal offense, and that the Oxford comma is non-negotiable.",
 ];
@@ -36,7 +36,7 @@ export const beliefs = [
 
 // The road to the dev branch. Adelina's own words, 2026-09-30 and 2026-10-01.
 export const origin = [
-  { when: "High school", text: "My first real contact with a computer was in high school, when I started rooting my Windows." },
+  { when: "High school", text: "My first real contact with a computer was in high school, when I started modding my Windows and breaking it." },
   { when: "Then", text: "I spent a lot of time emulating the Nintendo and Game Boy games that weren’t available to me. It was my comfort zone." },
   { when: "2012 to 2015", text: "Studied psychology, with a focus on criminalistics." },
   { when: "After the degree", text: "Interned at SRI, the Romanian Intelligence Service, through the Romanian Government’s internship programme." },
@@ -63,7 +63,7 @@ export const jobs: Job[] = [
     id: "yomali",
     company: "Yomali",
     role: "Technical Product Owner & Technical Support Team Manager",
-    short: "Technical Product Owner",
+    short: "Product Owner & Tech Support Manager",
     dates: "Sep 2025 to now",
     place: "United States",
     branch: "product",

@@ -15,7 +15,7 @@ export const keywords: Record<string, string> = {
   Kubernetes: "Ubisoft’s QA platform, deployed to production and monitored in Rancher.",
   Capacitor: "AgroCity: the app taken to iOS (built in Xcode) and Android, and published to both stores.",
   "React with TypeScript": "Fabel X, 2022 to 2024, alongside Rails, Vue, Node, Next.js and .NET.",
-  "rooting my Windows": "High school: my first real contact with a computer.",
+  "modding my Windows": "High school: my first real contact with a computer.",
   "Game Boy": "Emulated, because the games weren’t available to me.",
   Caspio: "SiteRocket Labs: the member app’s DataPages, wallet card pages included, fed by a JSON catalogue.",
   Laravel: "Built with it at AgroCity and Ubisoft, specced a pipeline in it at SiteRocket Labs.",

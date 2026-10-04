@@ -261,3 +261,9 @@
 /* The 30-second version: a night pill like the build button, with an electric border round it */
 .quickWrap { display: inline-block; margin-top: 8px; border-radius: 23px; }
 .quick { padding: 0 20px; box-shadow: none; }
+
+/* The end of the page: a heading, one line, the three ways to reach her */
+.outro { display: flex; flex-direction: column; gap: 14px; margin: 72px 0 140px; padding-top: 40px; border-top: 1px solid var(--line); }
+.outroLine { max-width: 520px; font-size: 16px; line-height: 1.55; color: var(--body-2); }
+.outro .actions { flex-wrap: wrap; gap: 14px 22px; }
+.outro a { text-decoration: none; }

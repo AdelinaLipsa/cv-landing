@@ -253,6 +253,17 @@ export default function Home({ ui }: { ui: UI }) {
         </div>
         {win95 && <Win95 onClose={() => setWin95(false)} contact={ui.contact} />}
       </section>
+
+      {/* The end of the page: somewhere to go next, the same three ways in as the hero and the 30-second version */}
+      <Land className={s.outro} delay={0.05}>
+        <h2 className={s.h2}><ShuffleHeading text="You made it to the end of the log." /></h2>
+        <p className={s.outroLine}>Product roles, full-time or contract. Payments, ops, and internal tools. I reply faster than a 3DS challenge.</p>
+        <div className={s.actions}>
+          <Magnet padding={40} magnetStrength={4} disabled={!!reduce}><button type="button" className={p.primary} onClick={ui.contact}><WhatsAppIcon size={17} />Message me</button></Magnet>
+          <a className={s.messageBtn} href={profile.pdf} download><DecryptedText text="Download the PDF" animateOn="hover" speed={40} maxIterations={8} /></a>
+          <a className={s.messageBtn} href={profile.linkedin} target="_blank" rel="noreferrer"><LinkedInIcon /><DecryptedText text="LinkedIn" animateOn="hover" speed={40} maxIterations={8} /></a>
+        </div>
+      </Land>
     </div>
   );
 }

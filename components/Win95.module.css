@@ -36,7 +36,7 @@
 .win[data-app="solitaire"] { max-width: calc(100vw - 16px); }
 .notepad { margin: 0; max-height: 52vh; overflow: auto; padding: 6px 8px; background: #fff; font: 13px/1.4 "Fixedsys", "Courier New", monospace; white-space: pre; box-shadow: inset -1px -1px #fff, inset 1px 1px #808080, inset -2px -2px #dfdfdf, inset 2px 2px #000; user-select: text; -webkit-user-select: text; }
 .paint { display: flex; flex-direction: column; gap: 6px; padding: 6px; background: #808080; }
-.paint img { display: block; width: 100%; max-width: 480px; image-rendering: auto; box-shadow: 2px 2px 0 #000; }
+.paint video { display: block; width: 100%; max-width: 480px; image-rendering: auto; box-shadow: 2px 2px 0 #000; }
 .paint p { margin: 0; color: #fff; }
 .bin ul { list-style: none; margin: 0; padding: 6px; display: flex; flex-direction: column; gap: 8px; background: #fff; box-shadow: inset 1px 1px #808080, inset -1px -1px #fff; }
 .bin li { display: flex; flex-direction: column; }

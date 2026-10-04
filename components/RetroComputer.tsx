@@ -159,8 +159,12 @@ async function mount(el: HTMLElement, character: boolean, onScreen: () => void) 
     { url: "/models/straw-hat.glb", size: 1.3, at: [2.75, 0, 1.45], ry: 0.5 }, // on the floor
     { url: "/models/boxing-gloves.glb", size: 1.0, at: [2.55, 0, -0.95], ry: -0.4 }, // behind the guitar
   ] as const;
-  const { GLTFLoader } = await import("three/examples/jsm/loaders/GLTFLoader.js");
-  const loader = new GLTFLoader();
+  // The models are meshopt-compressed with 512px WebP textures (gltf-transform optimize): about 1.5MB for all seven.
+  const [{ GLTFLoader }, { MeshoptDecoder }] = await Promise.all([
+    import("three/examples/jsm/loaders/GLTFLoader.js"),
+    import("three/examples/jsm/libs/meshopt_decoder.module.js"),
+  ]);
+  const loader = new GLTFLoader().setMeshoptDecoder(MeshoptDecoder);
   const mixers: T.AnimationMixer[] = [];
   let gone = false;
   for (const prop of PROPS) {
@@ -190,7 +194,7 @@ async function mount(el: HTMLElement, character: boolean, onScreen: () => void) 
   el.style.position = "relative";
   let zoom = 1, zoomTo = 1; // pinch / ctrl + scroll, eased in the loop
   const NOTES = [
-    { text: "my passions", at: new THREE.Vector3(3.9, 2.4, -0.4) }, // just right of the guitar, the iPad and the gloves
+    { text: "my passions", at: new THREE.Vector3(2.85, 1.7, -0.45) }, // on the guitar body, above the gloves and the iPad
     { text: "my childhood", at: new THREE.Vector3(4.3, 1.1, 1.8) }, // just right of the Digivice, the hat and the figures
     { text: "boot me up", at: new THREE.Vector3(0.72, 2.32, 0.7) }, // the screen's top-right corner: clicking the screen boots Windows 95
   ].map((n) => {

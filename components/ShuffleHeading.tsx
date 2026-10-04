@@ -13,9 +13,11 @@ export default function ShuffleHeading({ text }: { text: string }) {
   const seen = useInView(ref, { once: true, amount: 0.6 });
   const calm = useCalm();
   return (
-    <span ref={ref} className="shuffle-heading" aria-label={text}>
+    <span ref={ref} className="shuffle-heading">
+      {/* Screen readers get the words once; the per-letter reels are hidden from them (aria-label on a span is ignored) */}
+      <span className="sr-only">{text}</span>
       {seen && !calm ? (
-        <Shuffle text={text} tag="span" shuffleDirection="up" duration={0.45} shuffleTimes={3} stagger={0.035} animationMode="evenodd" scrambleCharset="!<>/[]{}#*01" triggerOnHover threshold={0} rootMargin="0px" />
+        <span aria-hidden="true"><Shuffle text={text} tag="span" shuffleDirection="up" duration={0.45} shuffleTimes={3} stagger={0.035} animationMode="evenodd" scrambleCharset="!<>/[]{}#*01" triggerOnHover threshold={0} rootMargin="0px" /></span>
       ) : (
         <span aria-hidden="true" style={{ visibility: calm ? "visible" : "hidden" }}>{text}</span>
       )}
