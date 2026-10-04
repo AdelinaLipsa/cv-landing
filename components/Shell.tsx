@@ -131,7 +131,8 @@ export default function Shell({ code, character }: { code: Snippets; character: 
     if (i === at.current.pane || !el || reduce || document.hidden) return go(i, reduce ? { duration: 0 } : track);
     if (bursting.current) return;
     bursting.current = true;
-    pixelBurst(el, { z: 15, onCover: () => go(i, { duration: 0 }) }) // under the tab bar (z 20), so the pill stays in view.then(() => { bursting.current = false; });
+    // z 15: under the tab bar (z 20), so the pill stays in view
+    pixelBurst(el, { z: 15, onCover: () => go(i, { duration: 0 }) }).then(() => { bursting.current = false; });
   };
   const goRef = useRef(go);
   goRef.current = go;
