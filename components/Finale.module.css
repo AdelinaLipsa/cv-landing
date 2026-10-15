@@ -1,9 +1,9 @@
 /* Her room in the hero, with no box: the canvas is transparent and bleeds past the column (--bl left, --br right;
    on phones the pane's 24px gutters, so it runs edge to edge), so the room floats on the page. Its aspect is the room's
    own projected one (data-fit in Finale.tsx), and the camera keeps 6% air all round, so nothing is ever cut off.
-   The preview render shows at once, placed where the live camera puts Blender's frame, and fades as the canvas comes in. */
+   The preview (a capture of the live first frame, preloaded) shows at once; the canvas fades in over it once she's in. */
 .host { position: relative; width: calc(100% + var(--bl, 24px) + var(--br, 24px)); margin: 0 calc(-1 * var(--br, 24px)) 0 calc(-1 * var(--bl, 24px)); aspect-ratio: 1.1025; touch-action: pan-y; container-type: inline-size; }
-.host::before { content: ""; position: absolute; inset: 0; background: url("/models/room-preview.webp") 50% 39.6% / 84.53% auto no-repeat; /* Blender's frame under the live camera */ transition: opacity 0.8s var(--ease); pointer-events: none; }
+.host::before { content: ""; position: absolute; inset: 0; background: url("/models/room-preview.webp") center / 100% 100% no-repeat; /* the live first frame itself, her on the bed */ transition: opacity 0.8s var(--ease); pointer-events: none; }
 .host canvas { position: relative; display: block; width: 100%; height: 100%; opacity: 0; transition: opacity 0.8s var(--ease); }
 .host[data-live]::before { opacity: 0; }
 .host[data-live] canvas { opacity: 1; }

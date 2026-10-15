@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useRef } from "react";
+import { preload } from "react-dom";
 import type * as T from "three";
 import type { Toy } from "@/lib/toyStage";
 import { profile } from "@/content/cv";
@@ -22,21 +23,28 @@ const PICK_NODE: Record<Prop, string> = { phone: "Phone", printer: "Printer", ro
 // Her teenage bedroom, baked in Blender (art/README.md), in the hero. One object for each way in: a Nokia for
 // Message me, an inkjet for the PDF, her PC monitor for LinkedIn. Hover a button and its object acts; point at
 // an object and its button lights. The preview render shows at once; the live room fades in over it.
+type Bufs = { room: Promise<ArrayBuffer | null>; her: Promise<ArrayBuffer | null> };
+const grab = (url: string) => fetch(url).then((r) => (r.ok ? r.arrayBuffer() : null)).catch(() => null);
+
 export default function Finale({ className, hot, onHot, onPick, onScreen }: Props) {
+  // The hero: the preview and both models start downloading with the page, not after it.
+  preload("/models/room-preview.webp", { as: "image", fetchPriority: "high" });
+  preload("/models/room.glb", { as: "fetch", crossOrigin: "anonymous" });
+  preload("/models/character.glb", { as: "fetch", crossOrigin: "anonymous" });
   const host = useRef<HTMLDivElement>(null);
   const live = useRef<Live>({ hot, onHot, onPick, onScreen });
   live.current = { hot, onHot, onPick, onScreen };
 
   useEffect(() => {
     const el = host.current!;
+    mark("effect");
     let cleanup = () => {}, started = false, dead = false;
     const io = new IntersectionObserver(async ([e]) => {
       if (!e.isIntersecting || started) return;
       started = true;
-      // It's the hero: let the page paint and settle before three.js and 3 MB of room arrive.
-      await new Promise((r) => ("requestIdleCallback" in window ? requestIdleCallback(r, { timeout: 1500 }) : setTimeout(r, 300)));
-      if (dead) return;
-      const c = await mount(el, live, () => !dead);
+      mark("visible");
+      // Both files at once (the preloads already have them in flight); the preview covers the wait.
+      const c = await mount(el, live, () => !dead, { room: grab("/models/room.glb"), her: grab("/models/character.glb") });
       if (dead) c(); else cleanup = c; // unmounted while it loaded: tidy up straight away
     }, { rootMargin: "300px" });
     io.observe(el);
@@ -143,19 +151,34 @@ function cvPage() {
   return c;
 }
 
-async function mount(el: HTMLElement, live: React.RefObject<Live>, alive: () => boolean) {
-  const { toyStage } = await import("@/lib/toyStage");
-  const toy: Toy = await toyStage(el);
-  if (!alive()) { toy.dispose(); return () => {}; } // gone before the stage was ready: build nothing
-  const { THREE, renderer, scene, camera, reduce, touch } = toy;
-  const [{ GLTFLoader }, { MeshoptDecoder }, { UnrealBloomPass }, { FullScreenQuad }] = await Promise.all([
+// Load timings: performance marks always (cheap; read them in any build), a table in dev once she's in.
+const mark = (n: string) => performance.mark(`room:${n}`);
+const report = () => {
+  if (process.env.NODE_ENV === "production") return;
+  const t0 = performance.getEntriesByName("room:effect")[0]?.startTime ?? 0;
+  console.table(Object.fromEntries(performance.getEntriesByType("mark").filter((m) => m.name.startsWith("room:")).map((m) => [m.name.slice(5), Math.round(m.startTime - t0)])));
+};
+
+async function mount(el: HTMLElement, live: React.RefObject<Live>, alive: () => boolean, bufs: Bufs) {
+  const addons = Promise.all([ // fetched alongside the stage, not after it
     import("three/examples/jsm/loaders/GLTFLoader.js"),
     import("three/examples/jsm/libs/meshopt_decoder.module.js"),
     import("three/examples/jsm/postprocessing/UnrealBloomPass.js"),
     import("three/examples/jsm/postprocessing/Pass.js"),
   ]);
+  const { toyStage } = await import("@/lib/toyStage");
+  const toy: Toy = await toyStage(el);
+  mark("stage");
+  if (!alive()) { toy.dispose(); return () => {}; } // gone before the stage was ready: build nothing
+  const { THREE, renderer, scene, camera, reduce, touch } = toy;
+  const [{ GLTFLoader }, { MeshoptDecoder }, { UnrealBloomPass }, { FullScreenQuad }] = await addons;
+  mark("addons");
+  MeshoptDecoder.useWorkers(2); // decode off the main thread
   const loader = new GLTFLoader().setMeshoptDecoder(MeshoptDecoder);
-  const g = await loader.loadAsync("/models/room.glb").catch(() => null);
+  const parse = (b: ArrayBuffer | null) => (b ? loader.parseAsync(b, "/models/").catch(() => null) : null);
+  const herP = bufs.her.then(parse); // her too, alongside the room
+  const g = await bufs.room.then(parse);
+  mark("room-parsed");
   if (!g) { toy.dispose(); return () => {}; } // offline or blocked: the preview render stays
   const room = g.scene;
   scene.add(room); // in the scene first, so dispose frees it even if we leave now
@@ -584,10 +607,21 @@ async function mount(el: HTMLElement, live: React.RefObject<Live>, alive: () => 
     glowRT.setSize(px.x, px.y); bloom.setSize(px.x, px.y);
     draw(); placeNotes();
   };
+  // Warm the GPU before the first frame (shaders in parallel, textures uploaded), so it doesn't stall.
+  await renderer.compileAsync(scene, camera).catch(() => {});
+  for (const m of meshes) { const map = (m.material as T.MeshBasicMaterial).map; if (map) renderer.initTexture(map); }
+  mark("warm");
   const ro = new ResizeObserver(resize);
   ro.observe(el);
   resize();
-  el.dataset.live = ""; // the canvas fades in over the preview
+  // The canvas fades in over the preview once she's in too (the preview has her on the bed), or after 1.2 s
+  // without her; then she fades in on her own.
+  let herIn = () => {};
+  void Promise.race([new Promise<void>((r) => (herIn = r)), new Promise((r) => setTimeout(r, 1200))]).then(() => {
+    if (!alive()) return;
+    el.dataset.live = "";
+    mark("live");
+  });
 
   const ease = (from: number, to: number, dt: number, rate = 7) => from + (to - from) * (1 - Math.exp(-dt * rate));
   toy.run((t, dt) => {
@@ -662,14 +696,17 @@ async function mount(el: HTMLElement, live: React.RefObject<Live>, alive: () => 
         if (!mats.has(mt)) mats.set(mt, [mt.transparent, mt.opacity]);
       }
     });
-    let fade = reduce ? 1 : 0;
+    let fade = 0;
     const setFade = (f: number) => { for (const [mt, [, op]] of mats) mt.opacity = op * f; for (const m of catchers) (m.material as T.ShadowMaterial).opacity = 0.4 * f; };
     // Warm the opaque shaders first, so ending the fade doesn't hitch; the faded ones compile while she's invisible.
     void renderer.compileAsync(char, camera, scene).catch(() => {}).then(() => {
       if (!alive()) { free(char); key.shadow.dispose(); lamp.dispose(); return; }
-      if (!reduce) for (const mt of mats.keys()) { mt.transparent = true; mt.needsUpdate = true; }
+      fade = reduce || !("live" in el.dataset) ? 1 : 0; // not live yet: the canvas's own fade-in brings her in
+      if (fade < 1) for (const mt of mats.keys()) { mt.transparent = true; mt.needsUpdate = true; }
       setFade(fade);
       scene.add(char);
+      if (fade === 1) draw(); // into the canvas before it shows
+      mark("her-in"); herIn(); report();
 
       // The day: three strums on the bed, up to the desk and back (ToDesk), round again. Clicks wave.
       const herMix = new THREE.AnimationMixer(char), F = 1 / 24;
@@ -774,8 +811,9 @@ async function mount(el: HTMLElement, live: React.RefObject<Live>, alive: () => 
       dropHer = () => { drop(); scene.remove(char); free(char); key.shadow.dispose(); lamp.dispose(); };
     });
   };
-  void loader.loadAsync("/models/character.glb").catch(() => null).then((c) => {
-    if (!c) return; // the room stands on its own without her
+  void herP.then((c) => {
+    if (!c) return herIn(); // the room stands on its own without her
+    mark("her-parsed");
     if (!alive()) return free(c.scene); // unmounted while she loaded
     addHer(c);
   });
