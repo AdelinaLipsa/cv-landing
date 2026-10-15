@@ -48,6 +48,11 @@ export type UI = {
   stage: number;
 };
 
+// The light in the room: cooler on Work, branch colours on Career, warm lamp light once Off duty is on screen.
+const LIGHT: Record<string, [string, string]> = {
+  home: ["#F5B53F", "#3355FF"], room: ["#FFB25E", "#EE6E9F"], work: ["#8FB0FF", "#3355FF"], career: ["#F5B53F", "#EE6E9F"], skills: ["#F5B53F", "#3355FF"],
+};
+
 export default function Shell({ code, character }: { code: Snippets; character: boolean }) {
   const viewport = useRef<HTMLDivElement>(null);
   const [w, setW] = useState(0);
@@ -61,6 +66,7 @@ export default function Shell({ code, character }: { code: Snippets; character: 
   const [step, setStep] = useState(0);
   const [sheet, setSheet] = useState<{ label: string; body: ReactNode } | null>(null);
   const [term, setTerm] = useState(false);
+  const [mood, setMood] = useState("home");
   const reduce = useCalm();
   const x = useMotionValue(0);
   // The pill follows the track itself, so it moves with drags, tabs and tour steps alike.
@@ -95,6 +101,8 @@ export default function Shell({ code, character }: { code: Snippets; character: 
     const onScroll = () => {
       const top = document.querySelector<HTMLElement>("[data-pane][data-active]")?.scrollTop ?? 0;
       document.documentElement.toggleAttribute("data-scrolled", Math.max(top, scrollY) > 200);
+      const off = pane === 0 && (document.querySelector('[data-tour="offduty"]')?.getBoundingClientRect().top ?? Infinity) < innerHeight * 0.6;
+      setMood(off ? "room" : ["home", "work", "career", "skills"][pane]);
     };
     onScroll();
     addEventListener("scroll", onScroll, { passive: true, capture: true });
@@ -213,7 +221,7 @@ export default function Shell({ code, character }: { code: Snippets; character: 
       <ClickSpark sparkColor={touring || reduce ? "transparent" : "#F5B53F"} sparkSize={9} sparkRadius={18} sparkCount={8} duration={500}>
       <div ref={viewport} className={s.viewport} data-era={era} data-touring={touring || undefined} style={{ "--from": `${dir * 36}px` } as React.CSSProperties}>
         {/* React Bits SideRays: soft light from the top-right corner, in broth and blueprint. Only once the page is "now". */}
-        {era === 3 && !reduce && <div className={s.bg}><SideRays rayColor1="#F5B53F" rayColor2="#3355FF" speed={1.2} intensity={2} blend={0.5} opacity={0.8} /></div>}
+        {era === 3 && !reduce && <div className={s.bg}><SideRays rayColor1={LIGHT[mood][0]} rayColor2={LIGHT[mood][1]} speed={1.2} intensity={2} blend={0.5} opacity={0.8} /></div>}
         <motion.div
           className={s.track}
           style={{ x }}

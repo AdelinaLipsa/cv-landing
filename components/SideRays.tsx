@@ -51,6 +51,7 @@ const SideRays = ({
   className = ''
 }: SideRaysProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
+  const target = useRef({ c1: hexToRgb(rayColor1), c2: hexToRgb(rayColor2) });
   const uniformsRef = useRef<Record<string, { value: number | number[] }> | null>(null);
   const rendererRef = useRef<Renderer | null>(null);
   const animationIdRef = useRef<number | null>(null);
@@ -212,6 +213,12 @@ void main() {
       const loop = (t: number) => {
         if (!rendererRef.current || !uniformsRef.current || !meshRef.current) return;
         uniforms.iTime.value = t * 0.001;
+        // Colours drift toward their target instead of jumping: the room's light changes, it doesn't cut.
+        const k = 1 - Math.exp(-(1 / 60) * 3.5);
+        for (const [u, to] of [[uniforms.iRayColor1, target.current.c1], [uniforms.iRayColor2, target.current.c2]] as const) {
+          const v = u.value as number[];
+          for (let j = 0; j < 3; j++) v[j] += (to[j] - v[j]) * k;
+        }
         try {
           renderer.render({ scene: mesh });
           animationIdRef.current = requestAnimationFrame(loop);
@@ -252,14 +259,14 @@ void main() {
         cleanupFunctionRef.current = null;
       }
     };
-  }, [isVisible, speed, rayColor1, rayColor2, intensity, spread, origin, tilt, saturation, blend, falloff, opacity]);
+  // rayColor1/2 are left out on purpose: changing colour must not tear down the context (they ease via `target`).
+  }, [isVisible, speed, intensity, spread, origin, tilt, saturation, blend, falloff, opacity]);
 
   useEffect(() => {
     if (!uniformsRef.current) return;
     const u = uniformsRef.current;
     u.iSpeed.value = speed;
-    u.iRayColor1.value = hexToRgb(rayColor1);
-    u.iRayColor2.value = hexToRgb(rayColor2);
+    target.current = { c1: hexToRgb(rayColor1), c2: hexToRgb(rayColor2) };
     u.iIntensity.value = intensity;
     u.iSpread.value = spread;
     const [flipX, flipY] = originToFlip(origin);
