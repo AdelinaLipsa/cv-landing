@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useId, useRef } from "react";
+import { useEffect, useRef } from "react";
 import { preload } from "react-dom";
 import type * as T from "three";
 import type { Toy } from "@/lib/toyStage";
@@ -19,6 +19,13 @@ const NOTES: [Prop, string][] = [["phone", "text me"], ["printer", "print me out
 const LABEL: Record<Prop, [number, number]> = { phone: [0.1, 0.8], printer: [0.36, 0.05], rolodex: [0.8, 0.13] };
 const TARGET: Record<Prop, string> = { phone: "PhoneScreen", printer: "PrinterBodyMesh", rolodex: "Screen" };
 const PICK_NODE: Record<Prop, string> = { phone: "Phone", printer: "Printer", rolodex: "Monitor" };
+// Every clickable thing gets a hotspot: [key, its button's label, the word that shows on hover].
+type Spot = "her" | "Siamese" | "Burmese" | "pc" | "strat" | "phone" | "printer";
+const SPOTS: [Spot, string, string][] = [
+  ["her", "Say hi to Adelina", "say hi"], ["Siamese", "Pet the Siamese", "pet me"], ["Burmese", "Pet the Burmese", "pet me"],
+  ["pc", "Boot Windows 95 on my computer", "boot Win95"], ["strat", "Play her red Stratocaster", "play me"],
+  ["phone", "Text me", "text me"], ["printer", "Print my CV", "print my CV"],
+];
 
 // Her teenage bedroom, baked in Blender (art/README.md), in the hero. One object for each way in: a Nokia for
 // Message me, an inkjet for the PDF, her PC monitor for LinkedIn. Hover a button and its object acts; point at
@@ -52,78 +59,23 @@ export default function Finale({ className, hot, onHot, onPick, onScreen }: Prop
   }, []);
 
   return (
-    <>
-    <p className={s.sr}>The room is interactive. A door hanger on its wall says: knock first, or just click around: me, the cats, the computer. Pinch to zoom.</p>
-    <div ref={host} className={`${s.host} ${className ?? ""}`} role="img" aria-label="My teenage bedroom at dusk: rock posters, a window, my guitars, a skateboard, boxing gloves, a corner desk with my PC, a Nokia phone, an inkjet printer, a bed with bookshelves, and my two cats. I'm in it too, sitting on the bed playing guitar and now and then getting up to work at the desk: click me to say hi, or pet a cat. The phone messages me, the printer prints my CV, and the computer boots Windows 95. Pinch or double-click to zoom in.">
-      <svg className={s.arrows} aria-hidden="true">{NOTES.map(([p]) => <path key={p} data-arrow={p} />)}<path data-arrow="her" /></svg>
+    <div ref={host} className={`${s.host} ${className ?? ""}`} role="group" aria-label="My teenage bedroom at dusk: rock posters, a window, my guitars, a skateboard, boxing gloves, a corner desk with my PC, a Nokia phone, an inkjet printer, a bed with bookshelves, and my two cats. I'm in it too, sitting on the bed playing guitar and now and then getting up to work at the desk. Everything marked can be clicked: say hi to me, pet a cat, boot my computer into Windows 95, text me from the phone, or print my CV. Pinch or double-click to zoom in.">
+      <svg className={s.arrows} aria-hidden="true">{NOTES.map(([p]) => <path key={p} data-arrow={p} />)}</svg>
       {NOTES.map(([p, text]) => <span key={p} className={s.note} data-note={p} aria-hidden="true"><span>{text}</span></span>)}
-      <span className={s.ring} data-ring aria-hidden="true" />
-      <div className={s.hanger} data-hanger aria-hidden="true">
-        <div className={s.swing} data-swing>
-          <svg className={s.string} viewBox="0 0 24 44"><path d="M12 0C14 12 10 24 12 36c.6 4-3 6-4.5 4" /><circle cx="12" cy="1.5" r="2.2" /></svg>
-          <div className={s.card}><Tag side="front" /><Tag side="back" /></div>
-        </div>
+      {SPOTS.map(([k, aria, label], i) => (
+        <button key={k} type="button" className={s.spot} data-spot={k} data-off="" aria-label={aria} style={{ "--d": `${-i * 1.37}s` } as React.CSSProperties}>
+          <span className={s.dot} aria-hidden="true" /><span className={s.spotLabel} aria-hidden="true"><span>{label}</span></span>
+        </button>
+      ))}
+      <div className={s.ghost} data-ghost aria-hidden="true">
+        <span className={s.ripple} data-ripple />
+        <svg className={`${s.cursor} ${s.arrow}`} viewBox="0 0 24 30"><path d="M3 2v22l5.6-5.3 3.9 9 3.6-1.6-3.9-8.8h7.8z" /></svg>
+        <svg className={`${s.cursor} ${s.finger}`} viewBox="0 0 26 32"><path d="M9 4a2 2 0 0 1 4 0v9.2l1.3-.2a2 2 0 0 1 2.2 1.7l1.2-.1a2 2 0 0 1 2.2 1.8l1.1.1a2 2 0 0 1 2 2V24a7 7 0 0 1-7 7h-3.2a6.5 6.5 0 0 1-5.3-2.8L3.8 22a2 2 0 0 1 3.1-2.5L9 22z" /></svg>
+        <span className={s.caption} data-caption />
       </div>
-      <span className={`${s.note} ${s.herNote}`} data-her aria-hidden="true"><span>click me, I’ll say hi</span></span>
       <span className={s.hint} data-hint aria-hidden="true"><span>pinch or double-click to zoom</span></span>
       <button type="button" className={s.reset} data-reset aria-label="Zoom the room back out"><span>zoom out</span></button>
     </div>
-    </>
-  );
-}
-
-// Her door hanger: dusk-violet card, cream ink, a doodled border, three stickers. The string threads its hole.
-function Tag({ side }: { side: "front" | "back" }) {
-  const id = useId().replace(/:/g, ""), cut = `${id}c`, grain = `${id}g`, wob = `${id}w`;
-  const ink = "#fff4e6";
-  return (
-    <svg className={`${s.face} ${side === "back" ? s.back : ""}`} viewBox="0 0 150 200">
-      <defs>
-        <mask id={cut}>
-          <rect x="6" y="6" width="138" height="188" rx="16" fill="#fff" />
-          <circle cx="75" cy="34" r="15" fill="#000" />
-          <path d="M63 43 8 70" stroke="#000" strokeWidth="2.6" />
-        </mask>
-        <filter id={grain} x="0" y="0" width="100%" height="100%">
-          <feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="2" seed="7" />
-          <feColorMatrix values="0 0 0 0 1  0 0 0 0 0.9  0 0 0 0 0.8  0 0 0 0.55 -0.18" />
-        </filter>
-        <filter id={wob}><feTurbulence type="turbulence" baseFrequency="0.035" numOctaves="2" seed="3" /><feDisplacementMap in="SourceGraphic" scale="3" /></filter>
-      </defs>
-      <g mask={`url(#${cut})`}>
-        <rect width="150" height="200" fill="#2a1f4d" />
-        <rect width="150" height="200" fill="#000" filter={`url(#${grain})`} opacity="0.5" />
-        <path d="M6 150c30-10 70 6 138-6v50H6z" fill="#3a2b63" opacity="0.6" />
-      </g>
-      <rect x="13" y="13" width="124" height="174" rx="11" fill="none" stroke={ink} strokeOpacity="0.55" strokeWidth="1.6" strokeDasharray="7 4 2 4" filter={`url(#${wob})`} />
-      <circle cx="75" cy="34" r="17" fill="none" stroke={ink} strokeOpacity="0.4" strokeWidth="1.2" filter={`url(#${wob})`} />
-      {side === "front" ? (
-        <g className={s.ink} fill={ink}>
-          <text className={s.big} x="75" y="86" fontSize="27" fontWeight="800" textAnchor="middle" transform="rotate(-4 75 86)">KNOCK</text>
-          <text className={s.big} x="77" y="114" fontSize="27" fontWeight="800" textAnchor="middle" transform="rotate(-4 75 114)">FIRST</text>
-          <path d="M34 124c14 5 30-4 44 1s22-3 38 0" fill="none" stroke="#ff9ec0" strokeWidth="2.2" strokeLinecap="round" filter={`url(#${wob})`} />
-          <text x="75" y="142" fontSize="11.5" textAnchor="middle" fillOpacity="0.92">or just click around:</text>
-          <text x="75" y="156" fontSize="11.5" textAnchor="middle" fillOpacity="0.92">me, the cats,</text>
-          <text x="75" y="170" fontSize="11.5" textAnchor="middle" fillOpacity="0.92">the computer</text>
-          <text x="75" y="186" fontSize="8.5" textAnchor="middle" fillOpacity="0.6" letterSpacing="0.6">pinch to zoom</text>
-          {/* stickers: a star, a guitar pick, a cat face */}
-          <path d="m124 14 3.6 7.6 8.3 1-6.1 5.7 1.6 8.2-7.4-4.1-7.3 4.1 1.5-8.2-6.1-5.7 8.3-1z" fill="#ffcc4d" stroke="#2a1f4d" strokeWidth="1.2" transform="rotate(14 124 26)" />
-          <path d="M15 172c5-2.5 13-2.5 17 0 1 5-4 12-8.5 15-4.5-3-9.5-10-8.5-15z" fill="#ff9ec0" stroke="#2a1f4d" strokeWidth="1.2" transform="rotate(-18 24 180)" />
-          <g transform="translate(127 180) rotate(10) scale(0.9)">
-            <path d="M-9 -4-8-13-2-7h4l6-6 1 9c1 7-3 11-9 11s-10-4-9-11z" fill={ink} stroke="#2a1f4d" strokeWidth="1.2" />
-            <circle cx="-3.5" cy="-1" r="1.2" fill="#2a1f4d" /><circle cx="3.5" cy="-1" r="1.2" fill="#2a1f4d" /><path d="M-1.5 2.5 0 3.6 1.5 2.5" stroke="#2a1f4d" fill="none" strokeWidth="1" />
-          </g>
-        </g>
-      ) : (
-        <g className={s.ink} fill={ink}>
-          <text className={s.big} x="75" y="92" fontSize="20" fontWeight="800" textAnchor="middle" transform="rotate(-3 75 92)">come back</text>
-          <text className={s.big} x="75" y="120" fontSize="20" fontWeight="800" textAnchor="middle" transform="rotate(-3 75 122)">soon <tspan fill="#ff9ec0">♥</tspan></text>
-          <path d="M44 134c10 4 22-3 32 1s20-2 30 0" fill="none" stroke="#ff9ec0" strokeWidth="2" strokeLinecap="round" filter={`url(#${wob})`} />
-          <text x="98" y="166" fontSize="12" textAnchor="middle" fillOpacity="0.85" transform="rotate(-6 98 166)">— A.</text>
-          <path d="m30 160 2.4 5 5.5.7-4 3.8 1 5.4-4.9-2.7-4.9 2.7 1-5.4-4-3.8 5.5-.7z" fill="#ffcc4d" stroke="#2a1f4d" strokeWidth="1" />
-        </g>
-      )}
-    </svg>
   );
 }
 
@@ -398,88 +350,124 @@ async function mount(el: HTMLElement, live: React.RefObject<Live>, alive: () => 
     crtX.fillStyle = `rgba(255, 255, 255, ${0.8 * (1 - p)})`; crtX.fillRect(0, y, w, band);
     (winLit.map as T.Texture).needsUpdate = true;
   };
-  // Until the visitor clicks something in the room, a soft ring pulses on one clickable thing at a time, every 4 s:
-  // her, the Siamese, the Burmese, the monitor. The first click ends it for the session.
-  const ring = el.querySelector<HTMLElement>("[data-ring]")!, rv = new THREE.Vector3();
-  const pulseOn: T.Object3D[] = [node("Screen")];
-  let pulseI = 0, pulseAt = 1.5, pulsing: T.Object3D | null = null;
-  let poked = (() => { try { return sessionStorage.getItem("room-poked") === "1"; } catch { return false; } })();
-  const hanger = el.querySelector<HTMLElement>("[data-hanger]")!, swing = el.querySelector<HTMLElement>("[data-swing]")!;
-  hanger.toggleAttribute("data-flipped", poked);
-  const markPoked = () => {
-    if (poked) return;
-    poked = true; pulsing = null; ring.removeAttribute("data-on");
-    hanger.toggleAttribute("data-flipped", true); // "come back soon"
-    try { sessionStorage.setItem("room-poked", "1"); } catch {}
-  };
-  const pulse = (t: number) => {
-    if (poked || reduce) return;
-    if (t >= pulseAt) {
-      pulseAt = t + 4; pulsing = pulseOn[pulseI++ % pulseOn.length];
-      ring.setAttribute("data-on", "");
-      ring.animate([{ transform: "translate(-50%, -50%) scale(0.3)", opacity: 0.95 }, { transform: "translate(-50%, -50%) scale(1.5)", opacity: 0 }], { duration: 1500, easing: "cubic-bezier(0.2, 0.7, 0.3, 1)" });
+  // Hotspots: a cream dot in a breathing pink ring on everything clickable. They're real buttons (focusable; Enter
+  // and Space act), they show after the demo, and once two different things have been clicked they settle to 40%.
+  const spots = Object.fromEntries([...el.querySelectorAll<HTMLButtonElement>("[data-spot]")].map((b) => [b.dataset.spot, b])) as Record<Spot, HTMLButtonElement>;
+  const spotAt: Partial<Record<Spot, T.Object3D>> = { pc: node("Screen"), phone: node("PhoneScreen"), printer: node("PrinterBodyMesh") }; // her, the cats and the Strat join below
+  const used = new Set<Spot>(), sv = new THREE.Vector3();
+  // Each marker sits just above its object, never on it: the anchor plus a lift to the object's top (metres), then
+  // a few px more on screen, so even the 44 px touch target clears it. Her above her cap, the cats above their ears
+  // and back, the monitor's top corner, the Strat's headstock, above the phone and the printer.
+  const LIFT = Object.fromEntries(Object.entries({ her: [0, 0.36, 0], Siamese: [0, 0.1, 0], Burmese: [0, 0.12, 0], pc: [0.1, 0.19, 0], strat: [0, 0.07, 0], phone: [0, 0.01, 0], printer: [0, 0.13, 0] })
+    .map(([k, v]) => [k, new THREE.Vector3(...(v as [number, number, number]))])) as Record<Spot, T.Vector3>;
+  const placeSpots = () => {
+    const up = touch ? 26 : 20;
+    for (const [k] of SPOTS) {
+      const o = spotAt[k], v = o && o.getWorldPosition(sv).add(LIFT[k]).project(camera), off = !v || Math.abs(v.x) > 0.97 || Math.abs(v.y) > 0.9;
+      spots[k].toggleAttribute("data-off", off);
+      const side = k === "phone" ? up + 4 : 0; // the phone sits in front of the printer: beside it, not above
+      if (v && !off) spots[k].style.transform = `translate(${((v.x + 1) / 2) * el.clientWidth - side}px, ${((1 - v.y) / 2) * el.clientHeight - (side ? 0 : up)}px)`;
     }
-    if (!pulsing) return;
-    const v = pulsing.getWorldPosition(rv).project(camera);
-    ring.style.left = `${((v.x + 1) / 2) * el.clientWidth}px`; ring.style.top = `${((1 - v.y) / 2) * el.clientHeight}px`;
   };
-  // The door hanger hangs by its string from the top edge of the left wall, 30% in from its outer corner (the
-  // shell's top corner seen furthest left) toward the back corner, so it hangs on the wall, clear of the text, her
-  // and the cats. It drops in on a spring when the room goes live, sways like a pendulum, swings off a cursor.
-  const sb = new THREE.Box3().setFromObject(node("Room_ShellMesh")), hook = new THREE.Vector3(), back = new THREE.Vector3(), hv2 = new THREE.Vector3();
-  let far = Infinity, deep = -Infinity;
-  for (const x of [sb.min.x, sb.max.x]) for (const z of [sb.min.z, sb.max.z]) {
-    const cv = hv2.set(x, sb.max.y, z).applyMatrix4(camera.matrixWorldInverse), k = cv.x / -cv.z;
-    if (k < far) { far = k; hook.set(x, sb.max.y, z); }
-    if (-cv.z > deep) { deep = -cv.z; back.set(x, sb.max.y, z); }
-  }
-  hook.lerp(back, 0.3);
-  let ang = 0, angV = 0, drop = 0, dropV = 0, dropped = false;
-  const sway = (t: number, dt: number) => {
-    if (!dropped && "live" in el.dataset) { dropped = true; drop = -150; angV = 0.5; } // in from above, with a jolt
-    for (let n = Math.ceil(dt / (1 / 120)), h = dt / Math.max(n, 1); n > 0; n--) { // small steps: the drop spring is stiff
-      dropV += (-220 * drop - 2 * 0.3 * Math.sqrt(220) * dropV) * h; drop += dropV * h;
-      const rest = 0.03 * Math.sin(t * 0.8) + 0.012 * Math.sin(t * 1.9 + 1); // an idle sway, never quite still
-      angV += (-14 * (ang - rest) - 0.9 * angV) * h; ang += angV * h;
+
+  // The demo, once a visit: about 1.2 s after the room is live, a ghost cursor glides in from the edge to her and
+  // clicks (she reacts for real), glides on to the computer (it wakes), and goes; ~4 s. Any input in the room ends it.
+  const ghost = el.querySelector<HTMLElement>("[data-ghost]")!, caption = el.querySelector<HTMLElement>("[data-caption]")!;
+  const ripple = el.querySelector<HTMLElement>("[data-ripple]")!, cursors = [...el.querySelectorAll<SVGElement>("[data-ghost] svg")];
+  const SAY = touch ? "tap anything in my room" : "click anything in my room";
+  el.toggleAttribute("data-touch", touch);
+  let demo: "wait" | "run" | "done" = (() => { try { return sessionStorage.getItem("room-demo") === "1" ? "done" : "wait"; } catch { return "wait"; } })();
+  let demoT = 0, liveAt = -1, typed = -1, herStill = () => false, herChest: T.Object3D | null = null; // the cursor clicks her chest
+  const gp = new THREE.Vector2(), ga = new THREE.Vector2(), gb = new THREE.Vector2(), g0 = new THREE.Vector2();
+  const finishDemo = () => {
+    if (demo === "run") { ghost.removeAttribute("data-on"); pointPc(false); }
+    demo = "done";
+    el.toggleAttribute("data-spots", true);
+    try { sessionStorage.setItem("room-demo", "1"); } catch {}
+  };
+  if (demo === "done") el.toggleAttribute("data-spots", true);
+  const screenOf = (o: T.Object3D, out: T.Vector2) => { const v = o.getWorldPosition(sv).project(camera); return out.set(((v.x + 1) / 2) * el.clientWidth, ((1 - v.y) / 2) * el.clientHeight); };
+  const tap = () => { // the cursor presses and a ring ripples off its tip
+    for (const c of cursors) c.animate([{ scale: 1 }, { scale: 0.85 }, { scale: 1 }], { duration: 260, easing: "ease-out" });
+    ripple.animate([{ transform: "translate(-50%, -50%) scale(0.2)", opacity: 0.9 }, { transform: "translate(-50%, -50%) scale(2.6)", opacity: 0 }], { duration: 700, easing: "cubic-bezier(0.2, 0.7, 0.3, 1)" });
+  };
+  const glide = (from: T.Vector2, to: T.Vector2, u: number) => { // eased, along a bow that lifts toward the middle
+    const e = u < 0.5 ? 4 * u * u * u : 1 - (-2 * u + 2) ** 3 / 2, cx = (from.x + to.x) / 2, cy = Math.min(from.y, to.y) - 0.12 * el.clientHeight;
+    gp.set((1 - e) ** 2 * from.x + 2 * (1 - e) * e * cx + e * e * to.x, (1 - e) ** 2 * from.y + 2 * (1 - e) * e * cy + e * e * to.y);
+  };
+  const runDemo = (t: number, dt: number) => {
+    if (demo === "done" || !herChest) return;
+    if (demo === "wait") {
+      if (liveAt < 0) { if ("live" in el.dataset) liveAt = t; return; }
+      if (t - liveAt < 1.2 || !herStill()) return;
+      demo = "run"; demoT = 0; caption.textContent = ""; typed = -1; ghost.setAttribute("data-on", "");
     }
-    swing.style.transform = `translateY(${drop.toFixed(1)}px) rotate(${ang.toFixed(4)}rad)`;
+    const prev = demoT; demoT += dt;
+    const her = screenOf(herChest, ga), pc = screenOf(spotAt.pc!, gb);
+    if (demoT < 0.9) glide(g0.set(el.clientWidth * (her.x > el.clientWidth / 2 ? 0.12 : 0.88), el.clientHeight * 0.9), her, demoT / 0.9); // in from the room's far edge
+    else if (demoT < 2.4) gp.copy(her);
+    else if (demoT < 3.2) glide(her, pc, (demoT - 2.4) / 0.8);
+    else gp.copy(pc);
+    if (prev < 0.9 && demoT >= 0.9) { tap(); poke(); }
+    if (prev < 3.2 && demoT >= 3.2) pointPc(true);
+    if (prev < 3.4 && demoT >= 3.4) ghost.setAttribute("data-out", "");
+    if (demoT >= 4) { ghost.removeAttribute("data-out"); finishDemo(); return; }
+    const n = Math.min(SAY.length, Math.floor(Math.max(0, demoT - 0.15) * 34)); // the caption types in
+    if (n !== typed) { typed = n; caption.textContent = SAY.slice(0, n); }
+    ghost.style.transform = `translate(${gp.x.toFixed(1)}px, ${gp.y.toFixed(1)}px)`;
+    ghost.toggleAttribute("data-left", gp.x > 0.55 * el.clientWidth); // the caption reads on the side with room
   };
-  const onNudge = (e: PointerEvent) => { // swings away from the cursor's side
-    if (reduce) return;
-    const r = swing.getBoundingClientRect();
-    angV += (e.clientX < r.left + r.width / 2 ? -1 : 1) * 2.4;
+  const stillDemo = () => { // reduced motion: the cursor sits by her with the caption for 3 s, then fades
+    if (demo !== "wait" || !herChest) return;
+    demo = "run"; caption.textContent = SAY;
+    const p = screenOf(herChest, gp);
+    ghost.style.transform = `translate(${p.x + 24}px, ${p.y + 10}px)`; ghost.setAttribute("data-on", "");
+    ghost.toggleAttribute("data-left", p.x > 0.55 * el.clientWidth);
+    window.setTimeout(() => { if (demo === "run") finishDemo(); }, 3000);
   };
-  hanger.addEventListener("pointerenter", onNudge);
-  const placeHanger = () => {
-    const v = hv2.copy(hook).project(camera), off = Math.abs(v.x) > 1 || Math.abs(v.y) > 1;
-    hanger.toggleAttribute("data-off", off);
-    hanger.style.left = `${((v.x + 1) / 2) * el.clientWidth}px`; hanger.style.top = `${((1 - v.y) / 2) * el.clientHeight}px`;
-  };
+  const cancelDemo = () => { if (demo !== "done") finishDemo(); }; // any input in the room: it never plays, or stops at once
 
   let hoverHer = (_h: unknown) => {}; // her and the cats brighten under the pointer, once they're in
   const pointPc = (on: boolean) => { if (pcHover && !on) pcOffAt = performance.now() / 1000 + 1.5; pcHover = on; };
 
-  const heat: Record<Prop, number> = { phone: 0, printer: 0, rolodex: 0 };
+  const heat: Record<Prop, number> = { phone: 0, printer: 0, rolodex: 0 }, PROPS = Object.keys(heat) as Prop[];
   let pointer: Prop | null = null, since = 0, wasHot: Prop | null = null;
 
   // Which object is under the pointer.
   const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
   type Who = "her" | "Siamese" | "Burmese";
   let who = (_r: T.Raycaster): Who | null => null, poke = () => {}, tickHer: ((dt: number) => void) | null = null, dropHer = () => {}; // filled in once she loads
-  const hit = (e: PointerEvent): Prop | "tower" | Who | null => {
+  const hit = (e: PointerEvent): Prop | "tower" | "strat" | Who | null => {
     const r = el.getBoundingClientRect();
     ndc.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
     ray.setFromCamera(ndc, camera);
     const w = who(ray); if (w) return w; // she's in front of the desk: she wins over the objects behind her
+    if (ray.intersectObject(strat).length) return "strat";
     for (const p of Object.keys(picks) as Prop[]) if (ray.intersectObject(picks[p], true).length) return p;
     return ray.intersectObject(tower, true).length ? "tower" : null;
   };
-  // Progressive notes: at rest only the door hanger; her note while the pointer's in the room (a tap shows it 2 s on
-  // touch); an object's note when the pointer's near it, or its button is hovered.
-  let roomPtr = false, tapUntil = 0;
-  const ptr = new THREE.Vector2();
+  const spotOf = (h: ReturnType<typeof hit>): Spot | null => (h === "rolodex" || h === "tower" ? "pc" : h);
+  let spotHover: Spot | null = null;
+  const hoverSpot = (k: Spot | null) => { // pointing at an object lights its hotspot (bigger ring, its word)
+    if (k === spotHover) return;
+    if (spotHover) spots[spotHover].removeAttribute("data-hover");
+    if (k) spots[k].setAttribute("data-hover", "");
+    spotHover = k;
+  };
+  const touched = (k: Spot | null) => { if (!k) return; used.add(k); if (used.size >= 2) el.toggleAttribute("data-quiet", true); };
+  const act = (k: Spot) => { // what each hotspot does: the same as clicking its object
+    sfx.wake(); // first, inside the click, so the browser lets every sound play
+    if (k === "her") poke();
+    else if (k === "strat") riff();
+    else if (k === "Siamese" || k === "Burmese") pet([k]);
+    else if (k === "pc") live.current.onScreen?.();
+    else live.current.onPick(k);
+    cancelDemo(); touched(k);
+  };
+  const onSpot = (e: Event) => act((e.currentTarget as HTMLElement).dataset.spot as Spot);
+  for (const b of Object.values(spots)) b.addEventListener("click", onSpot);
   const onMove = (e: PointerEvent) => {
-    if (e.pointerType === "mouse") { const r = el.getBoundingClientRect(); roomPtr = true; ptr.set(e.clientX - r.left, e.clientY - r.top); }
+    if (e.pointerType === "mouse" && !onButton(e)) cancelDemo();
     if (touches.has(e.pointerId)) touches.set(e.pointerId, [e.clientX, e.clientY]);
     if (touches.size === 2) { // pinch: zoom by the spread, about the midpoint
       e.stopPropagation(); // the first finger already started the pane's drag; this cuts it off (pointerup still bubbles, so it snaps back)
@@ -490,17 +478,18 @@ async function mount(el: HTMLElement, live: React.RefObject<Live>, alive: () => 
     if (drag && want.z > 1.01) { panBy(e.clientX - drag[0], e.clientY - drag[1]); drag = [e.clientX, e.clientY]; }
     const h = hit(e), p = h === "phone" || h === "printer" ? h : null; // pointing at the computer lights nothing: it's Win95
     pointPc(h === "rolodex" || h === "tower");
-    hoverHer(h);
+    hoverHer(h); hoverSpot(spotOf(h));
     el.style.cursor = h ? "pointer" : want.z > 1.01 ? (drag ? "grabbing" : "grab") : "";
     if (p !== pointer) { pointer = p; live.current.onHot(p); }
     if (reduce) placeNotes(live.current.hot ?? pointer); // no loop: the notes follow the pointer here
   };
-  const onLeave = () => { roomPtr = false; pointPc(false); hoverHer(null); if (reduce) placeNotes(live.current.hot); if (pointer) { pointer = null; live.current.onHot(null); } };
+  const onLeave = () => { pointPc(false); hoverHer(null); hoverSpot(null); if (reduce) placeNotes(live.current.hot); if (pointer) { pointer = null; live.current.onHot(null); } };
   // Her computer, monitor or tower, always boots Win95; LinkedIn opens only from its own button.
   // A click is a left press and release on the same object without dragging: right-clicks and drags do nothing.
   let down: { h: ReturnType<typeof hit>; x: number; y: number } | null = null;
-  const onButton = (e: Event) => !!(e.target as Element).closest?.("[data-reset], [data-hanger]"); // the zoom-out button and the hanger are their own
+  const onButton = (e: Event) => !!(e.target as Element).closest?.("[data-reset], [data-spot]"); // the zoom-out button and the hotspots are their own
   const onDown = (e: PointerEvent) => {
+    cancelDemo();
     if (onButton(e)) return;
     if (e.pointerType === "touch") touches.set(e.pointerId, [e.clientX, e.clientY]);
     if (touches.size > 1 || want.z > 1.01) e.stopPropagation(); // a pinch or a pan is the room's, not a swipe to the next page
@@ -513,11 +502,13 @@ async function mount(el: HTMLElement, live: React.RefObject<Live>, alive: () => 
     if (onButton(e)) return;
     const d = down;
     onCancel(e);
-    if (e.pointerType !== "mouse") tapUntil = performance.now() / 1000 + 2;
     const h = hit(e);
     if (!d || d.h !== h || Math.hypot(e.clientX - d.x, e.clientY - d.y) > 6) return; // a drag or pan never clicks
-    if (h) markPoked();
+    if (h) sfx.wake(); // first, inside the click, so the browser lets every sound play
+    touched(spotOf(h));
+    if (e.pointerType !== "mouse" && spotOf(h)) { hoverSpot(spotOf(h)); window.setTimeout(() => hoverSpot(null), 2000); } // no hover on touch: a tap shows its word
     if (h === "her") poke();
+    else if (h === "strat") riff();
     else if (h === "Siamese" || h === "Burmese") pet([h]);
     else if (h === "tower" || h === "rolodex") live.current.onScreen?.();
     else if (h) live.current.onPick(h as Prop);
@@ -543,26 +534,18 @@ async function mount(el: HTMLElement, live: React.RefObject<Live>, alive: () => 
     const head = (a: number) => `${ex - hx * Math.cos(a) + hy * Math.sin(a)} ${ey - hy * Math.cos(a) - hx * Math.sin(a)}`;
     arrow.setAttribute("d", `M${sx} ${sy}Q${cx} ${cy} ${ex} ${ey}M${head(0.5)}L${ex} ${ey}L${head(-0.5)}`);
   };
-  let placeHer = () => {}; // her own note, once she's in
   const placeNotes = (hot: Prop | null = null) => {
     const W = el.clientWidth, H = el.clientHeight;
     el.toggleAttribute("data-any", !!hot);
-    let nearest: Prop | null = null, best = 120; // the pointer's nearest object within 120 px; never the monitor (pointing at it is Win95)
-    if (roomPtr) for (const nd of notes) {
-      const p = nd.dataset.note as Prop, v = anchors[p].getWorldPosition(at).project(camera);
-      const d = Math.hypot(((v.x + 1) / 2) * W - ptr.x, ((1 - v.y) / 2) * H - ptr.y);
-      if (p !== "rolodex" && d < best) { best = d; nearest = p; }
-    }
     for (const nd of notes) {
       const p = nd.dataset.note as Prop, v = anchors[p].getWorldPosition(at).project(camera);
       const tx = ((v.x + 1) / 2) * W, ty = ((1 - v.y) / 2) * H, seen = Math.abs(v.x) <= 1 && Math.abs(v.y) <= 1;
-      const show = seen && (hot ? p === hot : p === nearest); // its button (or itself) hovered, else the nearest
+      const show = seen && p === hot; // its contact button hovered (or the object itself)
       nd.toggleAttribute("data-show", show); arrows[p].toggleAttribute("data-show", show);
       pin(nd, arrows[p], LABEL[p][0] * W, LABEL[p][1] * H, tx, ty);
       nd.toggleAttribute("data-hot", p === hot); arrows[p].toggleAttribute("data-hot", p === hot);
     }
-    placeHer();
-    placeHanger();
+    placeSpots();
   };
 
   const pose = (t: number, hot: Prop | null) => {
@@ -597,14 +580,14 @@ async function mount(el: HTMLElement, live: React.RefObject<Live>, alive: () => 
     // Only where the room is drawn (dst alpha), and alpha untouched: off the silhouette a halo over the light page reads as a pale box.
     transparent: true, depthTest: false, depthWrite: false, blending: THREE.CustomBlending, blendSrc: THREE.DstAlphaFactor, blendDst: THREE.OneFactor, blendSrcAlpha: THREE.ZeroFactor, blendDstAlpha: THREE.OneFactor,
   }));
-  const keep = new Map<T.Mesh, T.Material | T.Material[]>(), clear = new THREE.Color();
+  const keep = new Map<T.Mesh, T.Material | T.Material[]>(), clear = new THREE.Color(), screens = [...phoneLit, screenLit, winLit];
   const draw = () => {
     for (const m of meshes) {
       const glows = m.layers.isEnabled(BLOOM) || (m === screenMesh && m.material !== screenDark) || (m === phoneMesh && m.material !== phoneDark) || (m === ledMesh && m.material === ledLit);
       if (!glows) { keep.set(m, m.material); m.material = black; }
     }
     shaft.visible = dust.visible = false;
-    for (const m of [...phoneLit, screenLit, winLit]) m.color.setScalar(0.1); // a lit screen only haloes; full strength it bleaches to white
+    for (const m of screens) m.color.setScalar(0.1); // a lit screen only haloes; full strength it bleaches to white
     renderer.getClearColor(clear); const alpha = renderer.getClearAlpha();
     renderer.setClearColor(0x000000, 0);
     renderer.shadowMap.needsUpdate = true; // once a frame, not once per pass
@@ -614,7 +597,7 @@ async function mount(el: HTMLElement, live: React.RefObject<Live>, alive: () => 
     for (const [m, mt] of keep) m.material = mt;
     keep.clear();
     shaft.visible = dust.visible = true;
-    for (const m of [...phoneLit, screenLit, winLit]) m.color.setScalar(1);
+    for (const m of screens) m.color.setScalar(1);
     renderer.render(scene, camera);
     renderer.autoClear = false; add.render(renderer); renderer.autoClear = true;
   };
@@ -625,18 +608,28 @@ async function mount(el: HTMLElement, live: React.RefObject<Live>, alive: () => 
     const found = cats.map(catAt).filter((c) => c) as T.Object3D[];
     if (!found.length) return;
     sfx.purr(); unlock("cat");
-    for (const c of found) {
-      const v = c.getWorldPosition(at).project(camera);
-      for (let i = 0; i < 4; i++) {
-        const h = document.createElement("span");
-        h.className = s.heart; h.textContent = "♥"; h.setAttribute("aria-hidden", "true");
-        h.style.left = `${((v.x + 1) / 2) * el.clientWidth + (i - 1.5) * 12}px`; h.style.top = `${((1 - v.y) / 2) * el.clientHeight}px`;
-        h.style.animationDelay = `${i * 0.12}s`;
-        h.addEventListener("animationend", () => h.remove());
-        el.appendChild(h);
-      }
-    }
+    for (const c of found) float(c, "♥♥♥♥", "#EE6E9F");
   };
+  // A few small glyphs floating up off a thing in the room (hearts off a cat, notes off the guitar), ~1.2 s.
+  const float = (o: T.Object3D, glyphs: string, color: string) => {
+    const v = o.getWorldPosition(at).project(camera);
+    [...glyphs].forEach((g, i) => {
+      const h = document.createElement("span");
+      h.className = s.heart; h.textContent = g; h.style.color = color; h.setAttribute("aria-hidden", "true");
+      h.style.left = `${((v.x + 1) / 2) * el.clientWidth + (i - (glyphs.length - 1) / 2) * 12}px`; h.style.top = `${((1 - v.y) / 2) * el.clientHeight}px`;
+      h.style.animationDelay = `${i * 0.12}s`;
+      h.addEventListener("animationend", () => h.remove());
+      el.appendChild(h);
+    });
+  };
+  // Her red Strat by the window is baked into the furniture, so a box stands in for it for clicks: a power-chord
+  // riff, and notes float up off it.
+  const strat = new THREE.Mesh(new THREE.BoxGeometry(0.32, 1.0, 0.42), black);
+  strat.position.set(-1.46, 0.72, 0.62); strat.rotation.y = 0.35; strat.updateMatrixWorld();
+  const stratBody = new THREE.Object3D(), stratHead = new THREE.Object3D(); // where the notes float from; where its marker hangs
+  stratBody.position.set(-1.43, 0.55, 0.66); stratBody.updateMatrixWorld(); stratHead.position.set(-1.53, 1.18, 0.49); stratHead.updateMatrixWorld();
+  const riff = () => { sfx.riff(); float(stratBody, "♪♫♪", "#ff9ec0"); };
+  spotAt.strat = stratHead;
   const onKonami = () => pet(["Siamese", "Burmese"]); // the Konami code calls the cats
 
   // Zoom, the room's own (the page never zooms): 1x is the framed view, up to 3x toward the pointer, by pinch,
@@ -700,6 +693,7 @@ async function mount(el: HTMLElement, live: React.RefObject<Live>, alive: () => 
   el.addEventListener("wheel", onWheel, { passive: false });
   el.addEventListener("dblclick", onDbl);
   window.addEventListener("keydown", onKey);
+  el.addEventListener("keydown", cancelDemo);
   window.addEventListener("cv:cat", onKonami);
   resetBtn.addEventListener("click", unzoom);
 
@@ -734,12 +728,11 @@ async function mount(el: HTMLElement, live: React.RefObject<Live>, alive: () => 
   toy.run((t, dt) => {
     const hot = live.current.hot ?? pointer;
     if (hot !== wasHot) { since = t; wasHot = hot; }
-    for (const p of Object.keys(heat) as Prop[]) heat[p] = ease(heat[p], p === hot ? 1 : 0, dt, p === "printer" ? 2.5 : 7);
+    for (const p of PROPS) heat[p] = ease(heat[p], p === hot ? 1 : 0, dt, p === "printer" ? 2.5 : 7);
     glow.uTime.value = t;
     pose(t, hot);
     tickHer?.(dt);
-    pulse(t);
-    if (!reduce) sway(t, dt);
+    runDemo(t, dt);
     if (zoom.z !== want.z || zoom.x !== want.x || zoom.y !== want.y) { // ~150 ms ease
       for (const k of AXES) zoom[k] = Math.abs(want[k] - zoom[k]) < 1e-4 ? want[k] : ease(zoom[k], want[k], dt, 20);
       lens();
@@ -754,7 +747,7 @@ async function mount(el: HTMLElement, live: React.RefObject<Live>, alive: () => 
     const hot = live.current.hot ?? pointer;
     if (hot === wasHot && pcHover === wasPc) return;
     wasHot = hot; wasPc = pcHover;
-    for (const p of Object.keys(heat) as Prop[]) heat[p] = p === hot ? 1 : 0;
+    for (const p of PROPS) heat[p] = p === hot ? 1 : 0;
     pose(0, hot); draw(); placeNotes(hot);
   }, 100) : 0;
   if (reduce) { pose(0, null); draw(); }
@@ -851,7 +844,8 @@ async function mount(el: HTMLElement, live: React.RefObject<Live>, alive: () => 
         return null;
       };
       catAt = (k) => catRoots[k];
-      pulseOn.unshift(bone("DEF-spine003seg0"), bone("Siamese_Head"), bone("Burmese_Body")); // her first, then the cats, then the monitor
+      Object.assign(spotAt, { her: bone("DEF-spine006"), Siamese: bone("Siamese_Head"), Burmese: bone("Burmese_Body") });
+      herChest = bone("DEF-spine003seg0");
 
       // Under the pointer, her or a cat warms a touch, so it reads as clickable.
       const glowOf = (root: T.Object3D) => { const out = new Set<T.MeshStandardMaterial>(); root.traverse((o) => { const m = o as T.Mesh; if (m.isMesh) for (const mt of [m.material].flat()) out.add(mt as T.MeshStandardMaterial); }); return [...out].map((mt) => [mt, mt.emissive.clone(), mt.emissiveIntensity] as const); };
@@ -867,28 +861,15 @@ async function mount(el: HTMLElement, live: React.RefObject<Live>, alive: () => 
         if (reduce) draw();
       };
 
-      // Her note: "click me", following her head while she's on the bed or at the desk, hidden while she walks.
-      // After her first hello it says so.
-      const herNote = el.querySelector<HTMLElement>("[data-her]")!, herArrow = el.querySelector<SVGPathElement>('[data-arrow="her"]')!, hv = new THREE.Vector3();
-      const greet = () => { herNote.firstElementChild!.textContent = "hi again!"; };
-      placeHer = () => {
-        const t = day.time, still = state !== "day" || t < 47 * F || t > 540 * F || (t >= 232 * F && t <= 446 * F);
-        const v = head.getWorldPosition(hv).project(camera), wanted = roomPtr || performance.now() / 1000 < tapUntil;
-        const show = wanted && fade === 1 && still && Math.abs(v.x) < 0.95 && Math.abs(v.y) < 0.95;
-        herNote.toggleAttribute("data-show", show); herArrow.toggleAttribute("data-show", show);
-        if (!show && !herNote.hasAttribute("data-was")) return; // never placed yet: nothing to fade out
-        herNote.setAttribute("data-was", "");
-        const W = el.clientWidth, H = el.clientHeight, tx = ((v.x + 1) / 2) * W, ty = ((1 - v.y) / 2) * H - 0.03 * H; // to the top of her head
-        pin(herNote, herArrow, tx + (tx < 0.55 * W ? 0.14 : -0.13) * W, Math.max(0.06 * H, ty - 0.16 * H), tx, ty); // away from the hanger
-      };
+      herStill = () => { const t = day.time; return state === "strum" || (state === "day" && (t < 47 * F || t > 540 * F || (t >= 232 * F && t <= 446 * F))); };
 
       if (reduce) { // a still: her first strum, the cats at rest; a click shows the wave for 2 s
-        herMix.update(0); for (const m of cats) m.update(0); draw();
+        herMix.update(0); for (const m of cats) m.update(0); draw(); placeNotes(); stillDemo();
         let wave = 0;
         poke = () => {
           if (wave) return;
           strum.stop(); bed.reset().play(); bed.time = 1.25; herMix.update(0); draw();
-          wave = window.setTimeout(() => { wave = 0; bed.stop(); strum.play(); herMix.update(0); greet(); draw(); placeNotes(live.current.hot ?? pointer); }, 2000);
+          wave = window.setTimeout(() => { wave = 0; bed.stop(); strum.play(); herMix.update(0); draw(); }, 2000);
         };
         dropHer = () => { clearTimeout(wave); herMix.stopAllAction(); herMix.uncacheRoot(char); for (const m of cats) { m.stopAllAction(); m.uncacheRoot(char); } };
       } else {
@@ -904,8 +885,8 @@ async function mount(el: HTMLElement, live: React.RefObject<Live>, alive: () => 
           const t = day.time;
           if (state === "strum" && inState >= 3 * strum.getClip().duration) go("day", day, 0.25);
           else if (state === "day" && t < prev) go("strum", strum, 0.25); // ToDesk wrapped: she's back on the bed
-          else if (state === "bed" && bed.paused) { go("strum", strum, 0.25); greet(); }
-          else if (state === "desk" && desk.paused) { go("day", day, 0.25, resume); hold.fadeOut(0.25); greet(); } // back where she left off
+          else if (state === "bed" && bed.paused) go("strum", strum, 0.25);
+          else if (state === "desk" && desk.paused) { go("day", day, 0.25, resume); hold.fadeOut(0.25); } // back where she left off
           if (!queued) return;
           // A click waits for the next place she can react: on the bed, or seated at the desk (232-446), at once.
           // ReactDesk is keyed on ToDesk 330; from any other seated moment the crossfade carries her into it and back.
@@ -922,7 +903,7 @@ async function mount(el: HTMLElement, live: React.RefObject<Live>, alive: () => 
     });
   };
   void herP.then((c) => {
-    if (!c) return herIn(); // the room stands on its own without her
+    if (!c) { finishDemo(); return herIn(); } // the room stands on its own without her: no demo, just the hotspots
     mark("her-parsed");
     if (!alive()) return free(c.scene); // unmounted while she loaded
     addHer(c);
@@ -943,7 +924,9 @@ async function mount(el: HTMLElement, live: React.RefObject<Live>, alive: () => 
     window.removeEventListener("keydown", onKey);
     window.removeEventListener("cv:cat", onKonami);
     resetBtn.removeEventListener("click", unzoom);
-    hanger.removeEventListener("pointerenter", onNudge);
+    for (const b of Object.values(spots)) b.removeEventListener("click", onSpot);
+    strat.geometry.dispose();
+    el.removeEventListener("keydown", cancelDemo);
     clearTimeout(hintT);
     phoneMesh.material = phoneDark; screenMesh.material = screenDark; ledMesh.material = ledDark; // so the stage's dispose finds the baked ones
     for (const m of [...phoneLit, screenLit, winLit, ledLit, black]) { m.map?.dispose(); m.dispose(); }
