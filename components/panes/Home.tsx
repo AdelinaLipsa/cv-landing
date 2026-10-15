@@ -9,7 +9,7 @@ import type { UI } from "../Shell";
 import { about, beliefs, origin, profile, ventures } from "@/content/cv";
 import { tiles } from "@/content/wall";
 import { Card, TileLinks } from "./Work";
-import RetroComputer from "../RetroComputer";
+// import RetroComputer from "../RetroComputer"; // Off duty's computer: the room in the hero has her PC now
 import Win95 from "../Win95";
 import { LinkedInIcon, WhatsAppIcon } from "../Contact";
 import Dock from "../Dock";
@@ -19,7 +19,8 @@ import Counter from "../Counter";
 import Mark from "../Mark";
 import ShuffleHeading from "../ShuffleHeading";
 import Land from "../Land";
-import Workbench from "../Workbench";
+// import Workbench from "../Workbench"; // the room took its spot in the hero
+import Finale, { type Prop } from "../Finale";
 import { Rich } from "../Keyword";
 import EqualizerRing from "../EqualizerRing";
 import ThemeToggle from "../ThemeToggle";
@@ -104,6 +105,11 @@ export default function Home({ ui }: { ui: UI }) {
   const drop = (at: number) => (stage < at ? { "data-drop": "" } : {});
   const quick = <button type="button" className={`${p.primary} ${s.quick}`} onClick={() => ui.sheet("The 30-second version", <QuickRead contact={ui.contact} />)}><DecryptedText text="Busy? Read the 30-second version →" animateOn="hover" speed={40} maxIterations={8} /></button>;
   const [win95, setWin95] = useState(false); // the retro computer, booted
+  // The room's contact objects and the buttons they belong to: hover one, the other lights.
+  const [hot, setHot] = useState<Prop | null>(null);
+  const lights = (p: Prop) => ({ onPointerEnter: () => setHot(p), onPointerLeave: () => setHot(null), onFocus: () => setHot(p), onBlur: () => setHot(null), "data-lit": hot === p || undefined });
+  const pdfRef = useRef<HTMLAnchorElement>(null), liRef = useRef<HTMLAnchorElement>(null);
+  const pick = (p: Prop) => (p === "phone" ? ui.contact() : (p === "printer" ? pdfRef : liRef).current?.click()); // what the button itself does
   const buildLabel = touring ? "Stop the build" : ui.returning ? "Replay the build" : "Watch me build it";
 
   return (
@@ -112,10 +118,10 @@ export default function Home({ ui }: { ui: UI }) {
       <header className={s.top}>
         <span className={s.mark}><span className={s.monogram}>{profile.initials}</span><span className={s.markName}>{profile.name}</span></span>
         <div className={s.icons}>
-          <Magnet padding={24} magnetStrength={3} disabled={!!reduce}><a href={profile.linkedin} target="_blank" rel="noopener" aria-label="LinkedIn" className={`${s.icon} ${s.linkedin} water`}><LinkedInIcon /></a></Magnet>
-          <Magnet padding={24} magnetStrength={3} disabled={!!reduce}><button type="button" onClick={ui.contact} aria-label="Message me" className={`${s.icon} ${s.whatsapp} water`}><WhatsAppIcon size={18} /></button></Magnet>
+          <Magnet padding={24} magnetStrength={3} disabled={!!reduce}><a ref={liRef} href={profile.linkedin} target="_blank" rel="noopener" aria-label="LinkedIn" className={`${s.icon} ${s.linkedin} water`} {...lights("rolodex")}><LinkedInIcon /></a></Magnet>
+          <Magnet padding={24} magnetStrength={3} disabled={!!reduce}><button type="button" onClick={ui.contact} aria-label="Message me" className={`${s.icon} ${s.whatsapp} water`} {...lights("phone")}><WhatsAppIcon size={18} /></button></Magnet>
           <ThemeToggle className={`${s.icon} water`} />
-          <Magnet padding={24} magnetStrength={3} disabled={!!reduce}><a href={profile.pdf} download className={s.pdf} aria-label="Download CV as PDF">
+          <Magnet padding={24} magnetStrength={3} disabled={!!reduce}><a ref={pdfRef} href={profile.pdf} download className={s.pdf} aria-label="Download CV as PDF" {...lights("printer")}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 4v11m0 0-4.5-4.5M12 15l4.5-4.5M5 20h14" /></svg>
             <span>PDF</span>
           </a></Magnet>
@@ -172,7 +178,7 @@ export default function Home({ ui }: { ui: UI }) {
           <p className={s.about}><Rich text={about[0]} /></p>
           <div className={s.actions}>
             <Magnet padding={40} magnetStrength={4} disabled={!!reduce}><button type="button" className={`${p.primary} ${s.buildBtn}`} onClick={ui.build} data-tour="build"><Play />{buildLabel}</button></Magnet>
-            <button type="button" className={s.messageBtn} onClick={ui.contact}><WhatsAppIcon size={17} /><DecryptedText text="Message me" animateOn="hover" speed={40} maxIterations={8} /></button>
+            <button type="button" className={s.messageBtn} onClick={ui.contact} {...lights("phone")}><WhatsAppIcon size={17} /><DecryptedText text="Message me" animateOn="hover" speed={40} maxIterations={8} /></button>
           </div>
           {/* Skip the cutscene: the whole CV in 30 seconds, for the busy */}
           {!touring && (
@@ -191,9 +197,9 @@ export default function Home({ ui }: { ui: UI }) {
           </div>
         </div>
 
-        {/* Four sides of the job: product, people, operations, build */}
+        {/* Her room, baked in Blender. The Workbench that sat here is retired: <Workbench /> */}
         <div className={`${s.cards} ${s.dropper}`} data-tour="cards" {...drop(STAGE.cards)}>
-          <Workbench />
+          <Finale hot={hot} onHot={setHot} onPick={pick} onScreen={() => setWin95(true)} />
         </div>
       </div>
 
@@ -245,10 +251,8 @@ export default function Home({ ui }: { ui: UI }) {
             <span aria-hidden="true">&gt;_</span> psst… there’s a terminal in here<span className={s.termHint}>. Press `</span>
           </button>
         </div>
-        <div className={s.retro} data-tour="retro">
-          <RetroComputer className={s.retroCanvas} character={ui.character} onScreen={() => setWin95(true)} />
-          {!touring && <button type="button" className={s.bootBtn} onClick={() => setWin95(true)}><span aria-hidden="true">▶</span> Boot the old computer</button>}
-        </div>
+        {/* The computer moved to the room in the hero: <RetroComputer className={s.retroCanvas} character={ui.character} onScreen={() => setWin95(true)} /> */}
+        {!touring && <button type="button" className={s.bootBtn} onClick={() => setWin95(true)}><span aria-hidden="true">▶</span> Boot the old computer</button>}
         {win95 && <Win95 onClose={() => setWin95(false)} contact={ui.contact} />}
       </section>
 

@@ -24,6 +24,10 @@
 .linkedin { --water: #0a66c2; }
 .linkedin:hover svg *, .linkedin:focus-visible svg * { fill: #fff; stroke: #fff; }
 .whatsapp { --water: #25d366; }
+/* Lit from the room: pointing at an object lights its button. The icons fill like their hover; the others get the amber ring the Skills picks use. */
+.icon[data-lit] { --fill: 100%; color: var(--water-ink, #fff); border-color: var(--water, var(--blueprint)); }
+.linkedin[data-lit] svg * { fill: #fff; stroke: #fff; }
+.pdf[data-lit], .messageBtn[data-lit] { border-color: var(--broth); box-shadow: 0 0 0 3px rgba(245, 181, 63, 0.35); transform: translateY(-1px); }
 
 /* "Message me": a real secondary button next to the primary, not a text link */
 .messageBtn { display: inline-flex; align-items: center; gap: 8px; height: 46px; padding: 0 18px 0 14px; border: 1.5px solid var(--ink); border-radius: 999px; background: transparent; color: var(--ink); font-size: 15px; font-weight: 600; cursor: pointer; transition: background-color 0.3s var(--ease), color 0.3s var(--ease), transform 0.3s var(--ease); }
@@ -159,7 +163,7 @@
   .pdf { width: auto; padding: 0 18px; gap: 8px; font-size: 14px; font-weight: 600; text-decoration: none; }
   .pdf span { display: inline; }
 
-  .grid { grid-template-columns: minmax(0, 1fr) 460px; margin-top: 76px; }
+  .grid { grid-template-columns: minmax(0, 1fr) 520px; margin-top: 76px; } /* wider than the Workbench was, still narrow enough to keep the name on one line at 1440 */
   .portrait { --r: 36px; width: 132px; height: 132px; box-shadow: 0 1px 2px rgba(23, 21, 58, 0.06), 0 16px 36px rgba(23, 21, 58, 0.12); border-radius: 36px; }
   .portraitLabel { font-size: 12px; left: calc(100% + 24px); }
   .mobileOnly { display: none; }
@@ -177,7 +181,12 @@
   .h2 { font-size: 40px; }
   .tiles { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; }
   .media { height: 200px; border-radius: 24px; }
-  .offDuty { margin-top: 80px; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: start; gap: 48px; }
+  .offDuty { margin-top: 80px; }
+  /* One column now the computer is gone: the timeline on the left, the rest beside it */
+  .offText { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); grid-template-rows: auto auto auto auto 1fr; gap: 14px 64px; align-items: start; }
+  .offText > h2 { grid-column: 1 / -1; }
+  .offText > .origin { grid-row: 2 / -1; } /* the spare height goes to the last row, so the right column stays packed */
+  .offText > :not(h2, .origin) { grid-column: 2; }
   /* The text column runs long: the computer rides along beside it instead of sitting halfway down. */
   .retro { order: 0; height: 460px; margin: 0; position: sticky; top: 48px; }
 }

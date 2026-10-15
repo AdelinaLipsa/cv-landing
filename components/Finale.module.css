@@ -1,10 +1,29 @@
-/* The desk at the end of the page. The canvas fills it; the notes sit on top. */
-.host { position: relative; width: 100%; height: 280px; touch-action: pan-y; container-type: inline-size; }
-.host canvas { display: block; width: 100%; height: 100%; }
-@media (min-width: 1000px) { .host { height: 420px; } }
-/* The phone's note hangs below-left of it, arrow pointing up at the phone, clear of the posters and the printer's note */
-.under { flex-direction: row-reverse; align-items: flex-start; }
-.under svg { transform: scale(-1, -1); }
-.under > span { margin: 34px 0 0; }
-/* Phone-width scenes have no room for three notes side by side; the buttons above already name each object */
-@container (max-width: 479px) { .host [data-note] { display: none; } }
+/* Her room in the hero, with no box: the canvas is transparent and bleeds past the column (--bleed each side), so the
+   room floats on the page. The preview render shows at once and fades out as the live canvas fades in; the camera keeps
+   air round the walls (AIR in Finale.tsx), so the preview is drawn at 1 / 1.18 to line up with it. */
+.host { --bleed: 16px; position: relative; width: calc(100% + 2 * var(--bleed)); margin: calc(-1 * var(--bleed)); aspect-ratio: 5 / 4; touch-action: pan-y; container-type: inline-size; }
+@media (min-width: 1000px) { .host { --bleed: 48px; } }
+.host::before { content: ""; position: absolute; inset: 0; background: url("/models/room-preview.webp") center / 84.75% auto no-repeat; transition: opacity 0.8s var(--ease); pointer-events: none; }
+.host canvas { position: relative; display: block; width: 100%; height: 100%; opacity: 0; transition: opacity 0.8s var(--ease); }
+.host[data-live]::before { opacity: 0; }
+.host[data-live] canvas { opacity: 1; }
+/* The notes, lit like the room: warm cream handwriting with a dusk-violet halo and a fairy-light glow, so they
+   read over the room and over the light page alike. The arrows are the room's pink, haloed the same way. */
+.arrows { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 1; overflow: visible; pointer-events: none; }
+.arrows path { fill: none; stroke: #ff9ec0; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; filter: drop-shadow(0 0 1.5px #2a1f4d) drop-shadow(0 0 4px rgba(42, 31, 77, 0.6)); opacity: 0; transition: opacity 0.4s var(--ease), stroke-width 0.3s var(--ease); }
+.note { position: absolute; left: 0; top: 0; z-index: 2; pointer-events: none; opacity: 0; transition: opacity 0.4s var(--ease), scale 0.3s var(--ease), filter 0.3s var(--ease); }
+.note > span {
+  display: block; font-family: var(--font-display), sans-serif; font-size: 16px; font-weight: 700; font-stretch: 112%; white-space: nowrap;
+  color: #fff4e6; transform: rotate(-6deg);
+  text-shadow: 0 0 1px #2a1f4d, 0 0 2px #2a1f4d, 0 1px 3px #2a1f4d, 0 0 6px rgba(42, 31, 77, 0.7), 0 0 16px rgba(255, 178, 94, 0.55);
+  animation: float 3.4s ease-in-out infinite;
+}
+@keyframes float { 0%, 100% { translate: 0 0; } 50% { translate: 3px -5px; } }
+.note[data-placed], .host:has([data-placed]) .arrows path { opacity: 1; }
+/* Hovering a contact button or its object: its note brightens and grows a touch, the others step back */
+.note[data-hot] { scale: 1.12; filter: brightness(1.15) drop-shadow(0 0 8px rgba(255, 178, 94, 0.6)); }
+.arrows path[data-hot] { stroke-width: 3; }
+.host[data-any] .note:not([data-hot]), .host[data-any] .arrows path:not([data-hot]) { opacity: 0.5; }
+@media (prefers-reduced-motion: reduce) { .note > span { animation: none; } }
+/* Phone-width scenes have no room for three notes; the buttons above already name each object */
+@container (max-width: 479px) { .note, .arrows { display: none; } }
