@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useRef } from "react";
+import { useEffect, useId, useRef } from "react";
 import { preload } from "react-dom";
 import type * as T from "three";
 import type { Toy } from "@/lib/toyStage";
@@ -16,7 +16,7 @@ const NOTES: [Prop, string][] = [["phone", "text me"], ["printer", "print me out
 // Each note's text sits in open page space just off the room's silhouette (as a fraction of the canvas, for the
 // fixed camera), and its arrow is redrawn every frame to land on the object itself. "rolodex" is her PC monitor, which
 // wakes with her LinkedIn card while the LinkedIn button is hovered; the Prop name stays for the wiring.
-const LABEL: Record<Prop, [number, number]> = { phone: [0.1, 0.8], printer: [0.2, 0.13], rolodex: [0.8, 0.13] };
+const LABEL: Record<Prop, [number, number]> = { phone: [0.1, 0.8], printer: [0.36, 0.05], rolodex: [0.8, 0.13] };
 const TARGET: Record<Prop, string> = { phone: "PhoneScreen", printer: "PrinterBodyMesh", rolodex: "Screen" };
 const PICK_NODE: Record<Prop, string> = { phone: "Phone", printer: "Printer", rolodex: "Monitor" };
 
@@ -53,19 +53,77 @@ export default function Finale({ className, hot, onHot, onPick, onScreen }: Prop
 
   return (
     <>
-    <p className={s.cue}>
-      <span aria-hidden="true">↓ </span>my room, it’s interactive: click around
-      <svg className={s.tap} viewBox="0 0 16 22" aria-hidden="true"><path d="M2 1.5v15.5l4-3.6 2.6 6.1 3-1.3-2.6-6 5.4-.2z" /></svg>
-    </p>
+    <p className={s.sr}>The room is interactive. A door hanger on its wall says: knock first, or just click around: me, the cats, the computer. Pinch to zoom.</p>
     <div ref={host} className={`${s.host} ${className ?? ""}`} role="img" aria-label="My teenage bedroom at dusk: rock posters, a window, my guitars, a skateboard, boxing gloves, a corner desk with my PC, a Nokia phone, an inkjet printer, a bed with bookshelves, and my two cats. I'm in it too, sitting on the bed playing guitar and now and then getting up to work at the desk: click me to say hi, or pet a cat. The phone messages me, the printer prints my CV, and the computer boots Windows 95. Pinch or double-click to zoom in.">
       <svg className={s.arrows} aria-hidden="true">{NOTES.map(([p]) => <path key={p} data-arrow={p} />)}<path data-arrow="her" /></svg>
       {NOTES.map(([p, text]) => <span key={p} className={s.note} data-note={p} aria-hidden="true"><span>{text}</span></span>)}
       <span className={s.ring} data-ring aria-hidden="true" />
+      <div className={s.hanger} data-hanger aria-hidden="true">
+        <div className={s.swing} data-swing>
+          <svg className={s.string} viewBox="0 0 24 44"><path d="M12 0C14 12 10 24 12 36c.6 4-3 6-4.5 4" /><circle cx="12" cy="1.5" r="2.2" /></svg>
+          <div className={s.card}><Tag side="front" /><Tag side="back" /></div>
+        </div>
+      </div>
       <span className={`${s.note} ${s.herNote}`} data-her aria-hidden="true"><span>click me, I’ll say hi</span></span>
       <span className={s.hint} data-hint aria-hidden="true"><span>pinch or double-click to zoom</span></span>
       <button type="button" className={s.reset} data-reset aria-label="Zoom the room back out"><span>zoom out</span></button>
     </div>
     </>
+  );
+}
+
+// Her door hanger: dusk-violet card, cream ink, a doodled border, three stickers. The string threads its hole.
+function Tag({ side }: { side: "front" | "back" }) {
+  const id = useId().replace(/:/g, ""), cut = `${id}c`, grain = `${id}g`, wob = `${id}w`;
+  const ink = "#fff4e6";
+  return (
+    <svg className={`${s.face} ${side === "back" ? s.back : ""}`} viewBox="0 0 150 200">
+      <defs>
+        <mask id={cut}>
+          <rect x="6" y="6" width="138" height="188" rx="16" fill="#fff" />
+          <circle cx="75" cy="34" r="15" fill="#000" />
+          <path d="M63 43 8 70" stroke="#000" strokeWidth="2.6" />
+        </mask>
+        <filter id={grain} x="0" y="0" width="100%" height="100%">
+          <feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="2" seed="7" />
+          <feColorMatrix values="0 0 0 0 1  0 0 0 0 0.9  0 0 0 0 0.8  0 0 0 0.55 -0.18" />
+        </filter>
+        <filter id={wob}><feTurbulence type="turbulence" baseFrequency="0.035" numOctaves="2" seed="3" /><feDisplacementMap in="SourceGraphic" scale="3" /></filter>
+      </defs>
+      <g mask={`url(#${cut})`}>
+        <rect width="150" height="200" fill="#2a1f4d" />
+        <rect width="150" height="200" fill="#000" filter={`url(#${grain})`} opacity="0.5" />
+        <path d="M6 150c30-10 70 6 138-6v50H6z" fill="#3a2b63" opacity="0.6" />
+      </g>
+      <rect x="13" y="13" width="124" height="174" rx="11" fill="none" stroke={ink} strokeOpacity="0.55" strokeWidth="1.6" strokeDasharray="7 4 2 4" filter={`url(#${wob})`} />
+      <circle cx="75" cy="34" r="17" fill="none" stroke={ink} strokeOpacity="0.4" strokeWidth="1.2" filter={`url(#${wob})`} />
+      {side === "front" ? (
+        <g className={s.ink} fill={ink}>
+          <text className={s.big} x="75" y="86" fontSize="27" fontWeight="800" textAnchor="middle" transform="rotate(-4 75 86)">KNOCK</text>
+          <text className={s.big} x="77" y="114" fontSize="27" fontWeight="800" textAnchor="middle" transform="rotate(-4 75 114)">FIRST</text>
+          <path d="M34 124c14 5 30-4 44 1s22-3 38 0" fill="none" stroke="#ff9ec0" strokeWidth="2.2" strokeLinecap="round" filter={`url(#${wob})`} />
+          <text x="75" y="142" fontSize="11.5" textAnchor="middle" fillOpacity="0.92">or just click around:</text>
+          <text x="75" y="156" fontSize="11.5" textAnchor="middle" fillOpacity="0.92">me, the cats,</text>
+          <text x="75" y="170" fontSize="11.5" textAnchor="middle" fillOpacity="0.92">the computer</text>
+          <text x="75" y="186" fontSize="8.5" textAnchor="middle" fillOpacity="0.6" letterSpacing="0.6">pinch to zoom</text>
+          {/* stickers: a star, a guitar pick, a cat face */}
+          <path d="m124 14 3.6 7.6 8.3 1-6.1 5.7 1.6 8.2-7.4-4.1-7.3 4.1 1.5-8.2-6.1-5.7 8.3-1z" fill="#ffcc4d" stroke="#2a1f4d" strokeWidth="1.2" transform="rotate(14 124 26)" />
+          <path d="M15 172c5-2.5 13-2.5 17 0 1 5-4 12-8.5 15-4.5-3-9.5-10-8.5-15z" fill="#ff9ec0" stroke="#2a1f4d" strokeWidth="1.2" transform="rotate(-18 24 180)" />
+          <g transform="translate(127 180) rotate(10) scale(0.9)">
+            <path d="M-9 -4-8-13-2-7h4l6-6 1 9c1 7-3 11-9 11s-10-4-9-11z" fill={ink} stroke="#2a1f4d" strokeWidth="1.2" />
+            <circle cx="-3.5" cy="-1" r="1.2" fill="#2a1f4d" /><circle cx="3.5" cy="-1" r="1.2" fill="#2a1f4d" /><path d="M-1.5 2.5 0 3.6 1.5 2.5" stroke="#2a1f4d" fill="none" strokeWidth="1" />
+          </g>
+        </g>
+      ) : (
+        <g className={s.ink} fill={ink}>
+          <text className={s.big} x="75" y="92" fontSize="20" fontWeight="800" textAnchor="middle" transform="rotate(-3 75 92)">come back</text>
+          <text className={s.big} x="75" y="120" fontSize="20" fontWeight="800" textAnchor="middle" transform="rotate(-3 75 122)">soon <tspan fill="#ff9ec0">♥</tspan></text>
+          <path d="M44 134c10 4 22-3 32 1s20-2 30 0" fill="none" stroke="#ff9ec0" strokeWidth="2" strokeLinecap="round" filter={`url(#${wob})`} />
+          <text x="98" y="166" fontSize="12" textAnchor="middle" fillOpacity="0.85" transform="rotate(-6 98 166)">— A.</text>
+          <path d="m30 160 2.4 5 5.5.7-4 3.8 1 5.4-4.9-2.7-4.9 2.7 1-5.4-4-3.8 5.5-.7z" fill="#ffcc4d" stroke="#2a1f4d" strokeWidth="1" />
+        </g>
+      )}
+    </svg>
   );
 }
 
@@ -345,14 +403,17 @@ async function mount(el: HTMLElement, live: React.RefObject<Live>, alive: () => 
   const ring = el.querySelector<HTMLElement>("[data-ring]")!, rv = new THREE.Vector3();
   const pulseOn: T.Object3D[] = [node("Screen")];
   let pulseI = 0, pulseAt = 1.5, pulsing: T.Object3D | null = null;
-  let poked = reduce || (() => { try { return sessionStorage.getItem("room-poked") === "1"; } catch { return false; } })();
+  let poked = (() => { try { return sessionStorage.getItem("room-poked") === "1"; } catch { return false; } })();
+  const hanger = el.querySelector<HTMLElement>("[data-hanger]")!, swing = el.querySelector<HTMLElement>("[data-swing]")!;
+  hanger.toggleAttribute("data-flipped", poked);
   const markPoked = () => {
     if (poked) return;
     poked = true; pulsing = null; ring.removeAttribute("data-on");
+    hanger.toggleAttribute("data-flipped", true); // "come back soon"
     try { sessionStorage.setItem("room-poked", "1"); } catch {}
   };
   const pulse = (t: number) => {
-    if (poked) return;
+    if (poked || reduce) return;
     if (t >= pulseAt) {
       pulseAt = t + 4; pulsing = pulseOn[pulseI++ % pulseOn.length];
       ring.setAttribute("data-on", "");
@@ -362,6 +423,39 @@ async function mount(el: HTMLElement, live: React.RefObject<Live>, alive: () => 
     const v = pulsing.getWorldPosition(rv).project(camera);
     ring.style.left = `${((v.x + 1) / 2) * el.clientWidth}px`; ring.style.top = `${((1 - v.y) / 2) * el.clientHeight}px`;
   };
+  // The door hanger hangs by its string from the top edge of the left wall, 30% in from its outer corner (the
+  // shell's top corner seen furthest left) toward the back corner, so it hangs on the wall, clear of the text, her
+  // and the cats. It drops in on a spring when the room goes live, sways like a pendulum, swings off a cursor.
+  const sb = new THREE.Box3().setFromObject(node("Room_ShellMesh")), hook = new THREE.Vector3(), back = new THREE.Vector3(), hv2 = new THREE.Vector3();
+  let far = Infinity, deep = -Infinity;
+  for (const x of [sb.min.x, sb.max.x]) for (const z of [sb.min.z, sb.max.z]) {
+    const cv = hv2.set(x, sb.max.y, z).applyMatrix4(camera.matrixWorldInverse), k = cv.x / -cv.z;
+    if (k < far) { far = k; hook.set(x, sb.max.y, z); }
+    if (-cv.z > deep) { deep = -cv.z; back.set(x, sb.max.y, z); }
+  }
+  hook.lerp(back, 0.3);
+  let ang = 0, angV = 0, drop = 0, dropV = 0, dropped = false;
+  const sway = (t: number, dt: number) => {
+    if (!dropped && "live" in el.dataset) { dropped = true; drop = -150; angV = 0.5; } // in from above, with a jolt
+    for (let n = Math.ceil(dt / (1 / 120)), h = dt / Math.max(n, 1); n > 0; n--) { // small steps: the drop spring is stiff
+      dropV += (-220 * drop - 2 * 0.3 * Math.sqrt(220) * dropV) * h; drop += dropV * h;
+      const rest = 0.03 * Math.sin(t * 0.8) + 0.012 * Math.sin(t * 1.9 + 1); // an idle sway, never quite still
+      angV += (-14 * (ang - rest) - 0.9 * angV) * h; ang += angV * h;
+    }
+    swing.style.transform = `translateY(${drop.toFixed(1)}px) rotate(${ang.toFixed(4)}rad)`;
+  };
+  const onNudge = (e: PointerEvent) => { // swings away from the cursor's side
+    if (reduce) return;
+    const r = swing.getBoundingClientRect();
+    angV += (e.clientX < r.left + r.width / 2 ? -1 : 1) * 2.4;
+  };
+  hanger.addEventListener("pointerenter", onNudge);
+  const placeHanger = () => {
+    const v = hv2.copy(hook).project(camera), off = Math.abs(v.x) > 1 || Math.abs(v.y) > 1;
+    hanger.toggleAttribute("data-off", off);
+    hanger.style.left = `${((v.x + 1) / 2) * el.clientWidth}px`; hanger.style.top = `${((1 - v.y) / 2) * el.clientHeight}px`;
+  };
+
   let hoverHer = (_h: unknown) => {}; // her and the cats brighten under the pointer, once they're in
   const pointPc = (on: boolean) => { if (pcHover && !on) pcOffAt = performance.now() / 1000 + 1.5; pcHover = on; };
 
@@ -380,7 +474,12 @@ async function mount(el: HTMLElement, live: React.RefObject<Live>, alive: () => 
     for (const p of Object.keys(picks) as Prop[]) if (ray.intersectObject(picks[p], true).length) return p;
     return ray.intersectObject(tower, true).length ? "tower" : null;
   };
+  // Progressive notes: at rest only the door hanger; her note while the pointer's in the room (a tap shows it 2 s on
+  // touch); an object's note when the pointer's near it, or its button is hovered.
+  let roomPtr = false, tapUntil = 0;
+  const ptr = new THREE.Vector2();
   const onMove = (e: PointerEvent) => {
+    if (e.pointerType === "mouse") { const r = el.getBoundingClientRect(); roomPtr = true; ptr.set(e.clientX - r.left, e.clientY - r.top); }
     if (touches.has(e.pointerId)) touches.set(e.pointerId, [e.clientX, e.clientY]);
     if (touches.size === 2) { // pinch: zoom by the spread, about the midpoint
       e.stopPropagation(); // the first finger already started the pane's drag; this cuts it off (pointerup still bubbles, so it snaps back)
@@ -394,12 +493,13 @@ async function mount(el: HTMLElement, live: React.RefObject<Live>, alive: () => 
     hoverHer(h);
     el.style.cursor = h ? "pointer" : want.z > 1.01 ? (drag ? "grabbing" : "grab") : "";
     if (p !== pointer) { pointer = p; live.current.onHot(p); }
+    if (reduce) placeNotes(live.current.hot ?? pointer); // no loop: the notes follow the pointer here
   };
-  const onLeave = () => { pointPc(false); hoverHer(null); if (pointer) { pointer = null; live.current.onHot(null); } };
+  const onLeave = () => { roomPtr = false; pointPc(false); hoverHer(null); if (reduce) placeNotes(live.current.hot); if (pointer) { pointer = null; live.current.onHot(null); } };
   // Her computer, monitor or tower, always boots Win95; LinkedIn opens only from its own button.
   // A click is a left press and release on the same object without dragging: right-clicks and drags do nothing.
   let down: { h: ReturnType<typeof hit>; x: number; y: number } | null = null;
-  const onButton = (e: Event) => !!(e.target as Element).closest?.("[data-reset]"); // the zoom-out button is its own
+  const onButton = (e: Event) => !!(e.target as Element).closest?.("[data-reset], [data-hanger]"); // the zoom-out button and the hanger are their own
   const onDown = (e: PointerEvent) => {
     if (onButton(e)) return;
     if (e.pointerType === "touch") touches.set(e.pointerId, [e.clientX, e.clientY]);
@@ -413,6 +513,7 @@ async function mount(el: HTMLElement, live: React.RefObject<Live>, alive: () => 
     if (onButton(e)) return;
     const d = down;
     onCancel(e);
+    if (e.pointerType !== "mouse") tapUntil = performance.now() / 1000 + 2;
     const h = hit(e);
     if (!d || d.h !== h || Math.hypot(e.clientX - d.x, e.clientY - d.y) > 6) return; // a drag or pan never clicks
     if (h) markPoked();
@@ -441,21 +542,27 @@ async function mount(el: HTMLElement, live: React.RefObject<Live>, alive: () => 
     const ax = ex - cx, ay = ey - cy, al = Math.hypot(ax, ay) || 1, hx = (ax / al) * 10, hy = (ay / al) * 10; // the head follows the curve's end
     const head = (a: number) => `${ex - hx * Math.cos(a) + hy * Math.sin(a)} ${ey - hy * Math.cos(a) - hx * Math.sin(a)}`;
     arrow.setAttribute("d", `M${sx} ${sy}Q${cx} ${cy} ${ex} ${ey}M${head(0.5)}L${ex} ${ey}L${head(-0.5)}`);
-    nd.dataset.placed = "";
   };
   let placeHer = () => {}; // her own note, once she's in
   const placeNotes = (hot: Prop | null = null) => {
     const W = el.clientWidth, H = el.clientHeight;
     el.toggleAttribute("data-any", !!hot);
+    let nearest: Prop | null = null, best = 120; // the pointer's nearest object within 120 px; never the monitor (pointing at it is Win95)
+    if (roomPtr) for (const nd of notes) {
+      const p = nd.dataset.note as Prop, v = anchors[p].getWorldPosition(at).project(camera);
+      const d = Math.hypot(((v.x + 1) / 2) * W - ptr.x, ((1 - v.y) / 2) * H - ptr.y);
+      if (p !== "rolodex" && d < best) { best = d; nearest = p; }
+    }
     for (const nd of notes) {
       const p = nd.dataset.note as Prop, v = anchors[p].getWorldPosition(at).project(camera);
-      // Zoomed past it; and the monitor's LinkedIn note only while the LinkedIn button is hovered (a click on it is Win95)
-      const off = Math.abs(v.x) > 1 || Math.abs(v.y) > 1 || (p === "rolodex" && hot !== "rolodex");
-      nd.toggleAttribute("data-off", off); arrows[p].toggleAttribute("data-off", off);
-      pin(nd, arrows[p], LABEL[p][0] * W, LABEL[p][1] * H, ((v.x + 1) / 2) * W, ((1 - v.y) / 2) * H);
+      const tx = ((v.x + 1) / 2) * W, ty = ((1 - v.y) / 2) * H, seen = Math.abs(v.x) <= 1 && Math.abs(v.y) <= 1;
+      const show = seen && (hot ? p === hot : p === nearest); // its button (or itself) hovered, else the nearest
+      nd.toggleAttribute("data-show", show); arrows[p].toggleAttribute("data-show", show);
+      pin(nd, arrows[p], LABEL[p][0] * W, LABEL[p][1] * H, tx, ty);
       nd.toggleAttribute("data-hot", p === hot); arrows[p].toggleAttribute("data-hot", p === hot);
     }
     placeHer();
+    placeHanger();
   };
 
   const pose = (t: number, hot: Prop | null) => {
@@ -632,6 +739,7 @@ async function mount(el: HTMLElement, live: React.RefObject<Live>, alive: () => 
     pose(t, hot);
     tickHer?.(dt);
     pulse(t);
+    if (!reduce) sway(t, dt);
     if (zoom.z !== want.z || zoom.x !== want.x || zoom.y !== want.y) { // ~150 ms ease
       for (const k of AXES) zoom[k] = Math.abs(want[k] - zoom[k]) < 1e-4 ? want[k] : ease(zoom[k], want[k], dt, 20);
       lens();
@@ -765,11 +873,13 @@ async function mount(el: HTMLElement, live: React.RefObject<Live>, alive: () => 
       const greet = () => { herNote.firstElementChild!.textContent = "hi again!"; };
       placeHer = () => {
         const t = day.time, still = state !== "day" || t < 47 * F || t > 540 * F || (t >= 232 * F && t <= 446 * F);
-        const v = head.getWorldPosition(hv).project(camera), off = fade < 1 || !still || Math.abs(v.x) > 0.95 || Math.abs(v.y) > 0.95;
-        herNote.toggleAttribute("data-off", off); herArrow.toggleAttribute("data-off", off);
-        if (off) return;
+        const v = head.getWorldPosition(hv).project(camera), wanted = roomPtr || performance.now() / 1000 < tapUntil;
+        const show = wanted && fade === 1 && still && Math.abs(v.x) < 0.95 && Math.abs(v.y) < 0.95;
+        herNote.toggleAttribute("data-show", show); herArrow.toggleAttribute("data-show", show);
+        if (!show && !herNote.hasAttribute("data-was")) return; // never placed yet: nothing to fade out
+        herNote.setAttribute("data-was", "");
         const W = el.clientWidth, H = el.clientHeight, tx = ((v.x + 1) / 2) * W, ty = ((1 - v.y) / 2) * H - 0.03 * H; // to the top of her head
-        pin(herNote, herArrow, tx - 0.13 * W, Math.max(0.06 * H, ty - 0.16 * H), tx, ty);
+        pin(herNote, herArrow, tx + (tx < 0.55 * W ? 0.14 : -0.13) * W, Math.max(0.06 * H, ty - 0.16 * H), tx, ty); // away from the hanger
       };
 
       if (reduce) { // a still: her first strum, the cats at rest; a click shows the wave for 2 s
@@ -833,6 +943,7 @@ async function mount(el: HTMLElement, live: React.RefObject<Live>, alive: () => 
     window.removeEventListener("keydown", onKey);
     window.removeEventListener("cv:cat", onKonami);
     resetBtn.removeEventListener("click", unzoom);
+    hanger.removeEventListener("pointerenter", onNudge);
     clearTimeout(hintT);
     phoneMesh.material = phoneDark; screenMesh.material = screenDark; ledMesh.material = ledDark; // so the stage's dispose finds the baked ones
     for (const m of [...phoneLit, screenLit, winLit, ledLit, black]) { m.map?.dispose(); m.dispose(); }

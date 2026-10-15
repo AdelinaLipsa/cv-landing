@@ -19,12 +19,12 @@
   animation: float 3.4s ease-in-out infinite;
 }
 @keyframes float { 0%, 100% { translate: 0 0; } 50% { translate: 3px -5px; } }
-.note[data-placed], .host:has([data-placed]) .arrows path { opacity: 1; }
-.host .note[data-off], .host .arrows path[data-off] { opacity: 0; }
+/* Notes show only in context (see placeNotes): in over 200 ms, out over 400 ms */
+.note[data-show], .arrows path[data-show] { opacity: 1; transition-duration: 0.2s, 0.3s, 0.3s; }
 /* Hovering a contact button or its object: its note brightens and grows a touch, the others step back */
 .note[data-hot] { scale: 1.12; filter: brightness(1.15) drop-shadow(0 0 8px rgba(255, 178, 94, 0.6)); }
 .arrows path[data-hot] { stroke-width: 3; }
-.host[data-any] .note:not([data-hot]), .host[data-any] .arrows path:not([data-hot]) { opacity: 0.5; }
+.host[data-any] .note[data-show]:not([data-hot]), .host[data-any] .arrows path[data-show]:not([data-hot]) { opacity: 0.5; }
 /* Zoom: a hint on the first hover, and a way back out while zoomed, both in the notes' hand */
 .hint, .reset { position: absolute; z-index: 2; left: 50%; bottom: 4%; translate: -50% 0; opacity: 0; pointer-events: none; transition: opacity 0.4s var(--ease); }
 .hint > span, .reset > span { display: block; font-family: var(--font-display), sans-serif; font-size: 14px; font-weight: 700; font-stretch: 112%; white-space: nowrap; color: #fff4e6; text-shadow: 0 0 1px #2a1f4d, 0 0 2px #2a1f4d, 0 1px 3px #2a1f4d, 0 0 6px rgba(42, 31, 77, 0.7), 0 0 16px rgba(255, 178, 94, 0.55); }
@@ -35,15 +35,23 @@
 .reset:hover > span { filter: brightness(1.15) drop-shadow(0 0 8px rgba(255, 178, 94, 0.6)); }
 .reset:focus-visible { outline: 2px solid #ff9ec0; outline-offset: 2px; border-radius: 8px; }
 .host[data-zoomed] .reset { opacity: 1; pointer-events: auto; visibility: visible; }
-/* Over the room, always on: it's interactive. Real text in the notes' hand, a little cursor tapping beside it. */
-.cue {
-  position: relative; z-index: 1; margin: 0 0 -26px; text-align: center; text-wrap: balance; pointer-events: none;
-  font-family: var(--font-display), sans-serif; font-size: 19px; font-weight: 700; font-stretch: 112%; color: #fff4e6; transform: rotate(-2deg);
-  text-shadow: 0 0 1px #2a1f4d, 0 0 2px #2a1f4d, 0 1px 3px #2a1f4d, 0 0 6px rgba(42, 31, 77, 0.7), 0 0 16px rgba(255, 178, 94, 0.55);
-}
-.tap { display: inline-block; width: 15px; height: 20px; margin-left: 8px; vertical-align: -3px; overflow: visible; filter: drop-shadow(0 0 1.5px #2a1f4d) drop-shadow(0 0 5px rgba(255, 178, 94, 0.6)); animation: tap 3s ease-in-out infinite; transform-origin: 30% 10%; }
-.tap path { fill: #fff4e6; stroke: #2a1f4d; stroke-width: 1.4; stroke-linejoin: round; }
-@keyframes tap { 0%, 70%, 100% { transform: translate(0, 0) scale(1); } 78% { transform: translate(-2px, 3px) scale(0.82); } 86% { transform: translate(0, 0) scale(1); } }
+/* The door hanger: hung from the room's top-left wall corner by its string, swinging (Finale.tsx sways it). Its pin
+   sits at the corner; the card flips to its back after the first click. */
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.hanger { --s: 1; position: absolute; z-index: 1; width: 0; height: 0; opacity: 0; transition: opacity 0.5s var(--ease); }
+.host[data-live] .hanger { opacity: 1; }
+.hanger[data-off] { opacity: 0; }
+.swing { position: absolute; left: calc(-75px * var(--s)); top: -2px; width: calc(150px * var(--s)); transform-origin: 50% 0; filter: drop-shadow(0 6px 8px rgba(23, 21, 58, 0.45)); }
+.string { display: block; width: calc(24px * var(--s)); height: calc(44px * var(--s)); margin: 0 auto calc(-34px * var(--s)); position: relative; z-index: 1; overflow: visible; }
+.string path { fill: none; stroke: #e9d8bd; stroke-width: 1.4; stroke-linecap: round; }
+.string circle { fill: #c9b9a0; stroke: #2a1f4d; stroke-width: 1; }
+.card { position: relative; width: calc(150px * var(--s)); height: calc(200px * var(--s)); perspective: 600px; pointer-events: auto; cursor: default; }
+.face { position: absolute; inset: 0; width: 100%; height: 100%; backface-visibility: hidden; transition: transform 0.8s cubic-bezier(0.34, 1.4, 0.5, 1), opacity 0.5s var(--ease); }
+.face text { font-family: var(--font-display), sans-serif; font-stretch: 88%; font-weight: 600; }
+.face .big { font-stretch: 108%; font-weight: 800; }
+.back { transform: rotateY(180deg); }
+.hanger[data-flipped] .face:not(.back) { transform: rotateY(-180deg); }
+.hanger[data-flipped] .back { transform: rotateY(0deg); }
 /* The pulse on whatever's clickable, until the first click */
 .ring { position: absolute; z-index: 1; width: 64px; height: 64px; border-radius: 50%; pointer-events: none; opacity: 0; border: 2px solid rgba(255, 228, 188, 0.9); box-shadow: 0 0 12px rgba(255, 178, 94, 0.8), inset 0 0 10px rgba(255, 178, 94, 0.5); }
 /* Her note: bigger than the objects', its arrow bobbing toward her */
@@ -54,6 +62,15 @@
 .heart { position: absolute; z-index: 2; translate: -50% -50%; color: #EE6E9F; font-size: 16px; pointer-events: none; text-shadow: 0 0 6px rgba(42, 31, 77, 0.5); opacity: 0; animation: heart 1.2s var(--ease) both; }
 @keyframes heart { 0% { opacity: 0; transform: translateY(0) scale(0.6); } 20% { opacity: 1; transform: translateY(-8px) scale(1); } 100% { opacity: 0; transform: translateY(-46px) scale(0.9); } }
 @keyframes heartStill { 0%, 100% { opacity: 0; } 20% { opacity: 1; } }
-@media (prefers-reduced-motion: reduce) { .note > span, .tap, .arrows path[data-arrow="her"] { animation: none; } .heart { animation-name: heartStill; } }
-/* Phone-width scenes have no room for three notes; the buttons above already name each object */
-@container (max-width: 479px) { .note, .arrows { display: none; } }
+@media (prefers-reduced-motion: reduce) {
+  .note > span, .arrows path[data-arrow="her"] { animation: none; } .heart { animation-name: heartStill; }
+  /* the flip becomes a crossfade */
+  .face, .back, .hanger[data-flipped] .face:not(.back) { transform: none; transition: opacity 0.5s var(--ease); }
+  .back, .hanger[data-flipped] .face:not(.back) { opacity: 0; }
+  .hanger[data-flipped] .back { opacity: 1; }
+}
+/* Phone width: no room for the object notes (the buttons above name each object); her note stays for a tap, the hanger shrinks */
+@container (max-width: 479px) {
+  .note:not(.herNote), .arrows path:not([data-arrow="her"]) { display: none; }
+  .hanger { --s: 0.73; }
+}
