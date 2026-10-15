@@ -2,8 +2,9 @@
 .host { position: relative; width: 100%; height: 280px; touch-action: pan-y; container-type: inline-size; }
 .host canvas { display: block; width: 100%; height: 100%; }
 @media (min-width: 1000px) { .host { height: 420px; } }
-/* The phone's note points the other way, so its text sits over the posters instead of the printer's note */
-.flip { flex-direction: row-reverse; }
-.flip svg { transform: scaleX(-1); }
+/* The phone's note hangs below-left of it, arrow pointing up at the phone, clear of the posters and the printer's note */
+.under { flex-direction: row-reverse; align-items: flex-start; }
+.under svg { transform: scale(-1, -1); }
+.under > span { margin: 34px 0 0; }
 /* Phone-width scenes have no room for three notes side by side; the buttons above already name each object */
 @container (max-width: 479px) { .host [data-note] { display: none; } }

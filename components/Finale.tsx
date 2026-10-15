@@ -22,20 +22,21 @@ export default function Finale({ className, hot, onHot, onPick }: Props) {
 
   useEffect(() => {
     const el = host.current!;
-    let cleanup = () => {}, started = false;
+    let cleanup = () => {}, started = false, dead = false;
     const io = new IntersectionObserver(async ([e]) => {
       if (!e.isIntersecting || started) return;
       started = true;
-      cleanup = await mount(el, live);
+      const c = await mount(el, live, () => !dead);
+      if (dead) c(); else cleanup = c; // unmounted while it loaded: tidy up straight away
     }, { rootMargin: "300px" });
     io.observe(el);
-    return () => { io.disconnect(); cleanup(); };
+    return () => { dead = true; io.disconnect(); cleanup(); };
   }, []);
 
   return (
     <div ref={host} className={`${s.host} ${className ?? ""}`} role="img" aria-label="Her room back then, like a dollhouse: rock posters on the wall, a window with a plant, a chair on a rug, and a desk with a beige 90s phone, a dot-matrix printer with the oiia cat on it, and a Rolodex. Each one goes with a contact button.">
       {NOTES.map(([p, text]) => (
-        <span key={p} className={`${n.note} ${p === "phone" ? s.flip : ""}`} data-note={p} aria-hidden="true">
+        <span key={p} className={`${n.note} ${p === "phone" ? s.under : ""}`} data-note={p} aria-hidden="true">
           <svg className={n.noteArrow} width="54" height="46" viewBox="0 0 54 46" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M50 6C32 6 16 18 10 38" /><path d="M18 33l-8 7-4-10" /></svg>
           <span className={n.noteText}>{text}</span>
         </span>
@@ -44,9 +45,10 @@ export default function Finale({ className, hot, onHot, onPick }: Props) {
   );
 }
 
-async function mount(el: HTMLElement, live: React.RefObject<Live>) {
+async function mount(el: HTMLElement, live: React.RefObject<Live>, alive: () => boolean) {
   const { toyStage } = await import("@/lib/toyStage");
   const toy: Toy = await toyStage(el);
+  if (!alive()) { toy.dispose(); return () => {}; } // gone before the stage was ready: build nothing
   const { THREE, scene, camera, plastic, box, blob, reduce } = toy;
   const beige = plastic(0xcdbb94, 0.45), beigeDark = plastic(0xb3a27c, 0.55), ink = plastic(0x2a2760, 0.4);
 
@@ -116,11 +118,12 @@ async function mount(el: HTMLElement, live: React.RefObject<Live>) {
   const black = plastic(0x1c1b22, 0.5);
   const chair = new THREE.Group();
   chair.add(box(0.9, 0.12, 0.9, black, 0, 0.95, 0));                     // seat
-  chair.add(box(0.9, 1.0, 0.1, black, 0, 1.55, 0.42));                   // back
+  chair.add(box(0.08, 0.35, 0.08, black, 0, 1.12, 0.4));                 // the post up to the backrest
+  const back = box(0.9, 0.7, 0.1, black, 0, 1.62, 0.44); back.rotation.x = 0.12; chair.add(back); // backrest on the side away from the desk, leaning back
   chair.add(new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.8, 12), black).translateY(0.5)); // gas lift
   for (let i = 0; i < 5; i++) { const leg = box(0.55, 0.06, 0.08, black, 0, 0.1, 0); leg.geometry.translate(0.27, 0, 0); leg.rotation.y = (i / 5) * Math.PI * 2; chair.add(leg); } // star base
   chair.position.set(DX, 0, DZ + 1.75);
-  chair.rotation.y = 0.25;
+  chair.rotation.y = -0.45; // swivelled out toward the room, as if she just stood up; the seat still faces the desk
   room.add(chair);
   room.add(blob(3.4));
   const lamp = new THREE.Group();
@@ -264,14 +267,15 @@ async function mount(el: HTMLElement, live: React.RefObject<Live>) {
   el.addEventListener("pointerup", onUp);
 
   // Where each note's arrow points, in the desk's space.
-  const anchors: Record<Prop, T.Vector3> = { phone: new THREE.Vector3(-2.2, 0.9, 0.2), printer: new THREE.Vector3(-0.4, 0.65, -0.5), rolodex: new THREE.Vector3(2.3, 0.75, 0.5) };
+  const anchors: Record<Prop, T.Vector3> = { phone: new THREE.Vector3(-2.6, 0.2, 0.75), printer: new THREE.Vector3(-0.4, 0.65, -0.5), rolodex: new THREE.Vector3(2.3, 0.75, 0.5) };
   const notes = [...el.querySelectorAll<HTMLElement>("[data-note]")];
   const placeNotes = () => {
     for (const node of notes) {
       const v = desk.localToWorld(anchors[node.dataset.note as Prop].clone()).project(camera); // anchors are in the desk's space
       const x = ((v.x + 1) / 2) * el.clientWidth, y = ((1 - v.y) / 2) * el.clientHeight;
-      const flip = node.dataset.note === "phone"; // text up-left: up-right it would run into the printer's
-      node.style.transform = `translate(${x}px, ${y}px) translate(${flip ? "calc(-100% + 6px)" : "-6px"}, -100%)`; // arrow tip on the spot
+      // The phone's note hangs below-left of it, over the bare wall under the posters; up-right it would run into the printer's
+      const under = node.dataset.note === "phone";
+      node.style.transform = `translate(${x}px, ${y}px) translate(${under ? "calc(-100% + 6px), -6px" : "-6px, -100%"})`; // arrow tip on the spot
       node.dataset.placed = "";
     }
   };
