@@ -15,7 +15,7 @@ const NOTES: [Prop, string][] = [["phone", "text me"], ["printer", "print me out
 // Each note's text sits in open page space just off the room's silhouette (as a fraction of the canvas, for the
 // fixed camera), and its arrow is redrawn every frame to land on the object itself. "rolodex" is her PC monitor, which
 // wakes with her LinkedIn card while the LinkedIn button is hovered; the Prop name stays for the wiring.
-const LABEL: Record<Prop, [number, number]> = { phone: [0.1, 0.8], printer: [0.2, 0.08], rolodex: [0.8, 0.08] };
+const LABEL: Record<Prop, [number, number]> = { phone: [0.1, 0.8], printer: [0.2, 0.13], rolodex: [0.8, 0.13] };
 const TARGET: Record<Prop, string> = { phone: "PhoneScreen", printer: "PrinterBodyMesh", rolodex: "Screen" };
 const PICK_NODE: Record<Prop, string> = { phone: "Phone", printer: "Printer", rolodex: "Monitor" };
 
@@ -44,12 +44,20 @@ export default function Finale({ className, hot, onHot, onPick, onScreen }: Prop
   }, []);
 
   return (
+    <>
+    <p className={s.cue}>
+      <span aria-hidden="true">↓ </span>my room, it’s interactive: click around
+      <svg className={s.tap} viewBox="0 0 16 22" aria-hidden="true"><path d="M2 1.5v15.5l4-3.6 2.6 6.1 3-1.3-2.6-6 5.4-.2z" /></svg>
+    </p>
     <div ref={host} className={`${s.host} ${className ?? ""}`} role="img" aria-label="My teenage bedroom at dusk: rock posters, a window, my guitars, a skateboard, boxing gloves, a corner desk with my PC, a Nokia phone, an inkjet printer, a bed with bookshelves, and my two cats. I'm in it too, sitting on the bed playing guitar and now and then getting up to work at the desk: click me to say hi, or pet a cat. The phone messages me, the printer prints my CV, and the computer boots Windows 95. Pinch or double-click to zoom in.">
-      <svg className={s.arrows} aria-hidden="true">{NOTES.map(([p]) => <path key={p} data-arrow={p} />)}</svg>
+      <svg className={s.arrows} aria-hidden="true">{NOTES.map(([p]) => <path key={p} data-arrow={p} />)}<path data-arrow="her" /></svg>
       {NOTES.map(([p, text]) => <span key={p} className={s.note} data-note={p} aria-hidden="true"><span>{text}</span></span>)}
+      <span className={s.ring} data-ring aria-hidden="true" />
+      <span className={`${s.note} ${s.herNote}`} data-her aria-hidden="true"><span>click me, I’ll say hi</span></span>
       <span className={s.hint} data-hint aria-hidden="true"><span>pinch or double-click to zoom</span></span>
       <button type="button" className={s.reset} data-reset aria-label="Zoom the room back out"><span>zoom out</span></button>
     </div>
+    </>
   );
 }
 
@@ -100,6 +108,26 @@ function browserScreen() {
   x.fillStyle = "#444"; x.font = "18px Tahoma, sans-serif"; x.fillText(profile.role, 162, 162);
   x.fillStyle = "#0a66c2"; x.font = "15px Tahoma, sans-serif"; x.fillText(profile.linkedinHandle, 162, 188);
   x.fillStyle = "#0a66c2"; x.fillRect(162, 222, 120, 36); x.fillStyle = "#fff"; x.font = "bold 17px Tahoma, sans-serif"; x.fillText("Connect", 186, 246);
+  return c;
+}
+
+// Her PC, awake: a Windows 95 desktop, teal, two icons and the taskbar.
+function win95Screen() {
+  const c = document.createElement("canvas"); c.width = 512; c.height = 320;
+  const x = c.getContext("2d")!;
+  x.fillStyle = "#008080"; x.fillRect(0, 0, 512, 320);
+  for (const [i, label] of ["My Computer", "Recycle Bin"].entries()) {
+    const y = 18 + i * 78;
+    x.fillStyle = i ? "#c0c0c0" : "#d4d0c8"; x.fillRect(30, y, 36, 30); x.fillStyle = i ? "#808080" : "#1f4f9e"; x.fillRect(35, y + 5, 26, i ? 22 : 16); // the icon
+    x.fillStyle = "#fff"; x.font = "13px Tahoma, sans-serif"; x.textAlign = "center"; x.fillText(label, 48, y + 48);
+  }
+  x.textAlign = "left";
+  x.fillStyle = "#c0c0c0"; x.fillRect(0, 288, 512, 32); x.fillStyle = "#fff"; x.fillRect(0, 288, 512, 2); // the taskbar
+  x.fillStyle = "#c0c0c0"; x.fillRect(4, 293, 74, 23); x.strokeStyle = "#fff"; x.lineWidth = 2; x.strokeRect(5, 294, 72, 21); x.strokeStyle = "#404040"; x.beginPath(); x.moveTo(77, 294); x.lineTo(77, 315); x.lineTo(5, 315); x.stroke();
+  for (const [i, col] of ["#ff3b30", "#34c759", "#0a84ff", "#ffcc00"].entries()) { x.fillStyle = col; x.fillRect(12 + (i % 2) * 8, 298 + Math.floor(i / 2) * 7, 7, 6); } // the flag
+  x.fillStyle = "#000"; x.font = "bold 15px Tahoma, sans-serif"; x.fillText("Start", 32, 311);
+  x.fillStyle = "#c0c0c0"; x.fillRect(440, 293, 68, 23); x.strokeStyle = "#808080"; x.strokeRect(441, 294, 66, 21);
+  x.fillStyle = "#000"; x.font = "13px Tahoma, sans-serif"; x.fillText("4:20 PM", 452, 309);
   return c;
 }
 
@@ -162,12 +190,6 @@ async function mount(el: HTMLElement, live: React.RefObject<Live>, alive: () => 
   renderer.localClippingEnabled = true;
 
 
-  // A stack of books on the floor at the front corner reads as a stray red box below the room: drop its triangles.
-  const books = node("Room_PropsMesh") as T.Mesh, ix = books.geometry.index!, pp = books.geometry.getAttribute("position"), w = new THREE.Vector3();
-  const front = (i: number) => (w.fromBufferAttribute(pp, i).applyMatrix4(books.matrixWorld), w.x > 1 && w.z > 1);
-  const kept: number[] = [];
-  for (let t = 0; t < ix.count; t += 3) if (![0, 1, 2].some((k) => front(ix.getX(t + k)))) kept.push(ix.getX(t), ix.getX(t + 1), ix.getX(t + 2));
-  books.geometry.setIndex(kept);
 
   // The camera Blender rendered from, framed on the room itself: every vertex it draws, seen from the camera, as
   // tangents (x/z, y/z). The lens is fitted to the tighter of width and height and shifted onto it, plus MARGIN all
@@ -281,6 +303,45 @@ async function mount(el: HTMLElement, live: React.RefObject<Live>, alive: () => 
   slot.add(paper);
   meshes.push(paper); // so the bloom pass blacks it out like the rest
 
+  // Her computer wakes when pointed at: Win95 powers on from a bright CRT line, the tower's LED lights; it sleeps
+  // 1.5 s after the pointer leaves. The LinkedIn button's card wins over it while that button is hovered.
+  const desktop = win95Screen(), crt = document.createElement("canvas"), crtX = crt.getContext("2d")!;
+  crt.width = desktop.width; crt.height = desktop.height;
+  const winLit = lit(screenMesh, crt);
+  const ledMesh = node("TowerLEDMesh") as T.Mesh, ledDark = ledMesh.material as T.Material, ledLit = new THREE.MeshBasicMaterial({ color: "#5dff8a", toneMapped: false });
+  let pcHover = false, pcOffAt = 0, pcSince = -1, crtP = -1;
+  const boot = (p: number) => { // p: 0 a bright line across the middle, 1 the whole desktop
+    const w = crt.width, h = crt.height, band = Math.max(2, h * (1 - (1 - p) ** 3)), y = (h - band) / 2;
+    crtX.fillStyle = "#000"; crtX.fillRect(0, 0, w, h);
+    crtX.drawImage(desktop, 0, y, w, band, 0, y, w, band);
+    crtX.fillStyle = `rgba(255, 255, 255, ${0.8 * (1 - p)})`; crtX.fillRect(0, y, w, band);
+    (winLit.map as T.Texture).needsUpdate = true;
+  };
+  // Until the visitor clicks something in the room, a soft ring pulses on one clickable thing at a time, every 4 s:
+  // her, the Siamese, the Burmese, the monitor. The first click ends it for the session.
+  const ring = el.querySelector<HTMLElement>("[data-ring]")!, rv = new THREE.Vector3();
+  const pulseOn: T.Object3D[] = [node("Screen")];
+  let pulseI = 0, pulseAt = 1.5, pulsing: T.Object3D | null = null;
+  let poked = reduce || (() => { try { return sessionStorage.getItem("room-poked") === "1"; } catch { return false; } })();
+  const markPoked = () => {
+    if (poked) return;
+    poked = true; pulsing = null; ring.removeAttribute("data-on");
+    try { sessionStorage.setItem("room-poked", "1"); } catch {}
+  };
+  const pulse = (t: number) => {
+    if (poked) return;
+    if (t >= pulseAt) {
+      pulseAt = t + 4; pulsing = pulseOn[pulseI++ % pulseOn.length];
+      ring.setAttribute("data-on", "");
+      ring.animate([{ transform: "translate(-50%, -50%) scale(0.3)", opacity: 0.95 }, { transform: "translate(-50%, -50%) scale(1.5)", opacity: 0 }], { duration: 1500, easing: "cubic-bezier(0.2, 0.7, 0.3, 1)" });
+    }
+    if (!pulsing) return;
+    const v = pulsing.getWorldPosition(rv).project(camera);
+    ring.style.left = `${((v.x + 1) / 2) * el.clientWidth}px`; ring.style.top = `${((1 - v.y) / 2) * el.clientHeight}px`;
+  };
+  let hoverHer = (_h: unknown) => {}; // her and the cats brighten under the pointer, once they're in
+  const pointPc = (on: boolean) => { if (pcHover && !on) pcOffAt = performance.now() / 1000 + 1.5; pcHover = on; };
+
   const heat: Record<Prop, number> = { phone: 0, printer: 0, rolodex: 0 };
   let pointer: Prop | null = null, since = 0, wasHot: Prop | null = null;
 
@@ -299,20 +360,25 @@ async function mount(el: HTMLElement, live: React.RefObject<Live>, alive: () => 
   const onMove = (e: PointerEvent) => {
     if (touches.has(e.pointerId)) touches.set(e.pointerId, [e.clientX, e.clientY]);
     if (touches.size === 2) { // pinch: zoom by the spread, about the midpoint
+      e.stopPropagation(); // the first finger already started the pane's drag; this cuts it off (pointerup still bubbles, so it snaps back)
       const [[ax, ay], [bx, by]] = [...touches.values()], d = Math.hypot(ax - bx, ay - by);
       if (pinch) zoomAt(want.z * (d / pinch), (ax + bx) / 2, (ay + by) / 2);
       pinch = d; return;
     }
     if (drag && want.z > 1.01) { panBy(e.clientX - drag[0], e.clientY - drag[1]); drag = [e.clientX, e.clientY]; }
     const h = hit(e), p = h === "phone" || h === "printer" ? h : null; // pointing at the computer lights nothing: it's Win95
+    pointPc(h === "rolodex" || h === "tower");
+    hoverHer(h);
     el.style.cursor = h ? "pointer" : want.z > 1.01 ? (drag ? "grabbing" : "grab") : "";
     if (p !== pointer) { pointer = p; live.current.onHot(p); }
   };
-  const onLeave = () => { if (pointer) { pointer = null; live.current.onHot(null); } };
+  const onLeave = () => { pointPc(false); hoverHer(null); if (pointer) { pointer = null; live.current.onHot(null); } };
   // Her computer, monitor or tower, always boots Win95; LinkedIn opens only from its own button.
   // A click is a left press and release on the same object without dragging: right-clicks and drags do nothing.
   let down: { h: ReturnType<typeof hit>; x: number; y: number } | null = null;
+  const onButton = (e: Event) => !!(e.target as Element).closest?.("[data-reset]"); // the zoom-out button is its own
   const onDown = (e: PointerEvent) => {
+    if (onButton(e)) return;
     if (e.pointerType === "touch") touches.set(e.pointerId, [e.clientX, e.clientY]);
     if (touches.size > 1 || want.z > 1.01) e.stopPropagation(); // a pinch or a pan is the room's, not a swipe to the next page
     if (touches.size > 1) { down = drag = null; pinch = 0; return; } // a pinch is never a click
@@ -321,10 +387,12 @@ async function mount(el: HTMLElement, live: React.RefObject<Live>, alive: () => 
   };
   const onCancel = (e: PointerEvent) => { touches.delete(e.pointerId); pinch = 0; drag = down = null; };
   const onUp = (e: PointerEvent) => {
+    if (onButton(e)) return;
     const d = down;
     onCancel(e);
     const h = hit(e);
     if (!d || d.h !== h || Math.hypot(e.clientX - d.x, e.clientY - d.y) > 6) return; // a drag or pan never clicks
+    if (h) markPoked();
     if (h === "her") poke();
     else if (h === "Siamese" || h === "Burmese") pet([h]);
     else if (h === "tower" || h === "rolodex") live.current.onScreen?.();
@@ -341,6 +409,18 @@ async function mount(el: HTMLElement, live: React.RefObject<Live>, alive: () => 
   const anchors = Object.fromEntries((Object.keys(TARGET) as Prop[]).map((p) => [p, node(TARGET[p])])) as Record<Prop, T.Object3D>;
   const notes = [...el.querySelectorAll<HTMLElement>("[data-note]")], at = new THREE.Vector3();
   const arrows = Object.fromEntries([...el.querySelectorAll<SVGPathElement>("[data-arrow]")].map((a) => [a.dataset.arrow, a])) as Record<Prop, SVGPathElement>;
+  // A note's text at (lx, ly), its arrow bowing onto (tx, ty).
+  const pin = (nd: HTMLElement, arrow: SVGPathElement, lx: number, ly: number, tx: number, ty: number) => {
+    nd.style.transform = `translate(${lx}px, ${ly}px) translate(-50%, -50%)`;
+    const dx = tx - lx, dy = ty - ly, d = Math.hypot(dx, dy) || 1, ux = dx / d, uy = dy / d;
+    const sx = lx + ux * Math.min(56, d / 3), sy = ly + uy * 18, ex = tx - ux * 5, ey = ty - uy * 5; // leave the text, stop short of the tip
+    const cx = (sx + ex) / 2 - uy * d * 0.18, cy = (sy + ey) / 2 + ux * d * 0.18; // a hand-drawn bow
+    const ax = ex - cx, ay = ey - cy, al = Math.hypot(ax, ay) || 1, hx = (ax / al) * 10, hy = (ay / al) * 10; // the head follows the curve's end
+    const head = (a: number) => `${ex - hx * Math.cos(a) + hy * Math.sin(a)} ${ey - hy * Math.cos(a) - hx * Math.sin(a)}`;
+    arrow.setAttribute("d", `M${sx} ${sy}Q${cx} ${cy} ${ex} ${ey}M${head(0.5)}L${ex} ${ey}L${head(-0.5)}`);
+    nd.dataset.placed = "";
+  };
+  let placeHer = () => {}; // her own note, once she's in
   const placeNotes = (hot: Prop | null = null) => {
     const W = el.clientWidth, H = el.clientHeight;
     el.toggleAttribute("data-any", !!hot);
@@ -349,17 +429,10 @@ async function mount(el: HTMLElement, live: React.RefObject<Live>, alive: () => 
       // Zoomed past it; and the monitor's LinkedIn note only while the LinkedIn button is hovered (a click on it is Win95)
       const off = Math.abs(v.x) > 1 || Math.abs(v.y) > 1 || (p === "rolodex" && hot !== "rolodex");
       nd.toggleAttribute("data-off", off); arrows[p].toggleAttribute("data-off", off);
-      const tx = ((v.x + 1) / 2) * W, ty = ((1 - v.y) / 2) * H, lx = LABEL[p][0] * W, ly = LABEL[p][1] * H;
-      nd.style.transform = `translate(${lx}px, ${ly}px) translate(-50%, -50%)`;
-      const dx = tx - lx, dy = ty - ly, d = Math.hypot(dx, dy) || 1, ux = dx / d, uy = dy / d;
-      const sx = lx + ux * Math.min(56, d / 3), sy = ly + uy * 18, ex = tx - ux * 5, ey = ty - uy * 5; // leave the text, stop short of the tip
-      const cx = (sx + ex) / 2 - uy * d * 0.18, cy = (sy + ey) / 2 + ux * d * 0.18; // a hand-drawn bow
-      const ax = ex - cx, ay = ey - cy, al = Math.hypot(ax, ay) || 1, hx = (ax / al) * 10, hy = (ay / al) * 10; // the head follows the curve's end
-      const head = (a: number) => `${ex - hx * Math.cos(a) + hy * Math.sin(a)} ${ey - hy * Math.cos(a) - hx * Math.sin(a)}`;
-      arrows[p].setAttribute("d", `M${sx} ${sy}Q${cx} ${cy} ${ex} ${ey}M${head(0.5)}L${ex} ${ey}L${head(-0.5)}`);
+      pin(nd, arrows[p], LABEL[p][0] * W, LABEL[p][1] * H, ((v.x + 1) / 2) * W, ((1 - v.y) / 2) * H);
       nd.toggleAttribute("data-hot", p === hot); arrows[p].toggleAttribute("data-hot", p === hot);
-      nd.dataset.placed = "";
     }
+    placeHer();
   };
 
   const pose = (t: number, hot: Prop | null) => {
@@ -368,7 +441,15 @@ async function mount(el: HTMLElement, live: React.RefObject<Live>, alive: () => 
     phone.position.set(phoneRest.p.x + Math.sin(t * 95) * 0.0025 * buzz, phoneRest.p.y, phoneRest.p.z + Math.cos(t * 83) * 0.0025 * buzz);
     phone.rotation.y = phoneRest.r + Math.sin(t * 70) * 0.04 * buzz;
     phoneMesh.material = hot === "phone" ? phoneLit[reduce || t - since > 0.9 ? 1 : 0] : phoneDark;
-    screenMesh.material = hot === "rolodex" ? screenLit : screenDark;
+    const pc = pcHover || (!reduce && t < pcOffAt);
+    if (!pc) pcSince = crtP = -1;
+    else {
+      if (pcSince < 0) pcSince = t;
+      const p = reduce ? 1 : Math.min(1, (t - pcSince) / 0.25); // ~250 ms power-on
+      if (p !== crtP) { boot(p); crtP = p; }
+    }
+    screenMesh.material = hot === "rolodex" ? screenLit : pc ? winLit : screenDark;
+    ledMesh.material = pc ? ledLit : ledDark;
     // Printer: page one slides out of the front tray.
     paper.visible = heat.printer > 0.02;
     paper.position.z = (heat.printer - 1) * 0.3; // from inside the body out over the tray
@@ -389,11 +470,11 @@ async function mount(el: HTMLElement, live: React.RefObject<Live>, alive: () => 
   const keep = new Map<T.Mesh, T.Material | T.Material[]>(), clear = new THREE.Color();
   const draw = () => {
     for (const m of meshes) {
-      const glows = m.layers.isEnabled(BLOOM) || (m === screenMesh && m.material !== screenDark) || (m === phoneMesh && m.material !== phoneDark);
+      const glows = m.layers.isEnabled(BLOOM) || (m === screenMesh && m.material !== screenDark) || (m === phoneMesh && m.material !== phoneDark) || (m === ledMesh && m.material === ledLit);
       if (!glows) { keep.set(m, m.material); m.material = black; }
     }
     shaft.visible = dust.visible = false;
-    for (const m of [...phoneLit, screenLit]) m.color.setScalar(0.1); // a lit screen only haloes; full strength it bleaches to white
+    for (const m of [...phoneLit, screenLit, winLit]) m.color.setScalar(0.1); // a lit screen only haloes; full strength it bleaches to white
     renderer.getClearColor(clear); const alpha = renderer.getClearAlpha();
     renderer.setClearColor(0x000000, 0);
     renderer.shadowMap.needsUpdate = true; // once a frame, not once per pass
@@ -403,7 +484,7 @@ async function mount(el: HTMLElement, live: React.RefObject<Live>, alive: () => 
     for (const [m, mt] of keep) m.material = mt;
     keep.clear();
     shaft.visible = dust.visible = true;
-    for (const m of [...phoneLit, screenLit]) m.color.setScalar(1);
+    for (const m of [...phoneLit, screenLit, winLit]) m.color.setScalar(1);
     renderer.render(scene, camera);
     renderer.autoClear = false; add.render(renderer); renderer.autoClear = true;
   };
@@ -431,6 +512,7 @@ async function mount(el: HTMLElement, live: React.RefObject<Live>, alive: () => 
   // Zoom, the room's own (the page never zooms): 1x is the framed view, up to 3x toward the pointer, by pinch,
   // ctrl/⌘-wheel or double-click. Zoomed, a drag pans, kept inside the framed view. Done with the lens, so it stays sharp.
   let FH = 1; // the framed view's half-height, in tangents
+  const AXES = ["z", "x", "y"] as const;
   const zoom = { z: 1, x: 0, y: 0 }, want = { z: 1, x: 0, y: 0 };
   const lens = () => {
     const a = camera.aspect, h = FH / zoom.z, cx = fitMid.x + zoom.x, cy = fitMid.y + zoom.y, n = camera.near;
@@ -470,7 +552,10 @@ async function mount(el: HTMLElement, live: React.RefObject<Live>, alive: () => 
     e.preventDefault();
     zoomAt(want.z * Math.exp(-e.deltaY * 0.01), e.clientX, e.clientY);
   };
-  const onDbl = (e: MouseEvent) => (want.z > 1.01 ? unzoom() : zoomAt(2, e.clientX, e.clientY));
+  const onDbl = (e: MouseEvent) => {
+    if (onButton(e) || hit(e as PointerEvent)) return; // on an object its click already acted: double-click zooms only on bare room
+    if (want.z > 1.01) unzoom(); else zoomAt(2, e.clientX, e.clientY);
+  };
   const onKey = (e: KeyboardEvent) => { if (e.key === "Escape" && want.z > 1.01) unzoom(); };
   const touches = new Map<number, [number, number]>();
   let drag: [number, number] | null = null, pinch = 0;
@@ -512,8 +597,9 @@ async function mount(el: HTMLElement, live: React.RefObject<Live>, alive: () => 
     glow.uTime.value = t;
     pose(t, hot);
     tickHer?.(dt);
+    pulse(t);
     if (zoom.z !== want.z || zoom.x !== want.x || zoom.y !== want.y) { // ~150 ms ease
-      for (const k of ["z", "x", "y"] as const) zoom[k] = Math.abs(want[k] - zoom[k]) < 1e-4 ? want[k] : ease(zoom[k], want[k], dt, 20);
+      for (const k of AXES) zoom[k] = Math.abs(want[k] - zoom[k]) < 1e-4 ? want[k] : ease(zoom[k], want[k], dt, 20);
       lens();
     }
     draw();
@@ -521,10 +607,11 @@ async function mount(el: HTMLElement, live: React.RefObject<Live>, alive: () => 
     return false; // drawn above, with the bloom
   });
   // Reduced motion: no loop. Redraw a still pose whenever the hot object changes; the screens just light up.
+  let wasPc = false;
   const still = reduce ? setInterval(() => {
     const hot = live.current.hot ?? pointer;
-    if (hot === wasHot) return;
-    wasHot = hot;
+    if (hot === wasHot && pcHover === wasPc) return;
+    wasHot = hot; wasPc = pcHover;
     for (const p of Object.keys(heat) as Prop[]) heat[p] = p === hot ? 1 : 0;
     pose(0, hot); draw(); placeNotes(hot);
   }, 100) : 0;
@@ -569,7 +656,9 @@ async function mount(el: HTMLElement, live: React.RefObject<Live>, alive: () => 
       m.frustumCulled = false; // skinned bounds are her bind pose; she walks out of them
       meshes.push(m); // the bloom pass blacks her out like the room
       for (const mt of [m.material].flat()) {
-        if (mt.name === "jeans.001") (mt as T.MeshStandardMaterial).color.set("#2f4f8f"); // the export lost the denim colour (its texture); white jeans otherwise
+        // The export lost the denim (its texture), leaving bare white jeans. Patch only that case: a fixed export skips this.
+        const sm = mt as T.MeshStandardMaterial;
+        if (/^jeans/.test(mt.name) && !sm.map && sm.color.getHex() === 0xffffff) sm.color.set("#2f4f8f");
         if (!mats.has(mt)) mats.set(mt, [mt.transparent, mt.opacity]);
       }
     });
@@ -577,7 +666,7 @@ async function mount(el: HTMLElement, live: React.RefObject<Live>, alive: () => 
     const setFade = (f: number) => { for (const [mt, [, op]] of mats) mt.opacity = op * f; for (const m of catchers) (m.material as T.ShadowMaterial).opacity = 0.4 * f; };
     // Warm the opaque shaders first, so ending the fade doesn't hitch; the faded ones compile while she's invisible.
     void renderer.compileAsync(char, camera, scene).catch(() => {}).then(() => {
-      if (!alive()) return free(char);
+      if (!alive()) { free(char); key.shadow.dispose(); lamp.dispose(); return; }
       if (!reduce) for (const mt of mats.keys()) { mt.transparent = true; mt.needsUpdate = true; }
       setFade(fade);
       scene.add(char);
@@ -593,7 +682,7 @@ async function mount(el: HTMLElement, live: React.RefObject<Live>, alive: () => 
         for (const a of c.animations) if (a.name.startsWith(cat + "_")) m.clipAction(a).play();
         return m;
       });
-      let state: "strum" | "day" | "bed" | "desk" = "strum", now: T.AnimationAction = strum, inState = 0, queued = false;
+      let state: "strum" | "day" | "bed" | "desk" = "strum", now: T.AnimationAction = strum, inState = 0, queued = false, resume = 0;
       const go = (next: typeof state, to: T.AnimationAction, fadeS: number, at = 0) => {
         to.reset().play(); to.time = at; to.crossFadeFrom(now, fadeS, false);
         state = next; now = to; inState = 0;
@@ -602,10 +691,10 @@ async function mount(el: HTMLElement, live: React.RefObject<Live>, alive: () => 
 
       const bone = (n: string) => char.getObjectByName(n)!;
       const hips = bone("DEF-spineseg0"), head = bone("DEF-spine006"), feet = [bone("DEF-footL"), bone("DEF-footR")];
-      const pa = new THREE.Vector3(), pb = new THREE.Vector3();
+      const pa = new THREE.Vector3(), pb = new THREE.Vector3(), pc = new THREE.Vector3();
       const near = (r: T.Ray, a: T.Object3D, b: T.Object3D, rad: number, reach = 0) => {
         a.getWorldPosition(pa); b.getWorldPosition(pb);
-        if (reach) pb.addScaledVector(pb.clone().sub(pa).normalize(), reach); // the head bone starts at the neck
+        if (reach) pb.add(pc.subVectors(pb, pa).setLength(reach)); // the head bone starts at the neck
         return r.distanceSqToSegment(pa, pb) < rad * rad;
       };
       // Skinned meshes don't raycast reliably: a capsule from hips to head, and one down each leg. The cats are rigid.
@@ -617,6 +706,34 @@ async function mount(el: HTMLElement, live: React.RefObject<Live>, alive: () => 
         return null;
       };
       catAt = (k) => catRoots[k];
+      pulseOn.unshift(bone("DEF-spine003seg0"), bone("Siamese_Head"), bone("Burmese_Body")); // her first, then the cats, then the monitor
+
+      // Under the pointer, her or a cat warms a touch, so it reads as clickable.
+      const glowOf = (root: T.Object3D) => { const out = new Set<T.MeshStandardMaterial>(); root.traverse((o) => { const m = o as T.Mesh; if (m.isMesh) for (const mt of [m.material].flat()) out.add(mt as T.MeshStandardMaterial); }); return [...out].map((mt) => [mt, mt.emissive.clone(), mt.emissiveIntensity] as const); };
+      const glows = { her: glowOf(bone("Her")), Siamese: glowOf(catRoots.Siamese), Burmese: glowOf(catRoots.Burmese) };
+      let warmOn: keyof typeof glows | null = null;
+      const warm = new THREE.Color("#ffb25e");
+      hoverHer = (h) => {
+        const next = h === "her" || h === "Siamese" || h === "Burmese" ? h : null;
+        if (next === warmOn) return;
+        if (warmOn) for (const [mt, e, i] of glows[warmOn]) { mt.emissive.copy(e); mt.emissiveIntensity = i; }
+        if (next) for (const [mt] of glows[next]) { mt.emissive.copy(warm); mt.emissiveIntensity = 0.07; }
+        warmOn = next;
+        if (reduce) draw();
+      };
+
+      // Her note: "click me", following her head while she's on the bed or at the desk, hidden while she walks.
+      // After her first hello it says so.
+      const herNote = el.querySelector<HTMLElement>("[data-her]")!, herArrow = el.querySelector<SVGPathElement>('[data-arrow="her"]')!, hv = new THREE.Vector3();
+      const greet = () => { herNote.firstElementChild!.textContent = "hi again!"; };
+      placeHer = () => {
+        const t = day.time, still = state !== "day" || t < 47 * F || t > 540 * F || (t >= 232 * F && t <= 446 * F);
+        const v = head.getWorldPosition(hv).project(camera), off = fade < 1 || !still || Math.abs(v.x) > 0.95 || Math.abs(v.y) > 0.95;
+        herNote.toggleAttribute("data-off", off); herArrow.toggleAttribute("data-off", off);
+        if (off) return;
+        const W = el.clientWidth, H = el.clientHeight, tx = ((v.x + 1) / 2) * W, ty = ((1 - v.y) / 2) * H - 0.03 * H; // to the top of her head
+        pin(herNote, herArrow, tx - 0.13 * W, Math.max(0.06 * H, ty - 0.16 * H), tx, ty);
+      };
 
       if (reduce) { // a still: her first strum, the cats at rest; a click shows the wave for 2 s
         herMix.update(0); for (const m of cats) m.update(0); draw();
@@ -624,7 +741,7 @@ async function mount(el: HTMLElement, live: React.RefObject<Live>, alive: () => 
         poke = () => {
           if (wave) return;
           strum.stop(); bed.reset().play(); bed.time = 1.25; herMix.update(0); draw();
-          wave = window.setTimeout(() => { wave = 0; bed.stop(); strum.play(); herMix.update(0); draw(); }, 2000);
+          wave = window.setTimeout(() => { wave = 0; bed.stop(); strum.play(); herMix.update(0); greet(); draw(); placeNotes(live.current.hot ?? pointer); }, 2000);
         };
         dropHer = () => { clearTimeout(wave); herMix.stopAllAction(); herMix.uncacheRoot(char); for (const m of cats) { m.stopAllAction(); m.uncacheRoot(char); } };
       } else {
@@ -640,14 +757,15 @@ async function mount(el: HTMLElement, live: React.RefObject<Live>, alive: () => 
           const t = day.time;
           if (state === "strum" && inState >= 3 * strum.getClip().duration) go("day", day, 0.25);
           else if (state === "day" && t < prev) go("strum", strum, 0.25); // ToDesk wrapped: she's back on the bed
-          else if (state === "bed" && bed.paused) go("strum", strum, 0.25);
-          else if (state === "desk" && desk.paused) { go("day", day, 0.25, 330 * F); hold.fadeOut(0.25); }
+          else if (state === "bed" && bed.paused) { go("strum", strum, 0.25); greet(); }
+          else if (state === "desk" && desk.paused) { go("day", day, 0.25, resume); hold.fadeOut(0.25); greet(); } // back where she left off
           if (!queued) return;
-          // A click waits for the next place she can react: on the bed at once, at the desk when ToDesk reaches 330.
+          // A click waits for the next place she can react: on the bed, or seated at the desk (232-446), at once.
+          // ReactDesk is keyed on ToDesk 330; from any other seated moment the crossfade carries her into it and back.
           if (state === "strum" || (state === "day" && (t < 47 * F || t > 540 * F))) { queued = false; go("bed", bed, 0.15); }
-          else if (state === "day" && prev < 330 * F && t >= 330 * F) {
-            queued = false; go("desk", desk, 0.15);
-            hold.reset().play(); hold.time = 330 * F; hold.paused = true; hold.fadeIn(0.15);
+          else if (state === "day" && t >= 232 * F && t <= 446 * F) {
+            queued = false; resume = t; go("desk", desk, 0.25);
+            hold.reset().play(); hold.time = t; hold.paused = true; hold.fadeIn(0.25);
           }
         };
         dropHer = () => { tickHer = null; herMix.stopAllAction(); herMix.uncacheRoot(char); for (const m of cats) { m.stopAllAction(); m.uncacheRoot(char); } };
@@ -678,8 +796,8 @@ async function mount(el: HTMLElement, live: React.RefObject<Live>, alive: () => 
     window.removeEventListener("cv:cat", onKonami);
     resetBtn.removeEventListener("click", unzoom);
     clearTimeout(hintT);
-    phoneMesh.material = phoneDark; screenMesh.material = screenDark; // so the stage's dispose finds the baked ones
-    for (const m of [...phoneLit, screenLit, black]) { m.map?.dispose(); m.dispose(); }
+    phoneMesh.material = phoneDark; screenMesh.material = screenDark; ledMesh.material = ledDark; // so the stage's dispose finds the baked ones
+    for (const m of [...phoneLit, screenLit, winLit, ledLit, black]) { m.map?.dispose(); m.dispose(); }
     (dust.material as T.Material).dispose(); dustGeo.dispose();
     glowRT.dispose(); bloom.dispose(); add.material.dispose(); add.dispose();
     toy.dispose();
