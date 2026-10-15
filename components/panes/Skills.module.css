@@ -50,3 +50,9 @@
 .chip { padding: 5px 10px; border-radius: 10px; font-size: 13px; font-weight: 600; cursor: default; }
 
 
+
+/* Title and picker on the left, the parts cabinet on the right; on phones the cabinet sits under the picker */
+.top { display: grid; gap: 12px; }
+@media (min-width: 1000px) { .top { grid-template-columns: minmax(0, 1fr) 360px; align-items: end; } }
+/* A drawer under the pointer lights its card, the same amber edge the picker uses */
+.layers > [data-lit] > .slab:global(.card-spotlight) { border-color: var(--broth); box-shadow: 0 0 0 3px rgba(245, 181, 63, 0.35); }

@@ -1,13 +1,17 @@
 "use client";
 import { motion } from "motion/react";
-import { useState } from "react";
+import dynamic from "next/dynamic";
+import { useMemo, useState } from "react";
 import type { UI } from "../Shell";
 import { layers, things } from "@/content/skills";
 import { drift, slow } from "@/lib/motion";
+import { drawers } from "@/lib/partsCabinet";
 import ShuffleHeading from "../ShuffleHeading";
 import SpotlightCard from "../SpotlightCard";
 import p from "./pane.module.css";
 import s from "./Skills.module.css";
+
+const PartsCabinet = dynamic(() => import("../PartsCabinet"), { ssr: false });
 
 const CHIP = {
   used: { backgroundColor: "#F5B53F", color: "#17153A" },
@@ -25,9 +29,15 @@ export default function Skills(_: { ui: UI }) {
   // Hovering a skill lights up the roles that used it: the picker, read backwards.
   const [hov, setHov] = useState<string | null>(null);
   const lit = (t: (typeof things)[number]) => !!hov && (t.used as readonly string[]).includes(hov);
+  // The cabinet and the cards light each other: hover a drawer to light its card, hover a chip to nudge its drawer.
+  const [overLayer, setOverLayer] = useState<number | null>(null);
+  const state = useMemo(() => drawers(layers, cur.used, all), [cur, all]);
+  const nudge = hov ? layers.findIndex((l) => (l.chips as readonly string[]).includes(hov)) : null;
 
   return (
     <div className={p.column}>
+      <div className={s.top}>
+      <div>
       <div className={s.head}>
         <h1 className={p.title}><ShuffleHeading text="The whole stack" /></h1>
         {/* A hand-drawn nudge, like the music button's, until a role is picked */}
@@ -50,6 +60,9 @@ export default function Skills(_: { ui: UI }) {
           </button>
         ))}
       </div>
+      </div>
+      <PartsCabinet className={s.cabinet} state={state} used={cur.used} nudge={nudge} onHover={setOverLayer} />
+      </div>
 
       <div className={s.layers}>
         {layers.map((l, i) => {
@@ -59,6 +72,7 @@ export default function Skills(_: { ui: UI }) {
             <motion.div
               key={l.name}
               data-tour={dark ? "product" : undefined}
+              data-lit={overLayer === i || undefined}
               animate={{ opacity: touched ? 1 : 0.42, x: touched ? 0 : 10, scale: touched ? 1 : 0.985 }}
               transition={slow}
             >
