@@ -156,12 +156,6 @@ async function mount(el: HTMLElement, live: React.RefObject<Live>, alive: () => 
   sky.material.clippingPlanes = [new THREE.Plane(new THREE.Vector3(0, -1, 0), shell.max.y), new THREE.Plane(new THREE.Vector3(0, 1, 0), -shell.min.y), new THREE.Plane(new THREE.Vector3(0, 0, 1), -shell.min.z), new THREE.Plane(new THREE.Vector3(0, 0, -1), shell.max.z)];
   renderer.localClippingEnabled = true;
 
-  // The camera Blender rendered from, with its vertical FOV. Narrower than the render, the FOV widens so the
-  // whole room stays in frame.
-  const view = node("View") as T.PerspectiveCamera;
-  view.matrixWorld.decompose(camera.position, camera.quaternion, camera.scale);
-  camera.near = view.near; camera.far = view.far;
-  const FOV = view.fov, ASPECT = view.aspect || 1.25, AIR = 1.18; // AIR: Blender's frame is tight on the walls; pull back so no corner touches the edge
 
   // A stack of books on the floor at the front corner reads as a stray red box below the room: drop its triangles.
   const books = node("Room_PropsMesh") as T.Mesh, ix = books.geometry.index!, pp = books.geometry.getAttribute("position"), w = new THREE.Vector3();
@@ -169,6 +163,23 @@ async function mount(el: HTMLElement, live: React.RefObject<Live>, alive: () => 
   const kept: number[] = [];
   for (let t = 0; t < ix.count; t += 3) if (![0, 1, 2].some((k) => front(ix.getX(t + k)))) kept.push(ix.getX(t), ix.getX(t + 1), ix.getX(t + 2));
   books.geometry.setIndex(kept);
+
+  // The camera Blender rendered from, framed on the room itself: every vertex it draws, seen from the camera, as
+  // tangents (x/z, y/z). The lens is fitted to the tighter of width and height and shifted onto it, plus MARGIN all
+  // round, so no corner ever touches the canvas edge at any aspect.
+  const view = node("View") as T.PerspectiveCamera;
+  view.matrixWorld.decompose(camera.position, camera.quaternion, camera.scale);
+  camera.near = view.near; camera.far = view.far;
+  camera.updateMatrixWorld();
+  const MARGIN = 0.06, fit = new THREE.Box2(), c = new THREE.Vector3(), tv = new THREE.Vector2(), toCam = new THREE.Matrix4();
+  for (const m of meshes) {
+    if (m.name === "Glow_WindowMesh") continue; // the sky plane: only ever seen through the window (clipped above)
+    const at = m.geometry.getAttribute("position"), ix = m.geometry.index, n = ix ? ix.count : at.count;
+    toCam.multiplyMatrices(camera.matrixWorldInverse, m.matrixWorld);
+    for (let i = 0; i < n; i++) { c.fromBufferAttribute(at, ix ? ix.getX(i) : i).applyMatrix4(toCam); fit.expandByPoint(tv.set(c.x / -c.z, c.y / -c.z)); }
+  }
+  const fitMid = fit.getCenter(new THREE.Vector2()), fitSize = fit.getSize(new THREE.Vector2());
+  el.dataset.fit = (fitSize.x / fitSize.y).toFixed(4); // the room's own aspect; the host's CSS matches it
 
   // Light cone: warm at the window (v = 0), fading along the beam and toward its silhouette, shimmering slowly.
   const shaft = node("LightShaftMesh") as T.Mesh;
@@ -373,8 +384,10 @@ async function mount(el: HTMLElement, live: React.RefObject<Live>, alive: () => 
     if (!width || !height) return;
     renderer.setSize(width, height, false);
     camera.aspect = width / height;
-    camera.fov = THREE.MathUtils.radToDeg(2 * Math.atan(Math.tan(THREE.MathUtils.degToRad(FOV) / 2) * AIR * Math.max(1, ASPECT / camera.aspect)));
-    camera.updateProjectionMatrix();
+    const h = (Math.max(fitSize.y, fitSize.x / camera.aspect) * (1 + 2 * MARGIN)) / 2, n = camera.near; // half-height, in tangents
+    camera.fov = THREE.MathUtils.radToDeg(2 * Math.atan(h));
+    camera.projectionMatrix.makePerspective(n * (fitMid.x - h * camera.aspect), n * (fitMid.x + h * camera.aspect), n * (fitMid.y + h), n * (fitMid.y - h), n, camera.far);
+    camera.projectionMatrixInverse.copy(camera.projectionMatrix).invert();
     const px = renderer.getDrawingBufferSize(new THREE.Vector2()).multiplyScalar(touch ? 0.5 : 1);
     glowRT.setSize(px.x, px.y); bloom.setSize(px.x, px.y);
     draw(); placeNotes();

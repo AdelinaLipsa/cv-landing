@@ -175,7 +175,10 @@
   .actions { margin-top: 12px; }
   .dock { display: flex; flex-direction: column; gap: 14px; margin-top: 36px; font-size: 14px; }
 
-  .cards { margin-top: 0; align-self: center; }
+  /* The room takes the right column and bleeds well past it: into the gap on the left, to the viewport's edge on the
+     right. The text sits above it, so the canvas's transparent corners never block a word or a button. */
+  .hero { position: relative; z-index: 1; }
+  .cards { margin-top: 0; align-self: center; --bl: 40px; --br: calc((100vw - min(var(--col), 100vw - 48px)) / 2); }
 
   .preview { margin-top: 64px; }
   .h2 { font-size: 40px; }
