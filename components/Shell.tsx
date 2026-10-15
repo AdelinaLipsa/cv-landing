@@ -8,7 +8,6 @@ import Boot from "./Boot";
 import EasterEggs from "./EasterEggs";
 import Toasts from "./Toasts";
 import Clock from "./Clock";
-import Cat from "./Cat";
 import { unlock } from "@/lib/achievements";
 import { fromQuery, type Challenge } from "@/lib/challenge";
 import Arcade from "./Arcade";
@@ -282,7 +281,6 @@ export default function Shell({ code, character }: { code: Snippets; character: 
       {arcade && <Arcade onClose={() => { setArcade(false); setChallenge(null); }} contact={() => { setArcade(false); ui.contact(); }} challenge={challenge} />}
       <Toasts />
       <Clock />
-      {!touring && <Cat />}
 
       <AnimatePresence>
         {term && <Terminal onClose={() => setTerm(false)} onContact={ui.contact} onWork={() => ui.go(1)} />}
