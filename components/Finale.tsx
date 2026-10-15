@@ -9,7 +9,7 @@ export type Prop = "phone" | "printer" | "rolodex";
 type Props = { className?: string; hot: Prop | null; onHot: (p: Prop | null) => void; onPick: (p: Prop) => void; onScreen?: () => void };
 type Live = { hot: Prop | null; onHot: Props["onHot"]; onPick: Props["onPick"]; onScreen?: () => void };
 
-const NOTES: [Prop, string][] = [["phone", "ring me"], ["printer", "print me out"], ["rolodex", "my card"]];
+const NOTES: [Prop, string][] = [["phone", "text me"], ["printer", "print me out"], ["rolodex", "my LinkedIn"]];
 // Each note's text sits in open page space just off the room's silhouette (as a fraction of the canvas, for the
 // fixed camera), and its arrow is redrawn every frame to land on the object itself. "rolodex" is her PC monitor
 // now; the Prop name stays for the wiring.
@@ -42,7 +42,7 @@ export default function Finale({ className, hot, onHot, onPick, onScreen }: Prop
   }, []);
 
   return (
-    <div ref={host} className={`${s.host} ${className ?? ""}`} role="img" aria-label="Her teenage bedroom at dusk: rock posters, a window, her guitars, a skateboard and boxing gloves, a corner desk with her PC, a Nokia phone and an inkjet printer, a bed with bookshelves, and two cats. The phone, the printer and the monitor each go with a contact button.">
+    <div ref={host} className={`${s.host} ${className ?? ""}`} role="img" aria-label="My teenage bedroom at dusk: rock posters, a window, my guitars, a skateboard, boxing gloves, a corner desk with my PC, a Nokia phone, an inkjet printer, a bed with bookshelves, and two cats. The phone messages me, the printer prints my CV, and the monitor shows my LinkedIn.">
       <svg className={s.arrows} aria-hidden="true">{NOTES.map(([p]) => <path key={p} data-arrow={p} />)}</svg>
       {NOTES.map(([p, text]) => <span key={p} className={s.note} data-note={p} aria-hidden="true"><span>{text}</span></span>)}
     </div>
