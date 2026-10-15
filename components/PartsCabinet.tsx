@@ -105,6 +105,7 @@ async function mount(el: HTMLElement, live: React.RefObject<Props>, alive: () =>
 
   const chipsOf = layers.map((l) => l.chips as readonly string[]);
   let lastUsed: readonly string[] | null = null;
+  let dirty = true; // recoloured since the last render
   const paint = (used: readonly string[]) => {
     slots.forEach((s, i) => { chipsOf[i].forEach((c, k) => s.parts.setColorAt(k, used.includes(c) ? AMBER : BEIGE)); s.parts.instanceColor!.needsUpdate = true; });
   };
@@ -129,7 +130,7 @@ async function mount(el: HTMLElement, live: React.RefObject<Props>, alive: () =>
 
   const settle = (dt: number) => {
     const { state, used, nudge } = live.current;
-    if (used !== lastUsed) { paint(used); lastUsed = used; }
+    if (used !== lastUsed) { paint(used); lastUsed = used; dirty = true; }
     let moving = false;
     slots.forEach((s, i) => {
       const to = state[i].open * (D * 0.7) + (nudge === i || over === i ? 0.08 : 0);
@@ -141,7 +142,7 @@ async function mount(el: HTMLElement, live: React.RefObject<Props>, alive: () =>
   };
   // Only render while something is sliding (or on the first frame): the cabinet is otherwise still.
   let boot = true;
-  toy.run((_, dt) => { const m = settle(dt) || boot; boot = false; return m; });
+  toy.run((_, dt) => { const m = settle(dt) || boot || dirty; boot = dirty = false; return m; });
   // Reduced motion has no loop, so poll for a new role or hover, and redraw only when the target moved.
   let seen = "";
   const still = reduce ? setInterval(() => {

@@ -22,3 +22,12 @@ test("the first drawer is wide on top, the rest go in pairs", () => {
   const d = drawers(layers, [], true);
   assert.deepEqual(d.map((x) => [x.wide, x.row, x.col]), [[true, 0, 0], [false, 1, 0], [false, 1, 1]]);
 });
+
+test("five drawers: rows 0,1,1,2,2 and columns alternate", () => {
+  const five = ["A", "B", "C", "D", "E"].map((name) => ({ name, chips: ["x"] }));
+  const d = drawers(five, [], true);
+  assert.deepEqual(d.map((x) => [x.row, x.col]), [[0, 0], [1, 0], [1, 1], [2, 0], [2, 1]]);
+});
+test("all picked beats a non-empty used list: every drawer shut", () => {
+  assert.deepEqual(drawers(layers, ["a", "c", "g"], true).map((d) => d.open), [0, 0, 0]);
+});
