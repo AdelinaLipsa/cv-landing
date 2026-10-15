@@ -135,7 +135,25 @@ const strum = (notes: number[], at = 0, dur = 1.8, vol = 0.5) => {
   });
 };
 
+// A short recorded clip, fetched and decoded once, played through the same mute.
+const clips = new Map<string, Promise<AudioBuffer | null>>();
+const sample = (url: string, vol = 4) => {
+  const c = out(), m = master;
+  if (!c || !m) return;
+  let p = clips.get(url);
+  if (!p) { p = fetch(url).then((r) => r.arrayBuffer()).then((b) => c.decodeAudioData(b)).catch(() => null); clips.set(url, p); }
+  void p.then((b) => {
+    if (!b || muted) return;
+    const src = c.createBufferSource(), g = c.createGain();
+    src.buffer = b; g.gain.value = vol; // the master is set quiet for blips; a voice needs it back up
+    src.connect(g).connect(m);
+    src.start();
+  });
+};
+
 export const sfx = {
+  // Clicking her: "Hello…"
+  hello: () => sample("/sfx/hello.mp3"),
   // Call inside a click: Safari and Chrome only start (or resume) audio from the gesture's own call stack.
   wake: () => { out(); },
   // The red Strat in her room: an E5 power chord, then a quick A5 answer.

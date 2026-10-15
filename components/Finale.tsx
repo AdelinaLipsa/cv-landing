@@ -868,7 +868,7 @@ async function mount(el: HTMLElement, live: React.RefObject<Live>, alive: () => 
         let wave = 0;
         poke = () => {
           if (wave) return;
-          strum.stop(); bed.reset().play(); bed.time = 1.25; herMix.update(0); draw();
+          sfx.hello(); strum.stop(); bed.reset().play(); bed.time = 1.25; herMix.update(0); draw();
           wave = window.setTimeout(() => { wave = 0; bed.stop(); strum.play(); herMix.update(0); draw(); }, 2000);
         };
         dropHer = () => { clearTimeout(wave); herMix.stopAllAction(); herMix.uncacheRoot(char); for (const m of cats) { m.stopAllAction(); m.uncacheRoot(char); } };
@@ -890,9 +890,9 @@ async function mount(el: HTMLElement, live: React.RefObject<Live>, alive: () => 
           if (!queued) return;
           // A click waits for the next place she can react: on the bed, or seated at the desk (232-446), at once.
           // ReactDesk is keyed on ToDesk 330; from any other seated moment the crossfade carries her into it and back.
-          if (state === "strum" || (state === "day" && (t < 47 * F || t > 540 * F))) { queued = false; go("bed", bed, 0.15); }
+          if (state === "strum" || (state === "day" && (t < 47 * F || t > 540 * F))) { queued = false; sfx.hello(); go("bed", bed, 0.15); }
           else if (state === "day" && t >= 232 * F && t <= 446 * F) {
-            queued = false; resume = t; go("desk", desk, 0.25);
+            queued = false; sfx.hello(); resume = t; go("desk", desk, 0.25);
             hold.reset().play(); hold.time = t; hold.paused = true; hold.fadeIn(0.25);
           }
         };
