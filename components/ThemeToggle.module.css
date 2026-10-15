@@ -17,3 +17,6 @@
   .nudgeText { font-size: 13px; margin-top: 24px; }
   .nudgeArrow { width: 34px; height: 30px; }
 }
+/* Waits its turn after the hero room is live: the first of the three nudges (see SoundToggle, Shell) */
+.nudge { opacity: 0; transition: opacity 0.6s var(--ease); }
+:global(html:has([data-live])) .nudge { opacity: 1; transition-delay: 3s; }
