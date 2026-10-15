@@ -1,0 +1,10 @@
+import { NodeIO } from '@gltf-transform/core';
+import { ALL_EXTENSIONS } from '@gltf-transform/extensions';
+import { MeshoptDecoder } from 'meshoptimizer';
+await MeshoptDecoder.ready;
+const io = new NodeIO().registerExtensions(ALL_EXTENSIONS).registerDependencies({ 'meshopt.decoder': MeshoptDecoder });
+const doc = await io.read(process.argv[2]);
+const walk = (n, d) => { const c = n.getCamera(); const m = n.getMesh();
+  console.log('  '.repeat(d) + n.getName() + (m ? ' [mesh ' + m.listPrimitives()[0].getIndices()?.getCount()/3 + ' tris, uv' + m.listPrimitives()[0].listSemantics().filter(s=>s.startsWith('TEXCOORD')).length + ']' : '') + (c ? ' [camera yfov ' + (c.getYFov()*180/Math.PI).toFixed(2) + ' aspect ' + c.getAspectRatio()?.toFixed(3) + ']' : '') + ' t=' + n.getTranslation().map(v=>v.toFixed(2)).join(','));
+  n.listChildren().forEach(ch => walk(ch, d + 1)); };
+doc.getRoot().getDefaultScene().listChildren().forEach(n => walk(n, 0));

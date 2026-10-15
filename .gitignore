@@ -9,3 +9,8 @@ next-env.d.ts
 .env*
 # Old site: names the current employer, stays local
 index.html
+
+# Blender sources for the room (too big for git, kept locally; see art/README.md)
+art/*.blend
+art/*.blend1
+art/bake/
