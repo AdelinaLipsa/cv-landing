@@ -1,8 +1,177 @@
+/* Her teenage PC at night: a beige CRT on a desk, the 2003 page on its screen. CSS only, so it paints at once. */
+.room {
+  --w: min(92vw, 1040px, calc((100dvh - 190px) * 1.22)); /* monitor width: as big as the height allows */
+  --desk: clamp(48px, 9dvh, 96px);
+  --bez: calc(var(--w) * 0.036);
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+  padding-bottom: var(--desk);
+  overflow: hidden;
+  color-scheme: light;
+}
+.room[data-off] { pointer-events: none; }
+
+/* Dusk-blue dark, the hero room's palette; the screen's light pools on the desk under it. */
+.night {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(60% 55% at 50% 48%, rgba(96, 120, 255, 0.16), transparent 70%),
+    radial-gradient(120% 90% at 50% 100%, #241c44, #1a1530 45%, #0d0b1c 100%);
+}
+.desk {
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  height: var(--desk);
+  background:
+    radial-gradient(40% 120% at 50% 0%, rgba(120, 140, 255, 0.2), transparent 70%),
+    linear-gradient(#2c2347, #17122b 40%, #0e0b1c);
+  box-shadow: 0 -1px 0 rgba(170, 160, 255, 0.22); /* the front edge catching the screen's light */
+}
+
+.rig { position: relative; display: flex; flex-direction: column; align-items: center; width: var(--w); }
+
+/* The blue the tube throws onto the dark around it. */
+.glow {
+  position: absolute;
+  inset: -22% -30% -8%;
+  background: radial-gradient(50% 50% at 50% 46%, rgba(110, 140, 255, 0.42), rgba(110, 120, 255, 0.12) 55%, transparent 75%);
+  filter: blur(24px);
+  pointer-events: none;
+  animation: hum 7s ease-in-out infinite;
+  transition: opacity 0.3s;
+}
+.room[data-off] .glow { opacity: 0; }
+@keyframes hum { 50% { opacity: 0.82; } }
+
+/* Late-90s beige plastic, mostly in shadow: the screen is the only light in the room. */
+.bezel {
+  position: relative;
+  width: 100%;
+  padding: var(--bez) var(--bez) 0;
+  border-radius: calc(var(--bez) * 0.9);
+  background:
+    linear-gradient(90deg, rgba(26, 21, 48, 0.32), transparent 16% 84%, rgba(26, 21, 48, 0.4)),
+    radial-gradient(90% 70% at 50% 42%, rgba(150, 170, 255, 0.14), transparent 70%),
+    linear-gradient(170deg, #ada288, #94896f 50%, #6f6656);
+  box-shadow:
+    inset 0 2px 0 rgba(255, 250, 230, 0.35),
+    inset 0 -10px 18px rgba(30, 20, 60, 0.35),
+    inset 0 0 0 1px rgba(40, 30, 20, 0.25),
+    0 40px 80px -20px rgba(5, 3, 15, 0.9);
+}
+
+/* The glass sits in a recessed frame; the corners bulge a little like the real tube. */
+.screen {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  border-radius: 3.2% / 4.2%;
+  overflow: hidden;
+  background: #0c0d14;
+  box-shadow:
+    0 0 0 calc(var(--bez) * 0.32) #8d826a,
+    0 0 0 calc(var(--bez) * 0.36) rgba(40, 30, 20, 0.45),
+    0 0 26px 2px rgba(120, 150, 255, 0.28);
+}
+
+/* The picture: what collapses when the tube switches off. It scrolls when the page is longer than the screen. */
+.pic {
+  position: absolute;
+  inset: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+  background-color: #f6f7ff;
+  background-image: linear-gradient(#e0e6ff 1px, transparent 1px), linear-gradient(90deg, #e0e6ff 1px, transparent 1px);
+  background-size: 24px 24px;
+  background-attachment: local;
+}
+.flash { position: absolute; inset: 0; background: #fff; opacity: 0; pointer-events: none; }
+.dot {
+  position: absolute;
+  left: 50%; top: 50%;
+  width: 10px; height: 10px;
+  margin: -5px 0 0 -5px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 0 12px 4px rgba(200, 215, 255, 0.9), 0 0 40px 12px rgba(120, 150, 255, 0.5);
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Glass: barrel vignette, inner bezel shadow, scanlines, a reflection, a slow rolling band and a faint flicker. */
+.glass {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  background:
+    radial-gradient(70% 55% at 32% 12%, rgba(255, 255, 255, 0.1), transparent 60%),
+    radial-gradient(120% 110% at 50% 50%, transparent 58%, rgba(14, 10, 40, 0.42) 100%),
+    repeating-linear-gradient(rgba(10, 10, 40, 0.07) 0 1px, transparent 1px 3px);
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.5), inset 0 0 calc(var(--bez) * 1.4) rgba(10, 8, 30, 0.55);
+}
+.glass::before { content: ""; position: absolute; inset: 0; background: #0a0820; opacity: 0; animation: flicker 0.16s steps(2) infinite; }
+.glass::after {
+  content: "";
+  position: absolute;
+  left: 0; right: 0; top: -30%;
+  height: 30%;
+  background: linear-gradient(transparent, rgba(160, 180, 255, 0.06), transparent);
+  animation: roll 8s linear infinite;
+}
+@keyframes flicker { 50% { opacity: 0.035; } }
+@keyframes roll { to { transform: translateY(440%); } }
+
+/* The chin: a blank badge plate, the drive light, the power LED and its button. */
+.chin { display: flex; align-items: center; justify-content: space-between; height: calc(var(--w) * 0.07); padding: 0 calc(var(--bez) * 0.6); }
+.plate { width: 18%; height: 26%; border-radius: 3px; background: linear-gradient(#958a70, #a59a7f); box-shadow: inset 0 1px 2px rgba(30, 20, 10, 0.4), 0 1px 0 rgba(255, 250, 230, 0.25); }
+.lights { display: flex; align-items: center; gap: calc(var(--w) * 0.014); }
+.disk, .led { width: 7px; height: 7px; border-radius: 50%; }
+.disk { width: 10px; height: 4px; border-radius: 1px; background: #4a3b1c; animation: seek 9s steps(1) infinite; }
+.led { background: #5dff7a; box-shadow: 0 0 6px 1px rgba(93, 255, 122, 0.8), 0 0 16px 3px rgba(93, 255, 122, 0.3); transition: background 0.2s, box-shadow 0.2s; }
+.room[data-off] .led { background: #c78a2a; box-shadow: 0 0 5px rgba(255, 170, 60, 0.6); } /* standby */
+.power { width: calc(var(--w) * 0.03); height: calc(var(--w) * 0.017); border-radius: 3px; background: linear-gradient(#a99e83, #8a7f67); box-shadow: inset 0 1px 0 rgba(255, 250, 230, 0.35), 0 1px 2px rgba(10, 5, 20, 0.6); }
+/* Now and then the drive reads; it chatters when she points at the build. */
+@keyframes seek { 0%, 91%, 93%, 95%, 100% { background: #4a3b1c; box-shadow: none; } 92%, 94% { background: #ffb238; box-shadow: 0 0 6px rgba(255, 178, 56, 0.8); } }
+.room:has(.build:hover) .disk { animation: chatter 0.09s steps(1) 5; }
+@keyframes chatter { 0% { background: #ffb238; box-shadow: 0 0 6px rgba(255, 178, 56, 0.9); } 50% { background: #4a3b1c; box-shadow: none; } }
+
+.stand {
+  width: 34%;
+  height: calc(var(--w) * 0.03);
+  margin-top: -1px;
+  clip-path: polygon(14% 0, 86% 0, 100% 100%, 0 100%);
+  background: linear-gradient(#6f6654, #8c826b 70%, #5c5444);
+}
+
+/* Stuck on the bezel, a bit crooked. Decorative: the page keeps the joke for screen readers. */
+.note {
+  position: absolute;
+  top: calc(var(--bez) * -1.4);
+  right: 6%;
+  width: clamp(120px, 15%, 170px);
+  padding: 12px 12px 16px;
+  font-family: var(--font-hand), "Bradley Hand", "Segoe Print", cursive;
+  font-size: clamp(17px, 1.7vw, 22px);
+  line-height: 1.05;
+  color: #3b3220;
+  background: linear-gradient(170deg, #f2dc66, #e3c94c 80%, #d4b93f);
+  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.25), 0 10px 14px -6px rgba(5, 3, 15, 0.6);
+  transform: rotate(4deg);
+  transform-origin: top center;
+  border-radius: 1px 1px 6px 1px / 1px 1px 14px 1px; /* the corner curling off the plastic */
+}
+
+/* The 2003 page itself, unchanged: Times, grey outset buttons, placeholder boxes. */
 .boot {
-  min-height: 100dvh;
   max-width: 720px;
   margin: 0 auto;
-  padding: 40px 20px;
+  padding: clamp(24px, 4%, 44px) clamp(18px, 4%, 36px);
   display: flex;
   flex-direction: column;
   gap: 16px;
@@ -10,12 +179,6 @@
   font-size: 16px;
   line-height: 1.4;
   color: #000;
-}
-
-:global(html:not([data-built]) body):has(.boot) {
-  background-color: #fff;
-  background-image: linear-gradient(#e4e9ff 1px, transparent 1px), linear-gradient(90deg, #e4e9ff 1px, transparent 1px);
-  background-size: 24px 24px;
 }
 
 .h1 {
@@ -40,21 +203,51 @@
 }
 
 .button:active { border-style: inset; }
+.button:focus-visible { outline: 2px dotted #000; outline-offset: 2px; } /* the 2003 focus ring, dark on the light screen */
+
+/* A tiny signal glitch: the picture tears into RGB for a moment. */
+.build:hover { animation: glitch 0.15s steps(1) 1; }
+@keyframes glitch {
+  0% { transform: translate(1px, 0); text-shadow: -2px 0 rgba(255, 0, 70, 0.75), 2px 0 rgba(0, 190, 255, 0.75); clip-path: inset(0 0 45% 0); }
+  25% { transform: translate(-2px, 1px); text-shadow: 2px 0 rgba(255, 0, 70, 0.75), -2px 0 rgba(0, 190, 255, 0.75); clip-path: inset(40% 0 0 0); }
+  50% { transform: translate(1px, -1px); text-shadow: -1px 0 rgba(255, 0, 70, 0.75), 1px 0 rgba(0, 190, 255, 0.75); clip-path: none; }
+  75% { transform: translate(-1px, 0); text-shadow: 1px 0 rgba(255, 0, 70, 0.6), -1px 0 rgba(0, 190, 255, 0.6); }
+  100% { transform: none; text-shadow: none; }
+}
 
 .boxes { display: flex; flex-direction: column; gap: 10px; margin-top: 8px; }
 .pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
 
 .box {
-  border: 2px dashed var(--blueprint);
+  border: 2px dashed #3355ff;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 15px;
-  color: var(--blueprint);
+  color: #3355ff;
+  text-align: center;
 }
 
-.todo { font-size: 14px; color: #555; }
-.enc { color: var(--blueprint); }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.enc { color: #3355ff; }
 .h1 { position: relative; }
 .ghost { visibility: hidden; }
 .decrypt { position: absolute; inset: 0; }
+
+/* Phones: the monitor fills the width on a thinner bezel, and the screen is as tall as the room allows. */
+@media (max-width: 640px) {
+  .room { --w: calc(100vw - 12px); --bez: 9px; --desk: 40px; }
+  .screen { aspect-ratio: auto; height: calc(100dvh - var(--desk) - 96px); border-radius: 14px / 16px; }
+  .chin { height: 34px; padding: 0 10px; }
+  .disk { width: 8px; }
+  .power { width: 14px; height: 8px; }
+  .stand { height: 12px; }
+  .note { top: -30px; right: 14px; width: 116px; padding: 8px 10px 12px; font-size: 17px; }
+  .boot { padding: 30px 16px 24px; }
+  .h1 { font-size: 27px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .glow, .glass::before, .glass::after, .disk { animation: none; }
+  .build:hover, .room:has(.build:hover) .disk { animation: none; }
+}

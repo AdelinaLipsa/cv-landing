@@ -1,7 +1,7 @@
 "use client";
 import { AnimatePresence, animate, motion, MotionConfig, useMotionValue, useTransform, type Transition } from "motion/react";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
-import { glide, track } from "@/lib/motion";
+import { ease, glide, track } from "@/lib/motion";
 import { useCalm } from "@/lib/useCalm";
 import { steps, STAGE } from "@/content/tour";
 import Boot from "./Boot";
@@ -61,6 +61,7 @@ export default function Shell({ code, character }: { code: Snippets; character: 
   useEffect(() => { seen.current.add(pane); if (seen.current.size === TABS.length) unlock("explorer"); }, [pane]);
   const [built, setBuilt] = useState<boolean | null>(null);
   const [returning, setReturning] = useState(false);
+  const [enter, setEnter] = useState(0); // ms the page takes to come up around the boot monitor; 0: no entrance
   const [touring, setTouring] = useState(false);
   const [step, setStep] = useState(0);
   const [sheet, setSheet] = useState<{ label: string; body: ReactNode } | null>(null);
@@ -207,15 +208,28 @@ export default function Shell({ code, character }: { code: Snippets; character: 
     stage,
   };
 
-  const boot = <Boot onBuild={startTour} onSkip={() => { remember(); showBuilt(); }} />;
-  if (built === false) return boot;
-
   const panes = [Home, Work, Career, Skills];
 
   return (
     <MotionConfig reducedMotion="user">
-      {built === null && <div className="gate-boot">{boot}</div>}
-      <main className="gate-shell">
+      {/* Boot stays mounted through its exit, the pull-back, over the page coming up behind it. The tour waits for it. */}
+      <AnimatePresence>
+        {built !== true && (
+          <Boot
+            key="boot"
+            gate={built === null}
+            onBuild={(ms) => { setEnter(ms); showBuilt(); setTimeout(startTour, ms); }}
+            onSkip={(ms) => { setEnter(ms); remember(); showBuilt(); }}
+          />
+        )}
+      </AnimatePresence>
+      {built !== false && <>
+      <motion.main
+        className="gate-shell"
+        initial={enter ? (reduce ? { opacity: 0 } : { opacity: 0, scale: 1.08 }) : false}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: enter / 1000, ease }}
+      >
       {/* Sparks in broth once the page is built. Not during the build, which is its own show. */}
       <ClickSpark sparkColor={touring || reduce ? "transparent" : "#F5B53F"} sparkSize={9} sparkRadius={18} sparkCount={8} duration={500}>
       <div ref={viewport} className={s.viewport} data-era={era} data-touring={touring || undefined} style={{ "--from": `${dir * 36}px` } as React.CSSProperties}>
@@ -274,7 +288,7 @@ export default function Shell({ code, character }: { code: Snippets; character: 
         </div>
       </div>
       </ClickSpark>
-      </main>
+      </motion.main>
 
       {touring && <Tour code={code} onStep={onStep} onClose={endTour} />}
       <EasterEggs contact={ui.contact} terminal={ui.terminal} arcade={() => setArcade(true)} />
@@ -289,6 +303,7 @@ export default function Shell({ code, character }: { code: Snippets; character: 
       <Sheet open={!!sheet} onClose={() => setSheet(null)} label={sheet?.label ?? ""}>
         {sheet?.body}
       </Sheet>
+      </>}
     </MotionConfig>
   );
 }
