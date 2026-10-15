@@ -1,6 +1,6 @@
 exec(open("/Users/adelinalipsa/Documents/GitHub/adelina-cv/art/scripts/lib.py").read())
 TX = ART + "/textures/"
-for p in ("WindowRig", "Skirt", "WinFrame", "WinMullion", "WinTransom", "HoleCutter", "WindowGlass", "Sill", "Sky", "Curtain", "Rod", "Rug", "Poster", "Tape", "Cork", "Fairy"): kill(p)
+for p in ("WindowRig", "Skirt", "WinFrame", "WinMullion", "WinTransom", "HoleCutter", "WindowGlass", "Sill", "Sky", "Curtain", "Rod", "Rug", "Poster", "Tape", "Cork", "Fairy", "Glow_Bulbs", "Glow_Window"): kill(p)
 S, T, H = 1.8, 0.25, 2.6
 # The window is in the LEFT wall, where the sunset comes in. Its parts are built as if on the right wall
 # (y = S, across x) and the whole set is then turned 90 degrees about Z, which maps x -> y and y = S -> x = -S.
@@ -27,7 +27,7 @@ box("WinMullion", (0.035, 0.05, WZ1 - WZ0), (WX, S + 0.1, (WZ0 + WZ1) / 2), whit
 box("WinTransom", (WW, 0.05, 0.035), (WX, S + 0.1, WZ0 + (WZ1 - WZ0) * 0.68), white, c="Shell")
 box("Sill", (WW + 0.16, 0.2, 0.035), (WX, S - 0.02, WZ0 - 0.0175 + 0.002), white, bevel=0.008, c="Shell")
 sky = imgmat("SunsetSky", TX + "sunset_sky.png", emit=1.4)
-skyo = planeuv("Sky", 1.9, 1.75, (WX + 0.2, S + T + 0.3, 1.4), (math.pi / 2, 0, 0), sky, c="Shell")
+skyo = planeuv("Glow_Window", 1.9, 1.75, (WX + 0.2, S + T + 0.3, 1.4), (math.pi / 2, 0, 0), sky, c="Shell")
 skyo.visible_shadow = False  # the sun and the window glow shine through it
 # curtain rod and two curtains with soft folds
 metal = mat("DarkMetal", "#2B2A30", rough=0.35, metal=0.9)
@@ -55,7 +55,7 @@ curtain("CurtainR", WX + WW / 2 + 0.22, WX + WW / 2 - 0.05, 0.2)
 # turn the window set onto the left wall
 rig = D.objects.new("WindowRig", None); bpy.context.scene.collection.objects.link(rig)
 parts = [D.objects[n] for n in ("HoleCutter", "WindowGlass", "WinFrameTop", "WinFrameBot", "WinFrameL", "WinFrameR", "WinMullion",
-                               "WinTransom", "Sill", "Sky", "CurtainRod", "CurtainL", "CurtainR")]
+                               "WinTransom", "Sill", "Glow_Window", "CurtainRod", "CurtainL", "CurtainR")]
 for o in parts: o.parent = rig
 rig.rotation_euler = (0, 0, math.pi / 2)
 bpy.context.view_layer.update()
@@ -112,5 +112,5 @@ for k in range(0, len(wire), 5):
     r = bmesh.ops.create_uvsphere(bm, u_segments=10, v_segments=6, radius=0.014)
     bmesh.ops.scale(bm, vec=Vector((1, 1, 1.35)), verts=r["verts"])
     bmesh.ops.translate(bm, vec=p + Vector((0.01 if p.x < -S + 0.1 else 0, -0.01 if p.y > S - 0.1 else 0, -0.022)), verts=r["verts"])
-fb = mesh_obj("FairyBulbs", bm); finish(fb, bulbm, c="Shell")
+fb = mesh_obj("Glow_Bulbs", bm); finish(fb, bulbm, c="Shell")
 print("bulbs", len(fb.data.polygons) // 60)

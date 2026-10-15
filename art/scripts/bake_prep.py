@@ -49,13 +49,36 @@ def join(name, objs, coll_name):
     j = vl.objects.active; j.name = name; j.data.name = name; put(j, coll_name)
     bpy.ops.object.transform_apply(location=False, rotation=True, scale=True)
     return j
-KEEP = {"FairyBulbs", "PhoneScreen", "Screen", "Sky", "TowerLED"}
+# 3a. the light sources the site blooms: the lamp's emissive bulb comes out of the lamp as Glow_Lamp
+lampm = D.materials.get("desk_lamp_arm_01_light")
+pieces = []
+for o in [o for o in GEO if o.name in D.objects and lampm and lampm.name in [s.material.name for s in o.material_slots if s.material]]:
+    mi = [s.material for s in o.material_slots].index(lampm)
+    if not any(p.material_index == mi for p in o.data.polygons): continue
+    for x in D.objects: x.select_set(False)
+    o.select_set(True); vl.objects.active = o
+    bpy.ops.object.mode_set(mode="EDIT"); bpy.ops.mesh.select_all(action="DESELECT")
+    o.active_material_index = [s.material for s in o.material_slots].index(lampm)
+    bpy.ops.object.material_slot_select()
+    before = set(D.objects)
+    bpy.ops.mesh.separate(type="SELECTED")
+    bpy.ops.object.mode_set(mode="OBJECT")
+    pieces += [x for x in D.objects if x not in before]
+if pieces:
+    gl = join("Glow_Lamp", pieces, "Props")
+    GEO.append(gl)
+KEEP = {"Glow_Bulbs", "Glow_Window", "Glow_Lamp", "PhoneScreen", "Screen", "TowerLED"}
 def members(coll_name):
     return [o for o in D.collections[coll_name].all_objects if o.type == "MESH" and o.name not in KEEP]
 plant_parts = [o for o in D.objects["Plant"].children_recursive if o.type == "MESH"]
 phone_parts = [o for o in D.objects["Phone"].children_recursive if o.type == "MESH" and o.name not in KEEP]
 printer_parts = [o for o in D.objects["Printer"].children_recursive if o.type == "MESH"]
-special = set(plant_parts + phone_parts + printer_parts + [o for o in D.objects["Tower"].children_recursive if o.type == "MESH"])
+chair = D.objects["Chair"]
+SEAT = ("ChairPan", "ChairSeat", "ChairSpine", "ChairBack", "ChairArm", "ChairLift")
+chair_parts = [o for o in chair.children_recursive if o.type == "MESH"]
+seat_parts = [o for o in chair_parts if o.name.startswith(SEAT) and not o.name.startswith("ChairLiftSleeve")]
+base_parts = [o for o in chair_parts if o not in seat_parts]
+special = set(chair_parts + plant_parts + phone_parts + printer_parts + [o for o in D.objects["Tower"].children_recursive if o.type == "MESH"])
 def attach(child, parent):
     mw = child.matrix_world.copy(); child.parent = parent; child.matrix_world = mw
 pb = join("PhoneBody", phone_parts, "Interactive"); attach(pb, D.objects["Phone"])
@@ -73,12 +96,20 @@ D.objects.remove(pl_empty, do_unlink=True); pm.name = "Plant"; pm.data.name = "P
 bpy.context.scene.cursor.location = pl_loc
 for o in D.objects: o.select_set(False)
 pm.select_set(True); vl.objects.active = pm; bpy.ops.object.origin_set(type="ORIGIN_CURSOR")
+# the chair: its own bake, split into the base and the seat (which swivels on the gas lift)
+seat = join("ChairSeatTmp", seat_parts, "Interactive"); base = join("ChairBaseTmp", base_parts, "Interactive")
+bpy.context.scene.cursor.location = chair.matrix_world.translation
+for o, n in ((seat, "ChairSeat"), (base, "ChairBase")):
+    for x in D.objects: x.select_set(False)
+    o.select_set(True); vl.objects.active = o; bpy.ops.object.origin_set(type="ORIGIN_CURSOR")
+    o.name = n; o.data.name = n; attach(o, chair)
+put(chair, "Interactive")
 # the screen hangs off the Monitor empty, which survives
 for grp, cname in (("Room_Shell", "Shell"), ("Room_Furniture", "Furniture"), ("Room_Props", "Props")):
     ms = [o for o in members(cname) if o not in special and o.name not in ("Plant", "Tower")]
     join(grp, ms, cname)
 # remove the empties left with no children (old part groups), keeping the named nodes
-NAMED = {"Phone", "Printer", "PaperSlot", "NoteScreen", "CatSpot", "CatSpot2", "CharacterSpot", "NotePhone", "NotePrinter",
+NAMED = {"Chair", "PathBed", "PathDesk", "ChairAtDesk", "ChairRest", "Phone", "Printer", "PaperSlot", "NoteScreen", "CatSpot", "CatSpot2", "CharacterSpot", "NotePhone", "NotePrinter",
          "SteamSpot", "WindowGlass", "Monitor", "LightShaft"}
 for o in list(D.objects):
     if o.type == "EMPTY" and o.name not in NAMED and not o.children:

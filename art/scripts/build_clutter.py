@@ -77,7 +77,7 @@ cupm = mat("PenCupMetal", "#A9A6A0", rough=0.35, metal=0.8)
 bm = bmesh.new(); bmesh.ops.create_cone(bm, cap_ends=False, segments=24, radius1=0.035, radius2=0.035, depth=0.1)
 pc = mesh_obj("PenCup", bm); finish(pc, cupm, c=P); so = pc.modifiers.new("Solid", "SOLIDIFY"); so.thickness = 0.003
 cyl("PenCupBottom", 0.035, 0.004, (0, 0, -0.048), cupm, c=P, parent=pc)
-pc.location = (-1.71, 0.5, DZ + 0.05)
+pc.location = (-1.71, 1.12, DZ + 0.05)
 for k in range(6):
     col = ["#F5B53F", "#2A2760", "#B5121B", "#F5B53F", "#1E1D24", "#3E6B57"][k]
     a = k / 6 * 2 * math.pi
@@ -92,18 +92,18 @@ for k, (col, loc, rz) in enumerate([("#F5D547", (-1.2, 1.02, DZ + 0.0006), 0.2),
     s = box(f"Sticky{k}", (0.076, 0.076, 0.0012), loc, mat("Sticky_" + col, col, rough=0.8), bevel=0, rot=(0, 0, rz), c=P)
     if k == 2: s.rotation_euler = (0, math.pi / 2, 0.08)  # one stuck on the wall under the cork board
 for k in range(3):
-    cover_box(f"CDDesk{k}", (0.142, 0.125, 0.0104), (-1.68, 0.42, DZ + 0.0052 + k * 0.0106), (k * 3) % 8, rot=(0, 0, math.radians(20 + k * 9)))
+    cover_box(f"CDDesk{k}", (0.142, 0.125, 0.0104), (-1.66, 1.0, DZ + 0.0052 + k * 0.0106), (k * 3) % 8, rot=(0, 0, math.radians(20 + k * 9)))
 # a wall socket under the desk, with the printer's, the lamp's and the phone's leads dropping to it
 sockm = mat("SocketWhite", "#F2EFE8", rough=0.4)
 box("Socket", (0.012, 0.16, 0.08), (-S + 0.006, 0.6, 0.3), sockm, bevel=0.004, c=P)
 for k in range(3):
     box(f"Plug{k}", (0.03, 0.035, 0.035), (-S + 0.026, 0.55 + k * 0.05, 0.3), mat("PlugBlack", "#1E1D24", rough=0.5), bevel=0.006, c=P)
 wirem = mat("WireBlack", "#1E1D24", rough=0.5)
-tube("WirePrinter", [(-1.7, 0.98, DZ + 0.04), (-1.79, 0.92, 0.72), (-1.78, 0.75, 0.5), (-1.76, 0.6, 0.3)], 0.003, wirem, c=P)
-tube("WireLamp", [(-1.62, 0.66, DZ - 0.01), (-1.78, 0.66, 0.6), (-1.78, 0.62, 0.4), (-1.76, 0.6, 0.3)], 0.003, wirem, c=P)
+tube("WirePrinter", [(-1.7, 0.42, DZ + 0.04), (-1.79, 0.46, 0.72), (-1.78, 0.52, 0.5), (-1.76, 0.6, 0.3)], 0.003, wirem, c=P)
+tube("WireLamp", [(-1.62, 0.76, DZ - 0.01), (-1.78, 0.76, 0.6), (-1.78, 0.66, 0.4), (-1.76, 0.6, 0.3)], 0.003, wirem, c=P)
 # floor: her skateboard against the wall, a backpack by the bed, a pile of books
 bpm = mat("BackpackFabric", "#B5121B", rough=0.9, sheen=0.5)
-bp = box("Backpack", (0.16, 0.3, 0.4), (0.35, 0.66, 0.2), bpm, bevel=0.06, rot=(0.22, 0, math.radians(80)), c=P, segs=4)
+bp = box("Backpack", (0.16, 0.3, 0.4), (1.45, 0.64, 0.2), bpm, bevel=0.06, rot=(0.22, 0, math.radians(80)), c=P, segs=4)
 box("BackpackPocket", (0.06, 0.24, 0.18), (0.08, 0, -0.08), bpm, bevel=0.03, c=P, parent=bp, segs=3)
 tube("BackpackStrap", [(-0.08, -0.08, 0.18), (-0.13, -0.08, 0.0), (-0.08, -0.08, -0.17)], 0.012, D.materials["BlackPlastic"], c=P, parent=bp)
 tube("BackpackStrap2", [(-0.08, 0.08, 0.18), (-0.13, 0.08, 0.0), (-0.08, 0.08, -0.17)], 0.012, D.materials["BlackPlastic"], c=P, parent=bp)
@@ -128,7 +128,7 @@ for xx in (-0.27, 0.27):
         cyl(f"SkateWheel{xx}{yy}", 0.026, 0.03, (xx, yy, -0.045), mat("SkateWheel", "#D9CBA6", rough=0.6), rot=(math.pi / 2, 0, 0), c=P, parent=sk, verts=20)
 sk.rotation_euler = (0, math.radians(-110), 0); sk.location = (-1.6, -1.6, 0.41)
 for k, (col, rz) in enumerate([("#2A2760", 0.1), ("#E1B04A", -0.25), ("#3E6B57", 0.4), ("#B5121B", 0.05)]):
-    book(f"FloorBook{k}", 0.17, 0.035, 0.24, (-0.12, 0.66, 0.0175 + k * 0.036), rz, col)
+    book(f"FloorBook{k}", 0.17, 0.035, 0.24, (1.15, -1.35, 0.0175 + k * 0.036), rz, col)
 # cover_box("CDFloor", (0.142, 0.125, 0.0104), (0.15, 0.25, 0.006), 5, rot=(0, 0, 0.7))
 for k, (col, xx, yy, rz) in enumerate([("#F5B53F", -0.2, 0.03, 0.3), ("#EE6E9F", 0.05, -0.04, -0.2), ("#F2EFE8", 0.22, 0.02, 0.6), ("#2A2760", -0.05, 0.05, 1.0)]):
     box(f"SkateSticker{k}", (0.07, 0.05, 0.001), (xx, yy, -0.0125), mat("Sticker_" + col, col, rough=0.35), bevel=0, rot=(0, 0, rz), c=P, parent=sk)

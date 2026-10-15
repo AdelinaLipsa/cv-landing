@@ -1,10 +1,10 @@
 """Step 2: a second UV ('Lightmap') per bake group, smart-projected and packed into one atlas each."""
 exec(open("/Users/adelinalipsa/Documents/GitHub/adelina-cv/art/scripts/lib.py").read())
 GROUPS = {
-    "Shell": ["Room_Shell", "FairyBulbs", "Sky"],
+    "Shell": ["Room_Shell", "Glow_Bulbs", "Glow_Window"],
     "Furniture": ["Room_Furniture"],
-    "Props": ["Room_Props", "Plant"],
-    "Interactive": ["PhoneBody", "PhoneScreen", "PrinterBody", "Screen", "Tower", "TowerLED"],
+    "Props": ["Room_Props", "Plant", "Glow_Lamp"],
+    "Interactive": ["PhoneBody", "PhoneScreen", "PrinterBody", "Screen", "Tower", "TowerLED", "ChairSeat", "ChairBase"],
 }
 vl = bpy.context.view_layer
 def unwrap(names, margin=0.0015, angle=66):

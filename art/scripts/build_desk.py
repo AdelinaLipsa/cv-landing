@@ -28,7 +28,7 @@ def wedge(name, w, d, h_front, h_back, m, parent, loc=(0, 0, 0), bevel=0.006):
     return finish(o, m, bevel=bevel, c=C, parent=parent)
 
 # ---------- her mobile: a late-2000s QWERTY candybar (E71-style shape, no logo), lying flat, screen up, angled to the camera
-ph = group("Phone", (-1.36, 0.22, DZ), 38)
+ph = group("Phone", (-1.3, 0.11, DZ), 38)
 graphite = mat("PhoneGraphite", "#2C2C33", rough=0.35, metal=0.3)
 trim = mat("PhoneTrim", "#B9BCC2", rough=0.2, metal=1.0)
 keyc = mat("PhoneKeys", "#1A1A1F", rough=0.4)
@@ -49,7 +49,7 @@ scr = planeuv("PhoneScreen", 0.045, 0.034, (0, 0.03, PT + 0.0011), (0, 0, 0), ma
 empty("NotePhone", (0, 0.03, 0.04), parent=ph, c=C)
 # ---------- Printer: a late-2000s consumer inkjet against the wall, front to the room. Paper goes in a tray
 # at the back and slides out onto the output tray at the front, where PaperSlot is.
-pr = group("Printer", (-1.56, 0.98, DZ), 90)
+pr = group("Printer", (-1.56, 0.42, DZ), 90)  # the left end of wing A, by the window
 grey = mat("InkjetGrey", "#B9BBC0", rough=0.4)
 dark = mat("InkjetBlack", "#232328", rough=0.3, coat=0.3)
 paperm = mat("PaperWhite", "#F4F2EC", rough=0.9)
@@ -69,7 +69,7 @@ empty("PaperSlot", (0, -0.124, 0.05), parent=pr, c=C)   # the sheet slides out f
 empty("NotePrinter", (0, 0, 0.22), parent=pr, c=C)
 # ---------- the Siamese sits on wing A between phone and printer, under the lamp, facing the camera (built in code)
 if "CatSpot" in D.objects: D.objects.remove(D.objects["CatSpot"], do_unlink=True)
-cat = empty("CatSpot", (-1.29, 0.52, DZ), c=C, size=0.12)
+cat = empty("CatSpot", (-1.3, 0.86, DZ), c=C, size=0.12)
 cat.rotation_euler = (0, 0, math.radians(45))
 # ---------- mug on wing B
 P = "Props"

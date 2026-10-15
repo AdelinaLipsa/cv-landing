@@ -2,10 +2,10 @@
 exec(open("/Users/adelinalipsa/Documents/GitHub/adelina-cv/art/scripts/lib.py").read())
 import time
 GROUPS = {
-    "Shell": (["Room_Shell", "FairyBulbs", "Sky"], 2048),
+    "Shell": (["Room_Shell", "Glow_Bulbs", "Glow_Window"], 2048),
     "Furniture": (["Room_Furniture"], 2048),
-    "Props": (["Room_Props", "Plant"], 2048),
-    "Interactive": (["PhoneBody", "PhoneScreen", "PrinterBody", "Screen", "Tower", "TowerLED"], 2048),
+    "Props": (["Room_Props", "Plant", "Glow_Lamp"], 2048),
+    "Interactive": (["PhoneBody", "PhoneScreen", "PrinterBody", "Screen", "Tower", "TowerLED", "ChairSeat", "ChairBase"], 2048),
 }
 sc = bpy.context.scene; vl = bpy.context.view_layer
 sc.render.engine = "CYCLES"
@@ -29,8 +29,15 @@ def bake_group(g):
     for o in objs:
         o.select_set(True); o.data.uv_layers.active = o.data.uv_layers["Lightmap"]
     vl.objects.active = objs[0]
+    # the chair moves on the site: it gets its own bake (with the Interactive group) and stays out of the room's
+    chair = [D.objects[n] for n in ("ChairSeat", "ChairBase") if n in D.objects]
+    for o in chair: o.hide_render = g != "Interactive"
+    preview_only = [D.objects["LightShaft"]] + list(D.collections["Dust"].all_objects if "Dust" in D.collections else [])
+    for o in preview_only: o.hide_render = True   # the cone and the dust are drawn live on the site
     t = time.time()
     bpy.ops.object.bake(type="COMBINED")
+    for o in chair: o.hide_render = False
+    for o in preview_only: o.hide_render = False
     print(g, "baked in", round(time.time() - t, 1), "s")
     return img
 for g in (BAKE_ONLY if "BAKE_ONLY" in dir() else GROUPS):
