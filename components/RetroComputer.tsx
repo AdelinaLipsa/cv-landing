@@ -4,6 +4,7 @@ import type * as T from "three";
 import { createBattle, draw, step, W, H } from "@/lib/battle";
 import { buildHobbies } from "@/lib/hobbyModels";
 import { marquee, teaser } from "@/lib/bootTeaser";
+import { toyStage } from "@/lib/toyStage";
 import s from "./RetroComputer.module.css";
 
 // A beige late-90s computer in three.js. The screen is a canvas texture running the pixel battle.
@@ -32,69 +33,13 @@ export default function RetroComputer({ className, character = false, onScreen }
 }
 
 async function mount(el: HTMLElement, character: boolean, onScreen: () => void) {
-  const [THREE, { RoomEnvironment }] = await Promise.all([import("three"), import("three/examples/jsm/environments/RoomEnvironment.js")]);
-  const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
-
-  // Phones: 3x screens make this the heaviest thing on the page, so fewer pixels and no antialias there.
-  const touch = matchMedia("(pointer: coarse)").matches;
-  const renderer = new THREE.WebGLRenderer({ antialias: !touch, alpha: true });
-  renderer.setPixelRatio(Math.min(devicePixelRatio, touch ? 1.5 : 2));
-  renderer.outputColorSpace = THREE.SRGBColorSpace;
-  el.appendChild(renderer.domElement);
-
-  const scene = new THREE.Scene();
-  const camera = new THREE.PerspectiveCamera(30, 1, 0.1, 100);
+  const toy = await toyStage(el);
+  const { THREE, renderer, scene, camera, reduce, touch, plastic, box } = toy;
   const VIEW = new THREE.Vector3(3.4, 2.6, 8.2).normalize(); // the 3/4 angle we look from
 
-  // Reflections: a soft studio environment for the plastic and glass to catch.
-  const pmrem = new THREE.PMREMGenerator(renderer);
-  const env = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
-  scene.environment = env;
-  scene.environmentIntensity = 0.45;
-  renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 0.85;
-
-  scene.add(new THREE.HemisphereLight(0xffffff, 0xb8b6d9, 0.5));
-  const key = new THREE.DirectionalLight(0xfff4e0, 1.8);
-  key.position.set(4, 6, 5);
-  scene.add(key);
-
-  // 90s plastic: satin, not matte. A fine moulded grain drives bump and roughness.
-  const grainCanvas = document.createElement("canvas");
-  grainCanvas.width = grainCanvas.height = 128;
-  const g = grainCanvas.getContext("2d")!;
-  const img = g.createImageData(128, 128);
-  for (let p = 0; p < img.data.length; p += 4) {
-    const v = 150 + Math.random() * 70;
-    img.data[p] = img.data[p + 1] = img.data[p + 2] = v;
-    img.data[p + 3] = 255;
-  }
-  g.putImageData(img, 0, 0);
-  const grain = new THREE.CanvasTexture(grainCanvas);
-  grain.wrapS = grain.wrapT = THREE.RepeatWrapping;
-  grain.repeat.set(6, 6);
-
-  const plastic = (color: number, roughness: number) =>
-    new THREE.MeshPhysicalMaterial({
-      color,
-      roughness,
-      roughnessMap: grain,
-      bumpMap: grain,
-      bumpScale: 0.6,
-      clearcoat: 0.35,
-      clearcoatRoughness: 0.35,
-      sheen: 0.3,
-      sheenRoughness: 0.6,
-      envMapIntensity: 0.9,
-    });
   const beige = plastic(0xcdbb94, 0.45);
   const beigeDark = plastic(0xb3a27c, 0.55);
   const dark = new THREE.MeshPhysicalMaterial({ color: 0x2a2760, roughness: 0.35, clearcoat: 0.6 });
-  const box = (w: number, h: number, d: number, m: T.Material, x = 0, y = 0, z = 0) => {
-    const mesh = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m);
-    mesh.position.set(x, y, z);
-    return mesh;
-  };
 
   const pc = new THREE.Group();
   // Desktop case, floppy slot, LED
@@ -719,18 +664,11 @@ async function mount(el: HTMLElement, character: boolean, onScreen: () => void) 
     el.removeEventListener("pointermove", onMove);
     el.removeEventListener("pointerup", onUp);
     el.removeEventListener("pointercancel", onUp);
-    scene.traverse((o) => {
-      if (o instanceof THREE.Mesh) { o.geometry.dispose(); (Array.isArray(o.material) ? o.material : [o.material]).forEach((mt) => { (mt as T.MeshStandardMaterial).map?.dispose(); mt.dispose(); }); }
-    });
     tex.dispose();
     logoTex.dispose();
     hobbies.dispose();
-    grain.dispose();
-    env.dispose();
-    pmrem.dispose();
-    renderer.dispose();
-    renderer.domElement.remove();
     NOTES.forEach((n) => n.node.remove());
+    toy.dispose();
   };
 }
 
