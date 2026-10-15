@@ -285,13 +285,19 @@ async function mount(el: HTMLElement, live: React.RefObject<Live>, alive: () => 
   const onLeave = () => { if (pointer) { pointer = null; live.current.onHot(null); } };
   // The tower's power button boots Win95. So does a tap on the monitor when nothing is lit (touch has no hover);
   // with its LinkedIn card up, the monitor does what the LinkedIn button does.
+  // A click is a left press and release on the same object without dragging: right-clicks and drags do nothing.
+  let down: { h: ReturnType<typeof hit>; x: number; y: number } | null = null;
+  const onDown = (e: PointerEvent) => { down = e.button === 0 ? { h: hit(e), x: e.clientX, y: e.clientY } : null; };
   const onUp = (e: PointerEvent) => {
+    const d = down; down = null;
     const h = hit(e);
+    if (!d || d.h !== h || Math.hypot(e.clientX - d.x, e.clientY - d.y) > 6) return;
     if (h === "tower" || (h === "rolodex" && !live.current.hot)) live.current.onScreen?.();
     else if (h) live.current.onPick(h);
   };
   el.addEventListener("pointermove", onMove);
   el.addEventListener("pointerleave", onLeave);
+  el.addEventListener("pointerdown", onDown);
   el.addEventListener("pointerup", onUp);
 
   // The notes: text pinned in open space, a hand-drawn arrow bowing from it onto the object, redrawn every frame.
@@ -404,6 +410,7 @@ async function mount(el: HTMLElement, live: React.RefObject<Live>, alive: () => 
     ro.disconnect();
     el.removeEventListener("pointermove", onMove);
     el.removeEventListener("pointerleave", onLeave);
+    el.removeEventListener("pointerdown", onDown);
     el.removeEventListener("pointerup", onUp);
     phoneMesh.material = phoneDark; screenMesh.material = screenDark; // so the stage's dispose finds the baked ones
     for (const m of [...phoneLit, screenLit, black]) { m.map?.dispose(); m.dispose(); }
