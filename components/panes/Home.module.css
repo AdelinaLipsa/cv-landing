@@ -58,7 +58,7 @@
 .role b { font-weight: 600; display: block; }
 .role span { color: var(--steam); }
 .about { max-width: 520px; font-size: 16px; line-height: 1.55; color: var(--body-2); }
-.actions { display: flex; align-items: center; gap: 22px; margin-top: 2px; }
+.actions { display: flex; align-items: center; gap: 12px; margin-top: 2px; white-space: nowrap; } /* phones: both buttons on one line, each label unbroken */
 
 .dock { display: none; }
 .cards { margin-top: 8px; }
@@ -172,7 +172,7 @@
   .role { font-size: 23px; line-height: 1.4; }
   .role b { display: inline; }
   .about { font-size: 18px; line-height: 1.6; }
-  .actions { margin-top: 12px; }
+  .actions { margin-top: 12px; gap: 22px; }
   .dock { display: flex; flex-direction: column; gap: 14px; margin-top: 36px; font-size: 14px; }
 
   /* The room takes the right column and bleeds well past it: into the gap on the left, to the viewport's edge on the
