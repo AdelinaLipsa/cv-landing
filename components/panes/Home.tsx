@@ -29,6 +29,7 @@ import DecryptedText from "../DecryptedText";
 import ElectricBorder from "../ElectricBorder";
 import QuickRead from "../QuickRead";
 import GuestbookButton from "../Guestbook";
+import { sfx } from "@/lib/sfx";
 import p from "./pane.module.css";
 import s from "./Home.module.css";
 
@@ -199,7 +200,7 @@ export default function Home({ ui }: { ui: UI }) {
 
         {/* Her room, baked in Blender. The Workbench that sat here is retired: <Workbench /> */}
         <div className={`${s.cards} ${s.dropper}`} data-tour="cards" {...drop(STAGE.cards)}>
-          <Finale hot={hot} onHot={setHot} onPick={pick} onScreen={() => setWin95(true)} />
+          <Finale hot={hot} onHot={setHot} onPick={pick} onScreen={() => { sfx.wake(); setWin95(true); }} />
         </div>
       </div>
 
@@ -252,7 +253,7 @@ export default function Home({ ui }: { ui: UI }) {
           </button>
         </div>
         {/* The computer moved to the room in the hero: <RetroComputer className={s.retroCanvas} character={ui.character} onScreen={() => setWin95(true)} /> */}
-        {!touring && <button type="button" className={s.bootBtn} onClick={() => setWin95(true)}><span aria-hidden="true">▶</span> Boot the old computer</button>}
+        {!touring && <button type="button" className={s.bootBtn} onClick={() => { sfx.wake(); setWin95(true); }}><span aria-hidden="true">▶</span> Boot the old computer</button>}
         {win95 && <Win95 onClose={() => setWin95(false)} contact={ui.contact} />}
       </section>
 

@@ -90,7 +90,38 @@ const pad = (notes: number[], at: number, dur: number, vol = 0.16, open = 2600) 
 };
 const bell = (n: number, at: number, vol = 0.22) => { tone(n, n, 1.4, "sine", vol, at); tone(n * 2, n * 2, 0.7, "sine", vol * 0.25, at); };
 
+// An overdriven electric guitar: a few detuned saws through a soft-clip curve and a cabinet low-pass, each string
+// a few ms after the last like a downstroke. `notes` in Hz, `at` seconds from now.
+let curve: Float32Array<ArrayBuffer> | null = null;
+const strum = (notes: number[], at = 0, dur = 1.6, vol = 0.22) => {
+  const c = out();
+  if (!c || !master) return;
+  if (!curve) { curve = new Float32Array(1024); for (let i = 0; i < 1024; i++) { const x = (i / 512) - 1; curve[i] = Math.tanh(x * 6); } }
+  const t = c.currentTime + at;
+  const drive = c.createWaveShaper(), cab = c.createBiquadFilter(), g = c.createGain();
+  drive.curve = curve; drive.oversample = "2x";
+  cab.type = "lowpass"; cab.frequency.value = 2800; cab.Q.value = 0.9;
+  g.gain.setValueAtTime(vol, t);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  drive.connect(cab).connect(g).connect(master);
+  notes.forEach((n, i) => {
+    for (const cents of [-6, 6]) {
+      const o = c.createOscillator(), s = c.createGain();
+      o.type = "sawtooth"; o.frequency.value = n; o.detune.value = cents;
+      s.gain.setValueAtTime(0.0001, t + i * 0.012);
+      s.gain.exponentialRampToValueAtTime(0.5, t + i * 0.012 + 0.005);
+      o.connect(s).connect(drive);
+      o.start(t + i * 0.012); o.stop(t + dur + 0.05);
+    }
+  });
+  noise(0.05, 0.25, 5000, at); // the pick on the strings
+};
+
 export const sfx = {
+  // Call inside a click: Safari and Chrome only start (or resume) audio from the gesture's own call stack.
+  wake: () => { out(); },
+  // The red Strat in her room: an E5 power chord, then a quick A5 answer.
+  riff: () => { strum([82.41, 123.47, 164.81]); strum([110, 164.81, 220], 0.42, 1.4, 0.2); },
   // Startup: a Dmaj9 swell, a rising sparkle of bells, and a low D to settle on. About four seconds.
   boot: () => {
     pad([146.83, 220, 277.18, 329.63, 369.99], 0, 3.6, 0.14); // D3 A3 C#4 E4 F#4
