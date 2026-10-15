@@ -20,10 +20,25 @@
 }
 @keyframes float { 0%, 100% { translate: 0 0; } 50% { translate: 3px -5px; } }
 .note[data-placed], .host:has([data-placed]) .arrows path { opacity: 1; }
+.host .note[data-off], .host .arrows path[data-off] { opacity: 0; }
 /* Hovering a contact button or its object: its note brightens and grows a touch, the others step back */
 .note[data-hot] { scale: 1.12; filter: brightness(1.15) drop-shadow(0 0 8px rgba(255, 178, 94, 0.6)); }
 .arrows path[data-hot] { stroke-width: 3; }
 .host[data-any] .note:not([data-hot]), .host[data-any] .arrows path:not([data-hot]) { opacity: 0.5; }
-@media (prefers-reduced-motion: reduce) { .note > span { animation: none; } }
+/* Zoom: a hint on the first hover, and a way back out while zoomed, both in the notes' hand */
+.hint, .reset { position: absolute; z-index: 2; left: 50%; bottom: 4%; translate: -50% 0; opacity: 0; pointer-events: none; transition: opacity 0.4s var(--ease); }
+.hint > span, .reset > span { display: block; font-family: var(--font-display), sans-serif; font-size: 14px; font-weight: 700; font-stretch: 112%; white-space: nowrap; color: #fff4e6; text-shadow: 0 0 1px #2a1f4d, 0 0 2px #2a1f4d, 0 1px 3px #2a1f4d, 0 0 6px rgba(42, 31, 77, 0.7), 0 0 16px rgba(255, 178, 94, 0.55); }
+.hint[data-on] { opacity: 1; }
+.host[data-zoomed] .hint { opacity: 0; }
+.reset { top: 4%; right: 4%; bottom: auto; left: auto; translate: none; padding: 6px 4px; border: 0; background: none; cursor: pointer; visibility: hidden; transition: opacity 0.4s var(--ease), visibility 0.4s; } /* hidden, it leaves the tab order */
+.reset > span { transform: rotate(-4deg); }
+.reset:hover > span { filter: brightness(1.15) drop-shadow(0 0 8px rgba(255, 178, 94, 0.6)); }
+.reset:focus-visible { outline: 2px solid #ff9ec0; outline-offset: 2px; border-radius: 8px; }
+.host[data-zoomed] .reset { opacity: 1; pointer-events: auto; visibility: visible; }
+/* Petting a cat */
+.heart { position: absolute; z-index: 2; translate: -50% -50%; color: #EE6E9F; font-size: 16px; pointer-events: none; text-shadow: 0 0 6px rgba(42, 31, 77, 0.5); opacity: 0; animation: heart 1.2s var(--ease) both; }
+@keyframes heart { 0% { opacity: 0; transform: translateY(0) scale(0.6); } 20% { opacity: 1; transform: translateY(-8px) scale(1); } 100% { opacity: 0; transform: translateY(-46px) scale(0.9); } }
+@keyframes heartStill { 0%, 100% { opacity: 0; } 20% { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .note > span { animation: none; } .heart { animation-name: heartStill; } }
 /* Phone-width scenes have no room for three notes; the buttons above already name each object */
 @container (max-width: 479px) { .note, .arrows { display: none; } }

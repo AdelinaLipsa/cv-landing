@@ -3,6 +3,8 @@ import { useEffect, useRef } from "react";
 import type * as T from "three";
 import type { Toy } from "@/lib/toyStage";
 import { profile } from "@/content/cv";
+import { sfx } from "@/lib/sfx";
+import { unlock } from "@/lib/achievements";
 import s from "./Finale.module.css";
 
 export type Prop = "phone" | "printer" | "rolodex";
@@ -11,8 +13,8 @@ type Live = { hot: Prop | null; onHot: Props["onHot"]; onPick: Props["onPick"]; 
 
 const NOTES: [Prop, string][] = [["phone", "text me"], ["printer", "print me out"], ["rolodex", "my LinkedIn"]];
 // Each note's text sits in open page space just off the room's silhouette (as a fraction of the canvas, for the
-// fixed camera), and its arrow is redrawn every frame to land on the object itself. "rolodex" is her PC monitor
-// now; the Prop name stays for the wiring.
+// fixed camera), and its arrow is redrawn every frame to land on the object itself. "rolodex" is her PC monitor, which
+// wakes with her LinkedIn card while the LinkedIn button is hovered; the Prop name stays for the wiring.
 const LABEL: Record<Prop, [number, number]> = { phone: [0.1, 0.8], printer: [0.2, 0.08], rolodex: [0.8, 0.08] };
 const TARGET: Record<Prop, string> = { phone: "PhoneScreen", printer: "PrinterBodyMesh", rolodex: "Screen" };
 const PICK_NODE: Record<Prop, string> = { phone: "Phone", printer: "Printer", rolodex: "Monitor" };
@@ -42,9 +44,11 @@ export default function Finale({ className, hot, onHot, onPick, onScreen }: Prop
   }, []);
 
   return (
-    <div ref={host} className={`${s.host} ${className ?? ""}`} role="img" aria-label="My teenage bedroom at dusk: rock posters, a window, my guitars, a skateboard, boxing gloves, a corner desk with my PC, a Nokia phone, an inkjet printer, a bed with bookshelves, and two cats. The phone messages me, the printer prints my CV, and the monitor shows my LinkedIn.">
+    <div ref={host} className={`${s.host} ${className ?? ""}`} role="img" aria-label="My teenage bedroom at dusk: rock posters, a window, my guitars, a skateboard, boxing gloves, a corner desk with my PC, a Nokia phone, an inkjet printer, a bed with bookshelves, and my two cats. I'm in it too, sitting on the bed playing guitar and now and then getting up to work at the desk: click me to say hi, or pet a cat. The phone messages me, the printer prints my CV, and the computer boots Windows 95. Pinch or double-click to zoom in.">
       <svg className={s.arrows} aria-hidden="true">{NOTES.map(([p]) => <path key={p} data-arrow={p} />)}</svg>
       {NOTES.map(([p, text]) => <span key={p} className={s.note} data-note={p} aria-hidden="true"><span>{text}</span></span>)}
+      <span className={s.hint} data-hint aria-hidden="true"><span>pinch or double-click to zoom</span></span>
+      <button type="button" className={s.reset} data-reset aria-label="Zoom the room back out"><span>zoom out</span></button>
     </div>
   );
 }
@@ -122,7 +126,8 @@ async function mount(el: HTMLElement, live: React.RefObject<Live>, alive: () => 
     import("three/examples/jsm/postprocessing/UnrealBloomPass.js"),
     import("three/examples/jsm/postprocessing/Pass.js"),
   ]);
-  const g = await new GLTFLoader().setMeshoptDecoder(MeshoptDecoder).loadAsync("/models/room.glb").catch(() => null);
+  const loader = new GLTFLoader().setMeshoptDecoder(MeshoptDecoder);
+  const g = await loader.loadAsync("/models/room.glb").catch(() => null);
   if (!g) { toy.dispose(); return () => {}; } // offline or blocked: the preview render stays
   const room = g.scene;
   scene.add(room); // in the scene first, so dispose frees it even if we leave now
@@ -281,35 +286,55 @@ async function mount(el: HTMLElement, live: React.RefObject<Live>, alive: () => 
 
   // Which object is under the pointer.
   const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
-  const hit = (e: PointerEvent): Prop | "tower" | null => {
+  type Who = "her" | "Siamese" | "Burmese";
+  let who = (_r: T.Raycaster): Who | null => null, poke = () => {}, tickHer: ((dt: number) => void) | null = null, dropHer = () => {}; // filled in once she loads
+  const hit = (e: PointerEvent): Prop | "tower" | Who | null => {
     const r = el.getBoundingClientRect();
     ndc.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
     ray.setFromCamera(ndc, camera);
+    const w = who(ray); if (w) return w; // she's in front of the desk: she wins over the objects behind her
     for (const p of Object.keys(picks) as Prop[]) if (ray.intersectObject(picks[p], true).length) return p;
     return ray.intersectObject(tower, true).length ? "tower" : null;
   };
   const onMove = (e: PointerEvent) => {
-    const h = hit(e), p = h === "tower" ? null : h;
-    el.style.cursor = h ? "pointer" : "";
+    if (touches.has(e.pointerId)) touches.set(e.pointerId, [e.clientX, e.clientY]);
+    if (touches.size === 2) { // pinch: zoom by the spread, about the midpoint
+      const [[ax, ay], [bx, by]] = [...touches.values()], d = Math.hypot(ax - bx, ay - by);
+      if (pinch) zoomAt(want.z * (d / pinch), (ax + bx) / 2, (ay + by) / 2);
+      pinch = d; return;
+    }
+    if (drag && want.z > 1.01) { panBy(e.clientX - drag[0], e.clientY - drag[1]); drag = [e.clientX, e.clientY]; }
+    const h = hit(e), p = h === "phone" || h === "printer" ? h : null; // pointing at the computer lights nothing: it's Win95
+    el.style.cursor = h ? "pointer" : want.z > 1.01 ? (drag ? "grabbing" : "grab") : "";
     if (p !== pointer) { pointer = p; live.current.onHot(p); }
   };
   const onLeave = () => { if (pointer) { pointer = null; live.current.onHot(null); } };
-  // The tower's power button boots Win95. So does a tap on the monitor when nothing is lit (touch has no hover);
-  // with its LinkedIn card up, the monitor does what the LinkedIn button does.
+  // Her computer, monitor or tower, always boots Win95; LinkedIn opens only from its own button.
   // A click is a left press and release on the same object without dragging: right-clicks and drags do nothing.
   let down: { h: ReturnType<typeof hit>; x: number; y: number } | null = null;
-  const onDown = (e: PointerEvent) => { down = e.button === 0 ? { h: hit(e), x: e.clientX, y: e.clientY } : null; };
+  const onDown = (e: PointerEvent) => {
+    if (e.pointerType === "touch") touches.set(e.pointerId, [e.clientX, e.clientY]);
+    if (touches.size > 1 || want.z > 1.01) e.stopPropagation(); // a pinch or a pan is the room's, not a swipe to the next page
+    if (touches.size > 1) { down = drag = null; pinch = 0; return; } // a pinch is never a click
+    down = e.button === 0 ? { h: hit(e), x: e.clientX, y: e.clientY } : null;
+    if (down && want.z > 1.01) { drag = [e.clientX, e.clientY]; el.setPointerCapture(e.pointerId); }
+  };
+  const onCancel = (e: PointerEvent) => { touches.delete(e.pointerId); pinch = 0; drag = down = null; };
   const onUp = (e: PointerEvent) => {
-    const d = down; down = null;
+    const d = down;
+    onCancel(e);
     const h = hit(e);
-    if (!d || d.h !== h || Math.hypot(e.clientX - d.x, e.clientY - d.y) > 6) return;
-    if (h === "tower" || (h === "rolodex" && !live.current.hot)) live.current.onScreen?.();
-    else if (h) live.current.onPick(h);
+    if (!d || d.h !== h || Math.hypot(e.clientX - d.x, e.clientY - d.y) > 6) return; // a drag or pan never clicks
+    if (h === "her") poke();
+    else if (h === "Siamese" || h === "Burmese") pet([h]);
+    else if (h === "tower" || h === "rolodex") live.current.onScreen?.();
+    else if (h) live.current.onPick(h as Prop);
   };
   el.addEventListener("pointermove", onMove);
   el.addEventListener("pointerleave", onLeave);
   el.addEventListener("pointerdown", onDown);
   el.addEventListener("pointerup", onUp);
+  el.addEventListener("pointercancel", onCancel);
 
   // The notes: text pinned in open space, a hand-drawn arrow bowing from it onto the object, redrawn every frame.
   // The hot one brightens; the others step back.
@@ -321,6 +346,9 @@ async function mount(el: HTMLElement, live: React.RefObject<Live>, alive: () => 
     el.toggleAttribute("data-any", !!hot);
     for (const nd of notes) {
       const p = nd.dataset.note as Prop, v = anchors[p].getWorldPosition(at).project(camera);
+      // Zoomed past it; and the monitor's LinkedIn note only while the LinkedIn button is hovered (a click on it is Win95)
+      const off = Math.abs(v.x) > 1 || Math.abs(v.y) > 1 || (p === "rolodex" && hot !== "rolodex");
+      nd.toggleAttribute("data-off", off); arrows[p].toggleAttribute("data-off", off);
       const tx = ((v.x + 1) / 2) * W, ty = ((1 - v.y) / 2) * H, lx = LABEL[p][0] * W, ly = LABEL[p][1] * H;
       nd.style.transform = `translate(${lx}px, ${ly}px) translate(-50%, -50%)`;
       const dx = tx - lx, dy = ty - ly, d = Math.hypot(dx, dy) || 1, ux = dx / d, uy = dy / d;
@@ -368,6 +396,7 @@ async function mount(el: HTMLElement, live: React.RefObject<Live>, alive: () => 
     for (const m of [...phoneLit, screenLit]) m.color.setScalar(0.1); // a lit screen only haloes; full strength it bleaches to white
     renderer.getClearColor(clear); const alpha = renderer.getClearAlpha();
     renderer.setClearColor(0x000000, 0);
+    renderer.shadowMap.needsUpdate = true; // once a frame, not once per pass
     renderer.setRenderTarget(glowRT); renderer.clear(); renderer.render(scene, camera);
     bloom.render(renderer, null as unknown as T.WebGLRenderTarget, glowRT, 0, false);
     renderer.setRenderTarget(null); renderer.setClearColor(clear, alpha);
@@ -379,15 +408,93 @@ async function mount(el: HTMLElement, live: React.RefObject<Live>, alive: () => 
     renderer.autoClear = false; add.render(renderer); renderer.autoClear = true;
   };
 
+  // Petting a cat: a purr, the achievement (it unlocks once), and a few hearts floating up off it.
+  let catAt = (_k: "Siamese" | "Burmese"): T.Object3D | null => null;
+  const pet = (cats: ("Siamese" | "Burmese")[]) => {
+    const found = cats.map(catAt).filter((c) => c) as T.Object3D[];
+    if (!found.length) return;
+    sfx.purr(); unlock("cat");
+    for (const c of found) {
+      const v = c.getWorldPosition(at).project(camera);
+      for (let i = 0; i < 4; i++) {
+        const h = document.createElement("span");
+        h.className = s.heart; h.textContent = "♥"; h.setAttribute("aria-hidden", "true");
+        h.style.left = `${((v.x + 1) / 2) * el.clientWidth + (i - 1.5) * 12}px`; h.style.top = `${((1 - v.y) / 2) * el.clientHeight}px`;
+        h.style.animationDelay = `${i * 0.12}s`;
+        h.addEventListener("animationend", () => h.remove());
+        el.appendChild(h);
+      }
+    }
+  };
+  const onKonami = () => pet(["Siamese", "Burmese"]); // the Konami code calls the cats
+
+  // Zoom, the room's own (the page never zooms): 1x is the framed view, up to 3x toward the pointer, by pinch,
+  // ctrl/⌘-wheel or double-click. Zoomed, a drag pans, kept inside the framed view. Done with the lens, so it stays sharp.
+  let FH = 1; // the framed view's half-height, in tangents
+  const zoom = { z: 1, x: 0, y: 0 }, want = { z: 1, x: 0, y: 0 };
+  const lens = () => {
+    const a = camera.aspect, h = FH / zoom.z, cx = fitMid.x + zoom.x, cy = fitMid.y + zoom.y, n = camera.near;
+    camera.fov = THREE.MathUtils.radToDeg(2 * Math.atan(h));
+    camera.projectionMatrix.makePerspective(n * (cx - h * a), n * (cx + h * a), n * (cy + h), n * (cy - h), n, camera.far);
+    camera.projectionMatrixInverse.copy(camera.projectionMatrix).invert();
+  };
+  const clampPan = (v: typeof zoom) => {
+    const r = 1 - 1 / v.z, X = FH * camera.aspect * r, Y = FH * r;
+    v.x = THREE.MathUtils.clamp(v.x, -X, X); v.y = THREE.MathUtils.clamp(v.y, -Y, Y);
+  };
+  const resetBtn = el.querySelector<HTMLButtonElement>("[data-reset]")!;
+  const settle = () => {
+    clampPan(want);
+    const zoomed = want.z > 1.01;
+    el.toggleAttribute("data-zoomed", zoomed);
+    el.style.touchAction = zoomed ? "none" : ""; // zoomed, one finger pans the room instead of the page
+    if (!zoomed && document.activeElement === resetBtn) resetBtn.blur(); // it's about to hide
+    if (reduce) { Object.assign(zoom, want); lens(); draw(); placeNotes(live.current.hot ?? pointer); } // no easing: it jumps
+  };
+  const zoomAt = (z: number, cx: number, cy: number) => { // keeps the point under (cx, cy) where it is
+    const r = el.getBoundingClientRect(), nx = ((cx - r.left) / r.width) * 2 - 1, ny = 1 - ((cy - r.top) / r.height) * 2, a = camera.aspect;
+    const h = FH / zoom.z, px = zoom.x + nx * h * a, py = zoom.y + ny * h;
+    want.z = THREE.MathUtils.clamp(z, 1, 3);
+    const h2 = FH / want.z;
+    want.x = px - nx * h2 * a; want.y = py - ny * h2;
+    settle();
+  };
+  const unzoom = () => { Object.assign(want, { z: 1, x: 0, y: 0 }); settle(); };
+  const panBy = (dx: number, dy: number) => { // client pixels; the drag moves the room with the pointer
+    const h = (2 * FH) / zoom.z / el.clientHeight;
+    want.x -= dx * h; want.y += dy * h; clampPan(want); zoom.x = want.x; zoom.y = want.y; // no ease: it follows the hand
+    if (reduce) settle(); else lens();
+  };
+  const onWheel = (e: WheelEvent) => {
+    if (!e.ctrlKey && !e.metaKey) return; // a plain wheel scrolls the page; a trackpad pinch arrives with ctrlKey
+    e.preventDefault();
+    zoomAt(want.z * Math.exp(-e.deltaY * 0.01), e.clientX, e.clientY);
+  };
+  const onDbl = (e: MouseEvent) => (want.z > 1.01 ? unzoom() : zoomAt(2, e.clientX, e.clientY));
+  const onKey = (e: KeyboardEvent) => { if (e.key === "Escape" && want.z > 1.01) unzoom(); };
+  const touches = new Map<number, [number, number]>();
+  let drag: [number, number] | null = null, pinch = 0;
+  const hint = el.querySelector<HTMLElement>("[data-hint]")!;
+  let hinted = false, hintT = 0;
+  const onEnter = (e: PointerEvent) => { // the first hover only, then it fades
+    if (hinted || e.pointerType !== "mouse") return;
+    hinted = true; hint.toggleAttribute("data-on", true);
+    hintT = window.setTimeout(() => hint.removeAttribute("data-on"), 3000);
+  };
+  el.addEventListener("pointerenter", onEnter);
+  el.addEventListener("wheel", onWheel, { passive: false });
+  el.addEventListener("dblclick", onDbl);
+  window.addEventListener("keydown", onKey);
+  window.addEventListener("cv:cat", onKonami);
+  resetBtn.addEventListener("click", unzoom);
+
   const resize = () => {
     const { width, height } = el.getBoundingClientRect();
     if (!width || !height) return;
     renderer.setSize(width, height, false);
     camera.aspect = width / height;
-    const h = (Math.max(fitSize.y, fitSize.x / camera.aspect) * (1 + 2 * MARGIN)) / 2, n = camera.near; // half-height, in tangents
-    camera.fov = THREE.MathUtils.radToDeg(2 * Math.atan(h));
-    camera.projectionMatrix.makePerspective(n * (fitMid.x - h * camera.aspect), n * (fitMid.x + h * camera.aspect), n * (fitMid.y + h), n * (fitMid.y - h), n, camera.far);
-    camera.projectionMatrixInverse.copy(camera.projectionMatrix).invert();
+    FH = (Math.max(fitSize.y, fitSize.x / camera.aspect) * (1 + 2 * MARGIN)) / 2;
+    clampPan(want); clampPan(zoom); lens();
     const px = renderer.getDrawingBufferSize(new THREE.Vector2()).multiplyScalar(touch ? 0.5 : 1);
     glowRT.setSize(px.x, px.y); bloom.setSize(px.x, px.y);
     draw(); placeNotes();
@@ -404,6 +511,11 @@ async function mount(el: HTMLElement, live: React.RefObject<Live>, alive: () => 
     for (const p of Object.keys(heat) as Prop[]) heat[p] = ease(heat[p], p === hot ? 1 : 0, dt, p === "printer" ? 2.5 : 7);
     glow.uTime.value = t;
     pose(t, hot);
+    tickHer?.(dt);
+    if (zoom.z !== want.z || zoom.x !== want.x || zoom.y !== want.y) { // ~150 ms ease
+      for (const k of ["z", "x", "y"] as const) zoom[k] = Math.abs(want[k] - zoom[k]) < 1e-4 ? want[k] : ease(zoom[k], want[k], dt, 20);
+      lens();
+    }
     draw();
     placeNotes(hot);
     return false; // drawn above, with the bloom
@@ -418,13 +530,154 @@ async function mount(el: HTMLElement, live: React.RefObject<Live>, alive: () => 
   }, 100) : 0;
   if (reduce) { pose(0, null); draw(); }
 
+  // Her, the guitar, the chair and the cats: not baked, so lit live to sit in the dusk. They arrive after the
+  // room has drawn and fade in, so the hero stays fast. Same world space as room.glb.
+  const free = (root: T.Object3D) => root.traverse((o) => {
+    const m = o as T.SkinnedMesh;
+    if (!m.isMesh) return;
+    m.geometry.dispose(); m.skeleton?.dispose();
+    for (const mt of [m.material].flat()) { for (const v of Object.values(mt)) if ((v as T.Texture)?.isTexture) (v as T.Texture).dispose(); mt.dispose(); }
+  });
+  const addHer = (c: { scene: T.Group; animations: T.AnimationClip[] }) => {
+    const char = c.scene, clip = (n: string) => c.animations.find((a) => a.name === n)!;
+    for (const top of char.children) { const o = room.getObjectByName(top.name); if (o) o.visible = false; } // room.glb's own chair, etc.
+
+    // Dusk light for her alone (the room is baked and unlit): a cool fill, the window's warm key casting the
+    // only shadows, and the desk lamp's warm spill.
+    const hemi = scene.children.find((o) => (o as T.HemisphereLight).isHemisphereLight) as T.HemisphereLight;
+    const key = scene.children.find((o) => (o as T.DirectionalLight).isDirectionalLight) as T.DirectionalLight;
+    hemi.color.set("#9a8ee0"); hemi.groundColor.set("#5a3a40"); hemi.intensity = 0.8;
+    scene.environmentIntensity = 0.25;
+    key.color.set("#FFB25E"); key.intensity = 3.2;
+    const [win, floor] = cA.y > cB.y ? [cA, cB] : [cB, cA]; // down the beam, from the window
+    key.position.copy(win).addScaledVector(win.clone().sub(floor).normalize(), 2); key.target.position.copy(floor); scene.add(key.target);
+    key.castShadow = true;
+    const sc = key.shadow.camera; sc.left = sc.bottom = -2.5; sc.right = sc.top = 2.5; sc.near = 0.1; sc.far = 8; sc.updateProjectionMatrix();
+    key.shadow.mapSize.setScalar(touch ? 512 : 1024); key.shadow.bias = -0.0005; key.shadow.normalBias = 0.02; key.shadow.radius = 3;
+    const lamp = new THREE.PointLight("#FFC07A", 1.6, 3.5);
+    node("Glow_Lamp").getWorldPosition(lamp.position);
+    scene.add(lamp);
+    renderer.shadowMap.enabled = true; renderer.shadowMap.autoUpdate = false;
+    const catchers = ["ShadowFloorMesh", "ShadowBedMesh"].map((n) => room.getObjectByName(n) as T.Mesh);
+    for (const m of catchers) { (m.material as T.Material).dispose(); m.material = new THREE.ShadowMaterial({ color: "#1d1433", opacity: 0, depthWrite: false }); m.receiveShadow = m.visible = true; }
+
+    const mats = new Map<T.Material, [boolean, number]>(); // each one's own transparency and opacity, for the fade
+    for (const top of char.children) top.traverse((o) => {
+      const m = o as T.Mesh;
+      if (!m.isMesh) return;
+      m.castShadow = !/^(Siamese|Burmese)/.test(top.name);
+      m.frustumCulled = false; // skinned bounds are her bind pose; she walks out of them
+      meshes.push(m); // the bloom pass blacks her out like the room
+      for (const mt of [m.material].flat()) {
+        if (mt.name === "jeans.001") (mt as T.MeshStandardMaterial).color.set("#2f4f8f"); // the export lost the denim colour (its texture); white jeans otherwise
+        if (!mats.has(mt)) mats.set(mt, [mt.transparent, mt.opacity]);
+      }
+    });
+    let fade = reduce ? 1 : 0;
+    const setFade = (f: number) => { for (const [mt, [, op]] of mats) mt.opacity = op * f; for (const m of catchers) (m.material as T.ShadowMaterial).opacity = 0.4 * f; };
+    // Warm the opaque shaders first, so ending the fade doesn't hitch; the faded ones compile while she's invisible.
+    void renderer.compileAsync(char, camera, scene).catch(() => {}).then(() => {
+      if (!alive()) return free(char);
+      if (!reduce) for (const mt of mats.keys()) { mt.transparent = true; mt.needsUpdate = true; }
+      setFade(fade);
+      scene.add(char);
+
+      // The day: three strums on the bed, up to the desk and back (ToDesk), round again. Clicks wave.
+      const herMix = new THREE.AnimationMixer(char), F = 1 / 24;
+      const once = (n: string) => { const a = herMix.clipAction(clip(n)); a.setLoop(THREE.LoopOnce, 1); a.clampWhenFinished = true; return a; }; // clamped on its last frame, which the next clip starts on
+      const strum = herMix.clipAction(clip("Strum")), day = herMix.clipAction(clip("ToDesk")), bed = once("ReactBed"), desk = once("ReactDesk");
+      const td = clip("ToDesk"); // ReactDesk leaves the guitar alone: hold it where ToDesk has it at the desk
+      const hold = herMix.clipAction(new THREE.AnimationClip("GuitarHold", td.duration, td.tracks.filter((k) => k.name.startsWith("Guitar."))));
+      const cats = ["Siamese", "Burmese"].map((cat) => {
+        const m = new THREE.AnimationMixer(char);
+        for (const a of c.animations) if (a.name.startsWith(cat + "_")) m.clipAction(a).play();
+        return m;
+      });
+      let state: "strum" | "day" | "bed" | "desk" = "strum", now: T.AnimationAction = strum, inState = 0, queued = false;
+      const go = (next: typeof state, to: T.AnimationAction, fadeS: number, at = 0) => {
+        to.reset().play(); to.time = at; to.crossFadeFrom(now, fadeS, false);
+        state = next; now = to; inState = 0;
+      };
+      strum.play();
+
+      const bone = (n: string) => char.getObjectByName(n)!;
+      const hips = bone("DEF-spineseg0"), head = bone("DEF-spine006"), feet = [bone("DEF-footL"), bone("DEF-footR")];
+      const pa = new THREE.Vector3(), pb = new THREE.Vector3();
+      const near = (r: T.Ray, a: T.Object3D, b: T.Object3D, rad: number, reach = 0) => {
+        a.getWorldPosition(pa); b.getWorldPosition(pb);
+        if (reach) pb.addScaledVector(pb.clone().sub(pa).normalize(), reach); // the head bone starts at the neck
+        return r.distanceSqToSegment(pa, pb) < rad * rad;
+      };
+      // Skinned meshes don't raycast reliably: a capsule from hips to head, and one down each leg. The cats are rigid.
+      const catRoots = { Siamese: bone("Siamese"), Burmese: bone("Burmese") };
+      who = (rc) => {
+        if (fade < 0.5) return null;
+        if (near(rc.ray, hips, head, 0.2, 0.2) || feet.some((f) => near(rc.ray, hips, f, 0.13))) return "her";
+        for (const k of ["Siamese", "Burmese"] as const) if (rc.intersectObject(catRoots[k], true).length) return k;
+        return null;
+      };
+      catAt = (k) => catRoots[k];
+
+      if (reduce) { // a still: her first strum, the cats at rest; a click shows the wave for 2 s
+        herMix.update(0); for (const m of cats) m.update(0); draw();
+        let wave = 0;
+        poke = () => {
+          if (wave) return;
+          strum.stop(); bed.reset().play(); bed.time = 1.25; herMix.update(0); draw();
+          wave = window.setTimeout(() => { wave = 0; bed.stop(); strum.play(); herMix.update(0); draw(); }, 2000);
+        };
+        dropHer = () => { clearTimeout(wave); herMix.stopAllAction(); herMix.uncacheRoot(char); for (const m of cats) { m.stopAllAction(); m.uncacheRoot(char); } };
+      } else {
+        poke = () => { if (state !== "bed" && state !== "desk") queued = true; };
+        tickHer = (dt) => {
+          if (fade < 1) {
+            setFade(fade = Math.min(1, fade + dt / 0.4));
+            if (fade === 1) for (const [mt, [tr]] of mats) { mt.transparent = tr; mt.needsUpdate = true; }
+          }
+          const prev = day.time;
+          herMix.update(dt); for (const m of cats) m.update(dt);
+          inState += dt;
+          const t = day.time;
+          if (state === "strum" && inState >= 3 * strum.getClip().duration) go("day", day, 0.25);
+          else if (state === "day" && t < prev) go("strum", strum, 0.25); // ToDesk wrapped: she's back on the bed
+          else if (state === "bed" && bed.paused) go("strum", strum, 0.25);
+          else if (state === "desk" && desk.paused) { go("day", day, 0.25, 330 * F); hold.fadeOut(0.25); }
+          if (!queued) return;
+          // A click waits for the next place she can react: on the bed at once, at the desk when ToDesk reaches 330.
+          if (state === "strum" || (state === "day" && (t < 47 * F || t > 540 * F))) { queued = false; go("bed", bed, 0.15); }
+          else if (state === "day" && prev < 330 * F && t >= 330 * F) {
+            queued = false; go("desk", desk, 0.15);
+            hold.reset().play(); hold.time = 330 * F; hold.paused = true; hold.fadeIn(0.15);
+          }
+        };
+        dropHer = () => { tickHer = null; herMix.stopAllAction(); herMix.uncacheRoot(char); for (const m of cats) { m.stopAllAction(); m.uncacheRoot(char); } };
+      }
+      const drop = dropHer;
+      dropHer = () => { drop(); scene.remove(char); free(char); key.shadow.dispose(); lamp.dispose(); };
+    });
+  };
+  void loader.loadAsync("/models/character.glb").catch(() => null).then((c) => {
+    if (!c) return; // the room stands on its own without her
+    if (!alive()) return free(c.scene); // unmounted while she loaded
+    addHer(c);
+  });
+
   return () => {
     clearInterval(still);
+    dropHer();
     ro.disconnect();
     el.removeEventListener("pointermove", onMove);
     el.removeEventListener("pointerleave", onLeave);
     el.removeEventListener("pointerdown", onDown);
     el.removeEventListener("pointerup", onUp);
+    el.removeEventListener("pointercancel", onCancel);
+    el.removeEventListener("pointerenter", onEnter);
+    el.removeEventListener("wheel", onWheel);
+    el.removeEventListener("dblclick", onDbl);
+    window.removeEventListener("keydown", onKey);
+    window.removeEventListener("cv:cat", onKonami);
+    resetBtn.removeEventListener("click", unzoom);
+    clearTimeout(hintT);
     phoneMesh.material = phoneDark; screenMesh.material = screenDark; // so the stage's dispose finds the baked ones
     for (const m of [...phoneLit, screenLit, black]) { m.map?.dispose(); m.dispose(); }
     (dust.material as T.Material).dispose(); dustGeo.dispose();
