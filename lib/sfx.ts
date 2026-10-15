@@ -90,38 +90,56 @@ const pad = (notes: number[], at: number, dur: number, vol = 0.16, open = 2600) 
 };
 const bell = (n: number, at: number, vol = 0.22) => { tone(n, n, 1.4, "sine", vol, at); tone(n * 2, n * 2, 0.7, "sine", vol * 0.25, at); };
 
-// An overdriven electric guitar: a few detuned saws through a soft-clip curve and a cabinet low-pass, each string
-// a few ms after the last like a downstroke. `notes` in Hz, `at` seconds from now.
+// An overdriven electric guitar. Each string is a real plucked-string model (Karplus-Strong: a burst of noise
+// recirculating through a delay line one period long, averaged each pass so the highs die first), rendered once
+// into a buffer and cached. The chord then goes through an amp: a pre-gain, a soft-clip curve, and a speaker-cabinet
+// filter (a mid bump, the fizz rolled off). Strings sound a few ms apart, like a downstroke.
+const plucks = new Map<number, AudioBuffer>();
+const pluck = (c: AudioContext, hz: number) => {
+  let buf = plucks.get(hz);
+  if (buf) return buf;
+  const sr = c.sampleRate, n = Math.ceil(sr * 2.2), N = Math.round(sr / hz);
+  buf = c.createBuffer(1, n, sr);
+  const out = buf.getChannelData(0), line = new Float32Array(N);
+  for (let i = 0; i < N; i++) line[i] = Math.random() * 2 - 1; // the pick: a burst of noise
+  for (let i = 0, k = 0; i < n; i++, k = (k + 1) % N) {
+    const y = line[k];
+    out[i] = y;
+    line[k] = 0.996 * 0.5 * (y + line[(k + 1) % N]); // averaged each lap: the highs die first, like a real string
+  }
+  plucks.set(hz, buf);
+  return buf;
+};
 let curve: Float32Array<ArrayBuffer> | null = null;
-const strum = (notes: number[], at = 0, dur = 1.6, vol = 0.22) => {
+const strum = (notes: number[], at = 0, dur = 1.8, vol = 0.5) => {
   const c = out();
   if (!c || !master) return;
-  if (!curve) { curve = new Float32Array(1024); for (let i = 0; i < 1024; i++) { const x = (i / 512) - 1; curve[i] = Math.tanh(x * 6); } }
+  if (!curve) { curve = new Float32Array(2048); for (let i = 0; i < 2048; i++) { const x = i / 1024 - 1; curve[i] = (3 + 12) * x * 0.35 / (Math.PI + 12 * Math.abs(x)); } }
   const t = c.currentTime + at;
-  const drive = c.createWaveShaper(), cab = c.createBiquadFilter(), g = c.createGain();
-  drive.curve = curve; drive.oversample = "2x";
-  cab.type = "lowpass"; cab.frequency.value = 2800; cab.Q.value = 0.9;
+  const pre = c.createGain(), drive = c.createWaveShaper(), mid = c.createBiquadFilter(), cab = c.createBiquadFilter(), low = c.createBiquadFilter(), g = c.createGain();
+  pre.gain.value = 9;
+  drive.curve = curve; drive.oversample = "4x";
+  low.type = "highpass"; low.frequency.value = 70;
+  mid.type = "peaking"; mid.frequency.value = 900; mid.Q.value = 0.8; mid.gain.value = 5;
+  cab.type = "lowpass"; cab.frequency.value = 3600; cab.Q.value = 0.7;
   g.gain.setValueAtTime(vol, t);
+  g.gain.setValueAtTime(vol, t + dur * 0.6);
   g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
-  drive.connect(cab).connect(g).connect(master);
+  pre.connect(drive).connect(low).connect(mid).connect(cab).connect(g).connect(master);
   notes.forEach((n, i) => {
-    for (const cents of [-6, 6]) {
-      const o = c.createOscillator(), s = c.createGain();
-      o.type = "sawtooth"; o.frequency.value = n; o.detune.value = cents;
-      s.gain.setValueAtTime(0.0001, t + i * 0.012);
-      s.gain.exponentialRampToValueAtTime(0.5, t + i * 0.012 + 0.005);
-      o.connect(s).connect(drive);
-      o.start(t + i * 0.012); o.stop(t + dur + 0.05);
-    }
+    const src = c.createBufferSource();
+    src.buffer = pluck(c, n);
+    src.connect(pre);
+    src.start(t + i * 0.014);
+    src.stop(t + dur + 0.05);
   });
-  noise(0.05, 0.25, 5000, at); // the pick on the strings
 };
 
 export const sfx = {
   // Call inside a click: Safari and Chrome only start (or resume) audio from the gesture's own call stack.
   wake: () => { out(); },
   // The red Strat in her room: an E5 power chord, then a quick A5 answer.
-  riff: () => { strum([82.41, 123.47, 164.81]); strum([110, 164.81, 220], 0.42, 1.4, 0.2); },
+  riff: () => { strum([82.41, 123.47, 164.81]); strum([110, 164.81, 220], 0.38, 1.5, 0.42); strum([123.47, 185, 246.94], 0.62, 2, 0.45); }, // E5, A5, B5
   // Startup: a Dmaj9 swell, a rising sparkle of bells, and a low D to settle on. About four seconds.
   boot: () => {
     pad([146.83, 220, 277.18, 329.63, 369.99], 0, 3.6, 0.14); // D3 A3 C#4 E4 F#4
@@ -153,7 +171,28 @@ export const sfx = {
   block: () => { tone(1200, 900, 0.06, "triangle", 0.3); noise(0.05, 0.2, 5000); },
   fireball: () => { tone(200, 520, 0.25, "sawtooth", 0.3); noise(0.3, 0.3, 1200); },
   ko: () => { noise(0.9, 0.7, 1400); tone(300, 40, 0.9, "sawtooth", 0.4); buzz([90, 50, 200]); },
-  purr: () => { for (let i = 0; i < 9; i++) noise(0.07, 0.35, 380, i * 0.1); buzz([15, 70, 15, 70, 15, 70, 15]); },
+  // A cat's purr: low rumbling noise pulsed ~26 times a second by the larynx, in two breaths (a stronger out, a softer in).
+  purr: () => {
+    const c = out();
+    if (!c || !master) return;
+    const t = c.currentTime, dur = 3.2;
+    const buf = c.createBuffer(1, Math.ceil(c.sampleRate * dur), c.sampleRate), d = buf.getChannelData(0);
+    for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+    const src = c.createBufferSource(), lp = c.createBiquadFilter(), pulse = c.createGain(), lfo = c.createOscillator(), depth = c.createGain(), breath = c.createGain();
+    src.buffer = buf;
+    lp.type = "lowpass"; lp.frequency.value = 340; lp.Q.value = 1.4;
+    lfo.type = "sawtooth"; lfo.frequency.value = 26; depth.gain.value = 0.5; pulse.gain.value = 0.5; // gain swings 0..1, 26 Hz
+    lfo.connect(depth).connect(pulse.gain);
+    breath.gain.setValueAtTime(0.0001, t);
+    for (const [at, peak, len] of [[0, 1.6, 1.1], [1.2, 0.9, 0.8], [2.05, 1.5, 1.05]] as const) { // out, in, out
+      breath.gain.exponentialRampToValueAtTime(peak, t + at + 0.18);
+      breath.gain.exponentialRampToValueAtTime(0.05, t + at + len);
+    }
+    breath.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    src.connect(lp).connect(pulse).connect(breath).connect(master);
+    src.start(t); lfo.start(t); src.stop(t + dur); lfo.stop(t + dur);
+    buzz([15, 70, 15, 70, 15, 70, 15]);
+  },
   win: () => { arp([523, 659, 784, 1047, 784, 1047, 1319], 0.09, "square", 0.3); buzz([40, 40, 40, 40, 140]); },
   lose: () => { arp([494, 440, 392, 330, 262], 0.14, "triangle", 0.4); buzz(250); },
 };
