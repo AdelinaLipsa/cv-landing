@@ -4,12 +4,13 @@
 // Blender pivot and transform, and only the child gets the quantization transform.
 //   node pivot_nodes.mjs in.glb out.glb
 import { NodeIO } from '@gltf-transform/core';
+import { ALL_EXTENSIONS } from '@gltf-transform/extensions';
 const [inp, out] = process.argv.slice(2);
-const io = new NodeIO();
+const io = new NodeIO().registerExtensions(ALL_EXTENSIONS);   // keep emissive strength, specular, etc.
 const doc = await io.read(inp);
 for (const n of doc.getRoot().listNodes()) {
   const mesh = n.getMesh();
-  if (!mesh || n.getName().endsWith('Mesh')) continue;
+  if (!mesh || n.getSkin() || n.getName().endsWith('Mesh')) continue;   // skinned meshes ignore their node transform
   const child = doc.createNode(n.getName() + 'Mesh').setMesh(mesh);
   n.setMesh(null).addChild(child);
 }
