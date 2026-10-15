@@ -168,7 +168,7 @@
   .portraitLabel { font-size: 12px; left: calc(100% + 24px); }
   .mobileOnly { display: none; }
   .desktopOnly { display: inline; }
-  .name { font-size: 80px; font-stretch: 120%; letter-spacing: -0.04em; margin: 18px 0 0 -4px; }
+  .name { font-size: min(80px, 5.4vw); font-stretch: 120%; letter-spacing: -0.04em; margin: 18px 0 0 -4px; white-space: nowrap; } /* the hover widens the letters: stay on one line, sized to fit beside the room */
   .role { font-size: 23px; line-height: 1.4; }
   .role b { display: inline; }
   .about { font-size: 18px; line-height: 1.6; }
