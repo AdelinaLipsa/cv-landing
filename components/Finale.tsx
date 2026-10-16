@@ -20,11 +20,11 @@ const LABEL: Record<Prop, [number, number]> = { phone: [0.1, 0.8], printer: [0.3
 const TARGET: Record<Prop, string> = { phone: "PhoneScreen", printer: "PrinterBodyMesh", rolodex: "Screen" };
 const PICK_NODE: Record<Prop, string> = { phone: "Phone", printer: "Printer", rolodex: "Monitor" };
 // Every clickable thing gets a hotspot: [key, its button's label, the word that shows on hover].
-type Spot = "her" | "Siamese" | "Burmese" | "pc" | "strat" | "phone" | "printer";
+type Spot = "her" | "Siamese" | "Burmese" | "pc" | "strat" | "phone" | "printer" | "photos";
 const SPOTS: [Spot, string, string][] = [
   ["her", "Say hi to Adelina", "say hi"], ["Siamese", "Pet the Siamese", "pet me"], ["Burmese", "Pet the Burmese", "pet me"],
   ["pc", "Boot Windows 95 on my computer", "boot Win95"], ["strat", "Play her red Stratocaster", "play me"],
-  ["phone", "Text me", "text me"], ["printer", "Print my CV", "print my CV"],
+  ["phone", "Text me", "text me"], ["printer", "Print my CV", "print my CV"], ["photos", "See the photos on my wall", "my photos"],
 ];
 
 // Her teenage bedroom, baked in Blender (art/README.md), in the hero. One object for each way in: a Nokia for
@@ -161,7 +161,127 @@ function cvPage() {
   return c;
 }
 
+// Her records: seven sleeves in our own lettering for the bands on her walls (no real logos or artwork, like the
+// posters), and two bare discs, on one 480 px sheet of 160 px tiles (sleeves 0-6, discs 7-8).
+function records() {
+  const c = document.createElement("canvas"); c.width = c.height = 480;
+  const x = c.getContext("2d")!;
+  const SLEEVES: [string, string, string][] = [ // band, ground, ink
+    ["LED ZEPPELIN", "#d9cdb0", "#2a2420"], ["KORN", "#1c2a2e", "#c9d6b8"], ["SLIPKNOT", "#a8241c", "#151515"], ["OZZY", "#2a1838", "#d9c9ef"],
+    ["PINK FLOYD", "#0d0d14", "#f2f2f2"], ["SONATA ARCTICA", "#1d3550", "#e8f1fb"], ["COROZA", "#e7d9b8", "#3a2a1a"],
+  ];
+  SLEEVES.forEach(([band, ground, ink], i) => {
+    x.save(); x.translate((i % 3) * 160, Math.floor(i / 3) * 160);
+    x.fillStyle = ground; x.fillRect(0, 0, 160, 160);
+    x.fillStyle = x.strokeStyle = ink; x.lineWidth = 3;
+    if (i === 0) { x.beginPath(); x.ellipse(80, 64, 50, 18, -0.15, 0, 7); x.fill(); x.fillRect(118, 50, 14, 6); } // an airship
+    if (i === 1) for (let k = 0; k < 14; k++) { x.beginPath(); x.moveTo(20 + k * 9, 20); x.lineTo(40 + k * 7 + (k % 3) * 6, 112); x.stroke(); } // scratches
+    if (i === 2) for (let k = 0; k < 22; k++) x.fillRect(22 + k * 5.4, 24, k % 3 ? 2 : 4, 82); // a barcode
+    if (i === 3) { x.beginPath(); x.moveTo(80, 58); for (const [px, py] of [[30, 40], [44, 62], [18, 72], [62, 76], [80, 96], [98, 76], [142, 72], [116, 62], [130, 40]]) x.lineTo(px, py); x.closePath(); x.fill(); } // a bat
+    if (i === 4) ["#ff4d4d", "#ffb347", "#ffe66b", "#6bd38b", "#5aa9ff", "#a37bff"].forEach((col, k) => { x.strokeStyle = col; x.beginPath(); x.arc(80, 70, 44 - k * 6, 0, 7); x.stroke(); }); // rings
+    if (i === 5) { x.beginPath(); x.moveTo(24, 112); x.lineTo(80, 32); x.lineTo(136, 112); x.fill(); x.fillStyle = ground; x.beginPath(); x.moveTo(62, 58); x.lineTo(80, 32); x.lineTo(98, 58); x.lineTo(80, 50); x.fill(); } // a peak
+    if (i === 6) { x.beginPath(); x.arc(80, 66, 22, 0, 7); x.fill(); for (let k = 0; k < 12; k++) { const a = (k / 12) * Math.PI * 2; x.beginPath(); x.moveTo(80 + Math.cos(a) * 30, 66 + Math.sin(a) * 30); x.lineTo(80 + Math.cos(a) * 44, 66 + Math.sin(a) * 44); x.stroke(); } } // a sun
+    x.fillStyle = ink; x.font = `900 ${band.length > 10 ? 15 : 22}px Impact, "Arial Black", sans-serif`; x.textAlign = "center"; x.fillText(band, 80, 144);
+    x.strokeStyle = "rgba(0,0,0,0.25)"; x.lineWidth = 2; x.strokeRect(1, 1, 158, 158); // worn edges
+    x.restore();
+  });
+  for (const [i, label] of [[7, "#e0563b"], [8, "#f2c14e"]] as const) { // a disc: grooves, a sheen across them, a paper label
+    const cx = (i % 3) * 160 + 80, cy = Math.floor(i / 3) * 160 + 80;
+    x.fillStyle = "#0b0b0d"; x.fillRect(cx - 80, cy - 80, 160, 160);
+    for (let r = 30; r < 79; r += 1.5) { x.strokeStyle = `rgba(255,255,255,${r % 6 < 1.5 ? 0.07 : 0.025})`; x.lineWidth = 0.8; x.beginPath(); x.arc(cx, cy, r, 0, 7); x.stroke(); }
+    const sheen = x.createConicGradient(0.6, cx, cy);
+    for (const [at, a] of [[0, 0], [0.06, 0.22], [0.12, 0], [0.5, 0], [0.56, 0.18], [0.62, 0], [1, 0]]) sheen.addColorStop(at, `rgba(255,255,255,${a})`);
+    x.fillStyle = sheen; x.beginPath(); x.arc(cx, cy, 79, 0, 7); x.arc(cx, cy, 28, 0, 7, true); x.fill();
+    x.fillStyle = label; x.beginPath(); x.arc(cx, cy, 26, 0, 7); x.fill();
+    x.fillStyle = "#0b0b0d"; x.beginPath(); x.arc(cx, cy, 2.5, 0, 7); x.fill();
+  }
+  return c;
+}
+
 // Load timings: performance marks always (cheap; read them in any build), a table in dev once she's in.
+// Polaroids over her bed: 8.8 × 10.7 cm, a 7.9 cm square window, the fat margin at the bottom (50 px a cm).
+// Each shot is drawn into the window, then gets the same film: warmed, blacks lifted, a light leak, vignette, grain.
+type Shot = (x: CanvasRenderingContext2D, s: number, h?: number) => void; // s wide, h tall (default square)
+const POL = { w: 440, h: 535, m: 22, s: 396 }, WIDE = { w: 540, h: 430, m: 22, s: 496, t: 310 }; // WIDE: an Instax Wide, 10.8 × 8.6 cm
+const halo = (x: CanvasRenderingContext2D, cx: number, cy: number, r: number, c: string, a: number) => {
+  const g = x.createRadialGradient(cx, cy, 0, cx, cy, r);
+  g.addColorStop(0, `rgba(${c},${a})`); g.addColorStop(0.55, `rgba(${c},${a * 0.45})`); g.addColorStop(1, `rgba(${c},0)`);
+  x.fillStyle = g; x.fillRect(cx - r, cy - r, r * 2, r * 2);
+};
+const photo = (img: HTMLImageElement, lift = 0.2, fx = 0.5): Shot => (x, s, h = s) => { // cover-crop; lift/fx: where the slack goes (faces sit a little above centre)
+  const nw = img.naturalWidth, nh = img.naturalHeight, cw = Math.min(nw, (nh * s) / h), ch = (cw * h) / s;
+  x.drawImage(img, (nw - cw) * fx, (nh - ch) * lift, cw, ch, 0, 0, s, h);
+};
+const dusk: Shot = (x, s) => { // her city from the window: a lilac-to-peach sky, rooftops, lit windows, bokeh
+  const g = x.createLinearGradient(0, 0, 0, s);
+  g.addColorStop(0, "#2b2556"); g.addColorStop(0.45, "#8a5ea8"); g.addColorStop(0.72, "#f39272"); g.addColorStop(1, "#ffd6a0");
+  x.fillStyle = g; x.fillRect(0, 0, s, s);
+  halo(x, s * 0.62, s * 0.7, s * 0.3, "255,214,160", 0.8);
+  let r = 7;
+  const rnd = () => ((r = (r * 16807) % 2147483647) / 2147483647);
+  for (let i = 0, bx = -10; bx < s; i++) {
+    const w = 30 + rnd() * 50, h = s * (0.18 + rnd() * 0.32);
+    x.fillStyle = "#231a34"; x.fillRect(bx, s - h, w, h);
+    for (let wy = s - h + 10; wy < s - 8; wy += 14) for (let wx = bx + 6; wx < bx + w - 8; wx += 11) if (rnd() < 0.35) { x.fillStyle = rnd() < 0.7 ? "#ffcf86" : "#ff9fb8"; x.fillRect(wx, wy, 5, 7); }
+    bx += w + 2;
+  }
+  for (let i = 0; i < 9; i++) halo(x, rnd() * s, s * (0.55 + rnd() * 0.4), 10 + rnd() * 22, rnd() < 0.5 ? "255,190,120" : "255,150,190", 0.55);
+};
+const lanterns: Shot = (x, s) => { // ramen in the dark: red paper lanterns outside the shop, out of focus
+  x.fillStyle = "#130d18"; x.fillRect(0, 0, s, s);
+  halo(x, s * 0.5, s * 0.95, s * 0.6, "120,40,40", 0.5);
+  for (const [cx, cy, r] of [[0.28, 0.34, 0.15], [0.68, 0.28, 0.12], [0.86, 0.62, 0.09]] as const) {
+    halo(x, cx * s, cy * s, r * s * 2.2, "255,110,60", 0.35);
+    x.fillStyle = "#e0482f"; x.beginPath(); x.ellipse(cx * s, cy * s, r * s * 0.8, r * s, 0, 0, Math.PI * 2); x.fill();
+    halo(x, cx * s, cy * s, r * s, "255,214,150", 0.9);
+    x.strokeStyle = "rgba(90,20,15,0.45)"; x.lineWidth = 2;
+    for (let k = -2; k <= 2; k++) { x.beginPath(); x.ellipse(cx * s, cy * s, r * s * 0.8 * Math.abs(k / 2.4), r * s, 0, 0, Math.PI * 2); x.stroke(); }
+    x.fillStyle = "#2a1410"; x.fillRect(cx * s - r * s * 0.35, cy * s - r * s - 5, r * s * 0.7, 6); x.fillRect(cx * s - r * s * 0.35, cy * s + r * s - 1, r * s * 0.7, 6);
+  }
+  for (let i = 0; i < 14; i++) halo(x, ((i * 97) % 100) / 100 * s, s * (0.55 + ((i * 37) % 40) / 100), 8 + (i % 4) * 6, "255,200,140", 0.4);
+};
+const cats: Shot = (x, s) => { // the girls on the windowsill, against the sunset
+  const g = x.createLinearGradient(0, 0, 0, s);
+  g.addColorStop(0, "#5b4a8c"); g.addColorStop(0.55, "#f0937a"); g.addColorStop(1, "#ffd3a1");
+  x.fillStyle = g; x.fillRect(0, 0, s, s);
+  halo(x, s * 0.5, s * 0.78, s * 0.35, "255,230,180", 0.7);
+  x.fillStyle = "#1f1628"; x.fillRect(0, s * 0.82, s, s * 0.18); x.fillRect(s * 0.48, 0, 10, s * 0.82); x.fillRect(0, s * 0.4, s, 8); // sill, mullions
+  const cat = (cx: number, h: number, flip: number) => {
+    const by = s * 0.82;
+    x.beginPath(); x.ellipse(cx, by - h * 0.34, h * 0.26, h * 0.36, 0, 0, Math.PI * 2); x.fill(); // body
+    x.beginPath(); x.arc(cx + flip * h * 0.04, by - h * 0.8, h * 0.17, 0, Math.PI * 2); x.fill(); // head
+    for (const e of [-1, 1]) { const ex = cx + flip * h * 0.04 + e * h * 0.1; x.beginPath(); x.moveTo(ex - h * 0.07, by - h * 0.86); x.lineTo(ex + e * h * 0.03, by - h * 1.04); x.lineTo(ex + h * 0.07, by - h * 0.88); x.fill(); }
+    x.lineWidth = h * 0.07; x.lineCap = "round"; x.strokeStyle = "#1f1628";
+    x.beginPath(); x.moveTo(cx - flip * h * 0.2, by - h * 0.06); x.quadraticCurveTo(cx - flip * h * 0.55, by - h * 0.05, cx - flip * h * 0.5, by - h * 0.4); x.stroke(); // tail
+  };
+  x.fillStyle = "#1f1628"; cat(s * 0.3, s * 0.36, 1); cat(s * 0.7, s * 0.3, -1);
+};
+// A shot inside its paper frame, with an optional handwritten caption in the bottom margin.
+const polaroid = (shot: Shot, caption = "", font = "cursive", k = 1, wide = false) => { // k: resolution; wide: landscape print
+  const F = wide ? WIDE : { ...POL, t: POL.s }, s = F.s, t = F.t;
+  const c = document.createElement("canvas"); c.width = F.w * k; c.height = F.h * k;
+  const x = c.getContext("2d")!;
+  x.scale(k, k);
+  x.fillStyle = "#f3ecdf"; x.fillRect(0, 0, F.w, F.h);
+  for (let i = 0; i < 2600; i++) { x.fillStyle = `rgba(${Math.random() < 0.5 ? "120,100,80" : "255,255,255"},0.05)`; x.fillRect(Math.random() * F.w, Math.random() * F.h, 1.5, 1.5); } // paper tooth
+  x.save(); x.translate(F.m, F.m); x.beginPath(); x.rect(0, 0, s, t); x.clip();
+  shot(x, s, t);
+  x.globalCompositeOperation = "soft-light"; x.fillStyle = "rgba(255,170,100,0.45)"; x.fillRect(0, 0, s, t); // warm
+  x.globalCompositeOperation = "screen"; x.fillStyle = "rgba(60,36,70,0.32)"; x.fillRect(0, 0, s, t); // faded blacks
+  const leak = x.createLinearGradient(s, 0, s * 0.55, t * 0.45); leak.addColorStop(0, "rgba(255,120,60,0.45)"); leak.addColorStop(1, "rgba(255,120,60,0)");
+  x.fillStyle = leak; x.fillRect(0, 0, s, t); // a light leak off one corner
+  x.globalCompositeOperation = "source-over";
+  const v = x.createRadialGradient(s / 2, t / 2, Math.min(s, t) * 0.3, s / 2, t / 2, Math.max(s, t) * 0.75); v.addColorStop(0, "rgba(20,10,25,0)"); v.addColorStop(1, "rgba(20,10,25,0.6)");
+  x.fillStyle = v; x.fillRect(0, 0, s, t);
+  const d = x.getImageData(F.m * k, F.m * k, s * k, t * k), p = d.data; // device pixels: get/putImageData ignore the transform
+  for (let i = 0; i < p.length; i += 4) { const n = (Math.random() - 0.5) * 26; p[i] += n; p[i + 1] += n; p[i + 2] += n; } // grain
+  x.putImageData(d, F.m * k, F.m * k);
+  x.restore();
+  x.strokeStyle = "rgba(60,40,30,0.25)"; x.lineWidth = 1; x.strokeRect(F.m - 0.5, F.m - 0.5, s + 1, t + 1);
+  if (caption) { x.fillStyle = "#3a2c4a"; x.font = `42px ${font}`; x.textAlign = "center"; x.fillText(caption, F.w / 2, F.m + t + (F.h - F.m - t) / 2 + 14); }
+  return c;
+};
+
 const mark = (n: string) => performance.mark(`room:${n}`);
 const report = () => {
   if (process.env.NODE_ENV === "production") return;
@@ -318,6 +438,7 @@ async function mount(el: HTMLElement, live: React.RefObject<Live>, alive: () => 
   const picks = Object.fromEntries((Object.keys(PICK_NODE) as Prop[]).map((p) => [p, node(PICK_NODE[p])])) as Record<Prop, T.Object3D>;
   const tower = node("Tower");
   const phone = picks.phone, phoneRest = { p: phone.position.clone(), r: phone.rotation.y };
+  const printer = picks.printer, printerRest = printer.position.clone(), monitor = picks.rolodex, monitorRest = monitor.scale.clone();
   const lit = (mesh: T.Mesh, canvas: HTMLCanvasElement) => {
     const t = new THREE.CanvasTexture(canvas); t.colorSpace = THREE.SRGBColorSpace; t.flipY = false; // glTF UVs
     return new THREE.MeshBasicMaterial({ map: t, toneMapped: false, side: (mesh.material as T.Material).side });
@@ -336,13 +457,77 @@ async function mount(el: HTMLElement, live: React.RefObject<Live>, alive: () => 
   slot.add(paper);
   meshes.push(paper); // so the bloom pass blacks it out like the rest
 
+  // Polaroids on the wall over her bed, under the shelves and right of where she sits: two clipped to a twine,
+  // the rest washi-taped, loosely overlapping. Unlit like the bake, tinted to sit in the dusk.
+  // [shot, x, y, tilt°, held by]: back wall's face at z -1.784, bed top ~0.65, the shelves' underside ~1.2.
+  const WALL = -1.784, wall = new THREE.Group(), shade = document.createElement("canvas");
+  shade.width = shade.height = 64;
+  { const x = shade.getContext("2d")!; x.shadowColor = "rgba(20,10,30,0.9)"; x.shadowBlur = 10; x.shadowOffsetX = 200; x.fillRect(-200 + 12, 12, 40, 40); }
+  const shadeMat = new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(shade), transparent: true, opacity: 0.55, depthWrite: false, toneMapped: false });
+  const flat = (w: number, h: number, mat: T.Material, px: number, py: number, z: number, deg: number) => {
+    const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), mat);
+    m.position.set(px, py, z); m.rotation.z = THREE.MathUtils.degToRad(deg); wall.add(m); meshes.push(m); return m;
+  };
+  // Eight prints in two loose, overlapping rows (later ones lie on top); "lunch" is a landscape Instax Wide.
+  const hung: [string, number, number, number, "clip" | "tape" | ""][] = [
+    ["lanterns", 0.83, 1.06, -4, "clip"], ["cats", 0.95, 1.065, 5, "clip"], ["city", 1.07, 1.04, -3, "tape"], ["rock", 1.185, 1.045, 7, "tape"],
+    ["lunch", 0.9, 0.905, 3, "tape"], ["summer", 1.025, 0.88, -6, ""], ["saints", 1.14, 0.9, 4, "tape"],
+    ["blep", 1.245, 0.89, -5, ""],
+  ];
+  const WIDE_K = new Set(["lunch"]);
+  const faces = new Map<string, T.MeshBasicMaterial>(), framed: T.Mesh[] = []; // framed: the photos, in hung order (hit-tested)
+  hung.forEach(([k, px, py, deg, held], i) => {
+    const z = WALL + 0.003 + i * 0.0012;
+    const [w, h] = WIDE_K.has(k) ? [0.108, 0.086] : [0.088, 0.107];
+    flat(w + 0.005, h + 0.005, shadeMat, px + 0.002, py - 0.004, WALL + 0.0015, deg);
+    const tex = new THREE.CanvasTexture(document.createElement("canvas")); tex.colorSpace = THREE.SRGBColorSpace;
+    const mat = new THREE.MeshBasicMaterial({ map: tex, toneMapped: false, color: 0xd8c8c6 }); faces.set(k, mat);
+    framed.push(flat(w, h, mat, px, py, z, deg));
+    const top = new THREE.Vector3(0, h / 2, 0).applyAxisAngle(new THREE.Vector3(0, 0, 1), THREE.MathUtils.degToRad(deg));
+    if (held === "tape") flat(0.034, 0.013, new THREE.MeshBasicMaterial({ color: ["#e3a9bd", "#a9d3c4", "#c3b3e6"][i % 3], transparent: true, opacity: 0.72, toneMapped: false }), px + top.x, py + top.y, z + 0.0006, deg + (i % 2 ? 9 : -7));
+    if (held === "clip") flat(0.007, 0.02, new THREE.MeshBasicMaterial({ color: "#a87c55", toneMapped: false }), px + top.x, py + top.y + 0.004, z + 0.0008, deg);
+  });
+  const twine = new THREE.CatmullRomCurve3([new THREE.Vector3(0.73, 1.14, WALL + 0.002), new THREE.Vector3(0.87, 1.122, WALL + 0.004), new THREE.Vector3(1.01, 1.142, WALL + 0.002)]);
+  const cord = new THREE.Mesh(new THREE.TubeGeometry(twine, 24, 0.0009, 5), new THREE.MeshBasicMaterial({ color: "#b89878", toneMapped: false }));
+  wall.add(cord); meshes.push(cord);
+  scene.add(wall);
+  void (async () => { // her own shots from public/, the rest drawn; the captions in the site's hand (Caveat)
+    const load = (src: string) => new Promise<HTMLImageElement | null>((ok) => { const im = new Image(); im.onload = () => ok(im); im.onerror = () => ok(null); im.src = src; });
+    const fam = getComputedStyle(el).getPropertyValue("--font-hand").trim() || "cursive";
+    const [[saints, tabby, birman, ivy, lunch, summer, rock, blep]] = await Promise.all([
+      Promise.all(["/media/ruined-saints.jpg", ...[1, 2, 3, 4, 5, 6, 7].map((n) => `/media/wall/photo-${n}.jpg`)].map(load)),
+      document.fonts.load(`42px ${fam}`).catch(() => null)]);
+    if (!alive()) return;
+    const shots: Record<string, [Shot, string]> = {
+      saints: [saints ? photo(saints, 0.5) : lanterns, "RS"],
+      // her own: the tabby asleep, the Birman, her by the ivy with her camera (the drawn shots stay as fallbacks)
+      lanterns: [tabby ? photo(tabby, 0.15) : lanterns, tabby ? "sleepy" : "ramen in the dark"], cats: [birman ? photo(birman, 0.35) : cats, "the girls"],
+      city: [ivy ? photo(ivy, 0.3) : dusk, ivy ? "golden hour" : ""],
+      lunch: [lunch ? photo(lunch, 0.45) : dusk, "sunday lunch"], summer: [summer ? photo(summer, 0.55) : dusk, "summer"],
+      rock: [rock ? photo(rock, 0.6, 0.45) : dusk, "out of office"], blep: [blep ? photo(blep, 0.55) : cats, "blep"],
+    };
+    for (const [k, mat] of faces) { // 2x: crisp when the camera flies in. A fresh texture: a size change can't reuse the old one's storage
+      const tex = new THREE.CanvasTexture(polaroid(shots[k][0], shots[k][1], fam, 2, WIDE_K.has(k))); tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = 4;
+      mat.map!.dispose(); mat.map = tex; mat.needsUpdate = true;
+    }
+    if (reduce) window.setTimeout(() => draw()); // no loop: show them once they're painted
+  })();
+  let lifted = -1, photoOn = -1; // photoOn: the polaroid the camera has flown to
+  const liftPhoto = (i: number) => { // the one under the pointer comes off the wall a touch
+    if (photoOn >= 0) i = -1; // up close, they stay flat on the wall
+    if (i === lifted) return;
+    framed.forEach((m, j) => m.scale.setScalar(j === i ? 1.07 : 1)); lifted = i;
+    if (reduce) draw();
+  };
+
+
   // Her computer wakes when pointed at: Win95 powers on from a bright CRT line, the tower's LED lights; it sleeps
   // 1.5 s after the pointer leaves. The LinkedIn button's card wins over it while that button is hovered.
   const desktop = win95Screen(), crt = document.createElement("canvas"), crtX = crt.getContext("2d")!;
   crt.width = desktop.width; crt.height = desktop.height;
   const winLit = lit(screenMesh, crt);
   const ledMesh = node("TowerLEDMesh") as T.Mesh, ledDark = ledMesh.material as T.Material, ledLit = new THREE.MeshBasicMaterial({ color: "#5dff8a", toneMapped: false });
-  let pcHover = false, pcOffAt = 0, pcSince = -1, crtP = -1;
+  let pcHover = false, pcOffAt = 0, pcSince = -1, crtP = -1, herAtPc = false; // herAtPc: she's seated at it, so it's on
   const boot = (p: number) => { // p: 0 a bright line across the middle, 1 the whole desktop
     const w = crt.width, h = crt.height, band = Math.max(2, h * (1 - (1 - p) ** 3)), y = (h - band) / 2;
     crtX.fillStyle = "#000"; crtX.fillRect(0, 0, w, h);
@@ -353,12 +538,12 @@ async function mount(el: HTMLElement, live: React.RefObject<Live>, alive: () => 
   // Hotspots: a cream dot in a breathing pink ring on everything clickable. They're real buttons (focusable; Enter
   // and Space act), they show after the demo, and once two different things have been clicked they settle to 40%.
   const spots = Object.fromEntries([...el.querySelectorAll<HTMLButtonElement>("[data-spot]")].map((b) => [b.dataset.spot, b])) as Record<Spot, HTMLButtonElement>;
-  const spotAt: Partial<Record<Spot, T.Object3D>> = { pc: node("Screen"), phone: node("PhoneScreen"), printer: node("PrinterBodyMesh") }; // her, the cats and the Strat join below
+  const spotAt: Partial<Record<Spot, T.Object3D>> = { pc: node("Screen"), phone: node("PhoneScreen"), printer: node("PrinterBodyMesh"), photos: framed[1] }; // her, the cats and the Strat join below
   const used = new Set<Spot>(), sv = new THREE.Vector3();
   // Each marker sits just above its object, never on it: the anchor plus a lift to the object's top (metres), then
   // a few px more on screen, so even the 44 px touch target clears it. Her above her cap, the cats above their ears
   // and back, the monitor's top corner, the Strat's headstock, above the phone and the printer.
-  const LIFT = Object.fromEntries(Object.entries({ her: [0, 0.36, 0], Siamese: [0, 0.1, 0], Burmese: [0, 0.12, 0], pc: [0.1, 0.19, 0], strat: [0, 0.07, 0], phone: [0, 0.01, 0], printer: [0, 0.13, 0] })
+  const LIFT = Object.fromEntries(Object.entries({ her: [0, 0.36, 0], Siamese: [0, 0.1, 0], Burmese: [0, 0.12, 0], pc: [0.1, 0.19, 0], strat: [0, 0.07, 0], phone: [0, 0.01, 0], printer: [0, 0.13, 0], photos: [0, 0.07, 0] })
     .map(([k, v]) => [k, new THREE.Vector3(...(v as [number, number, number]))])) as Record<Spot, T.Vector3>;
   const placeSpots = () => {
     const up = touch ? 26 : 20;
@@ -428,6 +613,7 @@ async function mount(el: HTMLElement, live: React.RefObject<Live>, alive: () => 
   const cancelDemo = () => { if (demo !== "done") finishDemo(); }; // any input in the room: it never plays, or stops at once
 
   let hoverHer = (_h: unknown) => {}; // her and the cats brighten under the pointer, once they're in
+  let spin: T.Object3D | null = null; // the record on her turntable, once it's in
   const pointPc = (on: boolean) => { if (pcHover && !on) pcOffAt = performance.now() / 1000 + 1.5; pcHover = on; };
 
   const heat: Record<Prop, number> = { phone: 0, printer: 0, rolodex: 0 }, PROPS = Object.keys(heat) as Prop[];
@@ -437,16 +623,19 @@ async function mount(el: HTMLElement, live: React.RefObject<Live>, alive: () => 
   const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
   type Who = "her" | "Siamese" | "Burmese";
   let who = (_r: T.Raycaster): Who | null => null, poke = () => {}, tickHer: ((dt: number) => void) | null = null, dropHer = () => {}; // filled in once she loads
-  const hit = (e: PointerEvent): Prop | "tower" | "strat" | Who | null => {
+  let photoAt = 0; // which polaroid hit() last found
+  const hit = (e: PointerEvent): Prop | "tower" | "strat" | "photo" | Who | null => {
     const r = el.getBoundingClientRect();
     ndc.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
     ray.setFromCamera(ndc, camera);
     const w = who(ray); if (w) return w; // she's in front of the desk: she wins over the objects behind her
+    const ph = ray.intersectObjects(framed)[0]; // nearest first: the one on top where they overlap
+    if (ph) { photoAt = framed.indexOf(ph.object as T.Mesh); return "photo"; }
     if (ray.intersectObject(strat).length) return "strat";
     for (const p of Object.keys(picks) as Prop[]) if (ray.intersectObject(picks[p], true).length) return p;
     return ray.intersectObject(tower, true).length ? "tower" : null;
   };
-  const spotOf = (h: ReturnType<typeof hit>): Spot | null => (h === "rolodex" || h === "tower" ? "pc" : h);
+  const spotOf = (h: ReturnType<typeof hit>): Spot | null => (h === "rolodex" || h === "tower" ? "pc" : h === "photo" ? "photos" : h);
   let spotHover: Spot | null = null;
   const hoverSpot = (k: Spot | null) => { // pointing at an object lights its hotspot (bigger ring, its word)
     if (k === spotHover) return;
@@ -461,6 +650,7 @@ async function mount(el: HTMLElement, live: React.RefObject<Live>, alive: () => 
     else if (k === "strat") riff();
     else if (k === "Siamese" || k === "Burmese") pet([k]);
     else if (k === "pc") live.current.onScreen?.();
+    else if (k === "photos") focusPhoto(1);
     else live.current.onPick(k);
     cancelDemo(); touched(k);
   };
@@ -476,14 +666,25 @@ async function mount(el: HTMLElement, live: React.RefObject<Live>, alive: () => 
       pinch = d; return;
     }
     if (drag && want.z > 1.01) { panBy(e.clientX - drag[0], e.clientY - drag[1]); drag = [e.clientX, e.clientY]; }
-    const h = hit(e), p = h === "phone" || h === "printer" ? h : null; // pointing at the computer lights nothing: it's Win95
-    pointPc(h === "rolodex" || h === "tower");
-    hoverHer(h); hoverSpot(spotOf(h));
+    const h = spotHit(e.target) ?? hit(e); // over a hotspot it's its object, so the object lights with it
+    aim(h);
     el.style.cursor = h ? "pointer" : want.z > 1.01 ? (drag ? "grabbing" : "grab") : "";
+  };
+  // A hotspot stands for its object: pointing at (or focusing) either lights both, the same way.
+  const spotHit = (t: EventTarget | null): ReturnType<typeof hit> => {
+    const k = (t as Element).closest?.<HTMLElement>("[data-spot]")?.dataset.spot as Spot | undefined;
+    return k === "pc" ? "tower" : k === "photos" ? "photo" : k ?? null;
+  };
+  const aim = (h: ReturnType<typeof hit>) => {
+    const p = h === "phone" || h === "printer" ? h : null; // pointing at the computer lights nothing: it's Win95
+    pointPc(h === "rolodex" || h === "tower");
+    hoverHer(h); hoverSpot(spotOf(h)); liftPhoto(h === "photo" ? photoAt : -1);
     if (p !== pointer) { pointer = p; live.current.onHot(p); }
     if (reduce) placeNotes(live.current.hot ?? pointer); // no loop: the notes follow the pointer here
   };
-  const onLeave = () => { pointPc(false); hoverHer(null); hoverSpot(null); if (reduce) placeNotes(live.current.hot); if (pointer) { pointer = null; live.current.onHot(null); } };
+  const onLeave = () => aim(null);
+  const onFocus = (e: FocusEvent) => aim(spotHit(e.target)), onBlur = () => aim(null);
+  for (const b of Object.values(spots)) { b.addEventListener("focus", onFocus); b.addEventListener("blur", onBlur); }
   // Her computer, monitor or tower, always boots Win95; LinkedIn opens only from its own button.
   // A click is a left press and release on the same object without dragging: right-clicks and drags do nothing.
   let down: { h: ReturnType<typeof hit>; x: number; y: number } | null = null;
@@ -504,12 +705,14 @@ async function mount(el: HTMLElement, live: React.RefObject<Live>, alive: () => 
     onCancel(e);
     const h = hit(e);
     if (!d || d.h !== h || Math.hypot(e.clientX - d.x, e.clientY - d.y) > 6) return; // a drag or pan never clicks
+    if (!h && photoOn >= 0) return unzoom(); // up at a photo, a click off it flies back out
     if (h) sfx.wake(); // first, inside the click, so the browser lets every sound play
     touched(spotOf(h));
     if (e.pointerType !== "mouse" && spotOf(h)) { hoverSpot(spotOf(h)); window.setTimeout(() => hoverSpot(null), 2000); } // no hover on touch: a tap shows its word
     if (h === "her") poke();
     else if (h === "strat") riff();
     else if (h === "Siamese" || h === "Burmese") pet([h]);
+    else if (h === "photo") focusPhoto(photoAt);
     else if (h === "tower" || h === "rolodex") live.current.onScreen?.();
     else if (h) live.current.onPick(h as Prop);
   };
@@ -540,7 +743,9 @@ async function mount(el: HTMLElement, live: React.RefObject<Live>, alive: () => 
     for (const nd of notes) {
       const p = nd.dataset.note as Prop, v = anchors[p].getWorldPosition(at).project(camera);
       const tx = ((v.x + 1) / 2) * W, ty = ((1 - v.y) / 2) * H, seen = Math.abs(v.x) <= 1 && Math.abs(v.y) <= 1;
-      const show = seen && p === hot; // its contact button hovered (or the object itself)
+      // its contact button hovered, or the object itself while its hotspot isn't up to name it (one word, not two)
+      const named = p === pointer && "spots" in el.dataset && !spots[p === "rolodex" ? "pc" : p].hasAttribute("data-off");
+      const show = seen && p === hot && !named;
       nd.toggleAttribute("data-show", show); arrows[p].toggleAttribute("data-show", show);
       pin(nd, arrows[p], LABEL[p][0] * W, LABEL[p][1] * H, tx, ty);
       nd.toggleAttribute("data-hot", p === hot); arrows[p].toggleAttribute("data-hot", p === hot);
@@ -549,12 +754,13 @@ async function mount(el: HTMLElement, live: React.RefObject<Live>, alive: () => 
   };
 
   const pose = (t: number, hot: Prop | null) => {
-    // Phone: buzzes in bursts, 0.4 s on, 0.3 s off, with the message coming up after the first burst.
+    // Phone: buzzes in bursts, 0.4 s on, 0.3 s off, with the message coming up after the first burst. Big enough to
+    // read from across the room (a few px): it skitters on the desk, twists and hops, like a Nokia on vibrate.
     const buzz = reduce ? 0 : heat.phone * ((t - since) % 0.7 < 0.4 ? 1 : 0);
-    phone.position.set(phoneRest.p.x + Math.sin(t * 95) * 0.0025 * buzz, phoneRest.p.y, phoneRest.p.z + Math.cos(t * 83) * 0.0025 * buzz);
-    phone.rotation.y = phoneRest.r + Math.sin(t * 70) * 0.04 * buzz;
+    phone.position.set(phoneRest.p.x + Math.sin(t * 95) * 0.007 * buzz, phoneRest.p.y + Math.abs(Math.sin(t * 61)) * 0.003 * buzz, phoneRest.p.z + Math.cos(t * 83) * 0.007 * buzz);
+    phone.rotation.y = phoneRest.r + Math.sin(t * 70) * 0.14 * buzz;
     phoneMesh.material = hot === "phone" ? phoneLit[reduce || t - since > 0.9 ? 1 : 0] : phoneDark;
-    const pc = pcHover || (!reduce && t < pcOffAt);
+    const pc = pcHover || herAtPc || (!reduce && t < pcOffAt);
     if (!pc) pcSince = crtP = -1;
     else {
       if (pcSince < 0) pcSince = t;
@@ -562,8 +768,11 @@ async function mount(el: HTMLElement, live: React.RefObject<Live>, alive: () => 
       if (p !== crtP) { boot(p); crtP = p; }
     }
     screenMesh.material = hot === "rolodex" ? screenLit : pc ? winLit : screenDark;
+    monitor.scale.copy(monitorRest).multiplyScalar(1 + (crtP >= 0 && crtP < 1 ? Math.sin(crtP * Math.PI) * 0.025 : 0)); // the CRT thunks on: a tiny swell
     ledMesh.material = pc ? ledLit : ledDark;
-    // Printer: page one slides out of the front tray.
+    // Printer: page one slides out of the front tray, the body shuddering line by line while it feeds.
+    const feed = reduce ? 0 : heat.printer > 0.02 && heat.printer < 0.97 ? 1 : 0, line = Math.floor(t * 14) % 2;
+    printer.position.set(printerRest.x + (line - 0.5) * 0.005 * feed, printerRest.y + Math.abs(Math.sin(t * 47)) * 0.003 * feed, printerRest.z);
     paper.visible = heat.printer > 0.02;
     paper.position.z = (heat.printer - 1) * 0.3; // from inside the body out over the tray
   };
@@ -581,12 +790,14 @@ async function mount(el: HTMLElement, live: React.RefObject<Live>, alive: () => 
     transparent: true, depthTest: false, depthWrite: false, blending: THREE.CustomBlending, blendSrc: THREE.DstAlphaFactor, blendDst: THREE.OneFactor, blendSrcAlpha: THREE.ZeroFactor, blendDstAlpha: THREE.OneFactor,
   }));
   const keep = new Map<T.Mesh, T.Material | T.Material[]>(), clear = new THREE.Color(), screens = [...phoneLit, screenLit, winLit];
+  const smear = new THREE.Group(); // her wave's afterimages (filled in once she loads): never in the bloom pass
+  scene.add(smear);
   const draw = () => {
     for (const m of meshes) {
       const glows = m.layers.isEnabled(BLOOM) || (m === screenMesh && m.material !== screenDark) || (m === phoneMesh && m.material !== phoneDark) || (m === ledMesh && m.material === ledLit);
       if (!glows) { keep.set(m, m.material); m.material = black; }
     }
-    shaft.visible = dust.visible = false;
+    shaft.visible = dust.visible = smear.visible = false;
     for (const m of screens) m.color.setScalar(0.1); // a lit screen only haloes; full strength it bleaches to white
     renderer.getClearColor(clear); const alpha = renderer.getClearAlpha();
     renderer.setClearColor(0x000000, 0);
@@ -596,7 +807,7 @@ async function mount(el: HTMLElement, live: React.RefObject<Live>, alive: () => 
     renderer.setRenderTarget(null); renderer.setClearColor(clear, alpha);
     for (const [m, mt] of keep) m.material = mt;
     keep.clear();
-    shaft.visible = dust.visible = true;
+    shaft.visible = dust.visible = smear.visible = true;
     for (const m of screens) m.color.setScalar(1);
     renderer.render(scene, camera);
     renderer.autoClear = false; add.render(renderer); renderer.autoClear = true;
@@ -610,12 +821,14 @@ async function mount(el: HTMLElement, live: React.RefObject<Live>, alive: () => 
     sfx.purr(); unlock("cat");
     for (const c of found) float(c, "♥♥♥♥", "#EE6E9F");
   };
-  // A few small glyphs floating up off a thing in the room (hearts off a cat, notes off the guitar), ~1.2 s.
-  const float = (o: T.Object3D, glyphs: string, color: string) => {
+  // A few small glyphs floating up off a thing in the room (hearts off a cat, notes off the guitar), ~1.2 s; or,
+  // as `s.sung`, one slow note drifting up and swaying while she sings, ~2 s, on its own random drift and tilt.
+  const float = (o: T.Object3D, glyphs: string, color: string, cls = s.heart) => {
     const v = o.getWorldPosition(at).project(camera);
     [...glyphs].forEach((g, i) => {
       const h = document.createElement("span");
-      h.className = s.heart; h.textContent = g; h.style.color = color; h.setAttribute("aria-hidden", "true");
+      h.className = cls; h.textContent = g; h.style.color = color; h.setAttribute("aria-hidden", "true");
+      if (cls !== s.heart) h.style.cssText += `--dx:${(Math.random() * 2 - 1) * 26}px;--r:${(Math.random() * 2 - 1) * 18}deg;animation-duration:${1.6 + Math.random() * 0.6}s`;
       h.style.left = `${((v.x + 1) / 2) * el.clientWidth + (i - (glyphs.length - 1) / 2) * 12}px`; h.style.top = `${((1 - v.y) / 2) * el.clientHeight}px`;
       h.style.animationDelay = `${i * 0.12}s`;
       h.addEventListener("animationend", () => h.remove());
@@ -659,14 +872,42 @@ async function mount(el: HTMLElement, live: React.RefObject<Live>, alive: () => 
   const zoomAt = (z: number, cx: number, cy: number) => { // keeps the point under (cx, cy) where it is
     const r = el.getBoundingClientRect(), nx = ((cx - r.left) / r.width) * 2 - 1, ny = 1 - ((cy - r.top) / r.height) * 2, a = camera.aspect;
     const h = FH / zoom.z, px = zoom.x + nx * h * a, py = zoom.y + ny * h;
-    want.z = THREE.MathUtils.clamp(z, 1, 3);
+    flight = null; photoOn = -1;
+    want.z = THREE.MathUtils.clamp(z, 1, Math.max(3, zoom.z)); // up at a photo, a pinch can't snap back to 3x
     const h2 = FH / want.z;
     want.x = px - nx * h2 * a; want.y = py - ny * h2;
     settle();
   };
-  const unzoom = () => { Object.assign(want, { z: 1, x: 0, y: 0 }); settle(); };
+  // A flight: the camera glides (ease-in-out, ~0.7 s) instead of the 150 ms snap; the view's centre moves in step
+  // with how far it has zoomed, so the target homes in as it grows. Any wheel, pinch or pan takes over at once.
+  let flight: { a: typeof zoom; b: typeof zoom; t0: number } | null = null;
+  const fly = (to: typeof zoom) => {
+    Object.assign(want, to); settle();
+    if (!reduce) flight = { a: { ...zoom }, b: { ...want }, t0: performance.now() / 1000 };
+  };
+  const flown = (t: number) => { // in the loop, while flying
+    const f = flight!, u = Math.min(1, (t - f.t0) / 0.7), e = u < 0.5 ? 4 * u * u * u : 1 - (-2 * u + 2) ** 3 / 2;
+    zoom.z = f.a.z * (f.b.z / f.a.z) ** e;
+    const span = 1 / f.a.z - 1 / f.b.z, k = Math.abs(span) > 1e-6 ? (1 / f.a.z - 1 / zoom.z) / span : e;
+    zoom.x = f.a.x + (f.b.x - f.a.x) * k; zoom.y = f.a.y + (f.b.y - f.a.y) * k;
+    if (u >= 1) flight = null;
+  };
+  // A polaroid fills most of the view, centred: up to ~70x, well past the 3x a pinch reaches.
+  const pv = new THREE.Vector3();
+  const focusPhoto = (i: number) => {
+    i = (i + framed.length) % framed.length;
+    photoOn = i; liftPhoto(-1);
+    const v = framed[i].getWorldPosition(pv).applyMatrix4(camera.matrixWorldInverse), d = -v.z, { width: w, height: h } = (framed[i].geometry as T.PlaneGeometry).parameters;
+    const fill = hung[i][0] === "blep" ? 0.5 : 0.82; // blep's source is 310 px wide: closer, it goes soft
+    fly({ z: Math.min((FH * 2 * fill * d) / h, (FH * 2 * camera.aspect * fill * d) / w), x: v.x / d - fitMid.x, y: v.y / d - fitMid.y });
+  };
+  const unzoom = () => {
+    if (photoOn >= 0) { photoOn = -1; fly({ z: 1, x: 0, y: 0 }); return; }
+    flight = null; Object.assign(want, { z: 1, x: 0, y: 0 }); settle();
+  };
   const panBy = (dx: number, dy: number) => { // client pixels; the drag moves the room with the pointer
     const h = (2 * FH) / zoom.z / el.clientHeight;
+    flight = null; zoom.z = want.z;
     want.x -= dx * h; want.y += dy * h; clampPan(want); zoom.x = want.x; zoom.y = want.y; // no ease: it follows the hand
     if (reduce) settle(); else lens();
   };
@@ -679,7 +920,10 @@ async function mount(el: HTMLElement, live: React.RefObject<Live>, alive: () => 
     if (onButton(e) || hit(e as PointerEvent)) return; // on an object its click already acted: double-click zooms only on bare room
     if (want.z > 1.01) unzoom(); else zoomAt(2, e.clientX, e.clientY);
   };
-  const onKey = (e: KeyboardEvent) => { if (e.key === "Escape" && want.z > 1.01) unzoom(); };
+  const onKey = (e: KeyboardEvent) => {
+    if (e.key === "Escape" && want.z > 1.01) unzoom();
+    else if (photoOn >= 0 && (e.key === "ArrowLeft" || e.key === "ArrowRight")) { e.preventDefault(); focusPhoto(photoOn + (e.key === "ArrowLeft" ? -1 : 1)); }
+  };
   const touches = new Map<number, [number, number]>();
   let drag: [number, number] | null = null, pinch = 0;
   const hint = el.querySelector<HTMLElement>("[data-hint]")!;
@@ -732,9 +976,11 @@ async function mount(el: HTMLElement, live: React.RefObject<Live>, alive: () => 
     glow.uTime.value = t;
     pose(t, hot);
     tickHer?.(dt);
+    if (spin) spin.rotation.y -= dt * (100 / 3) * (Math.PI / 30); // 33⅓ rpm, clockwise from above
     runDemo(t, dt);
     if (zoom.z !== want.z || zoom.x !== want.x || zoom.y !== want.y) { // ~150 ms ease
-      for (const k of AXES) zoom[k] = Math.abs(want[k] - zoom[k]) < 1e-4 ? want[k] : ease(zoom[k], want[k], dt, 20);
+      if (flight) flown(t);
+      else for (const k of AXES) zoom[k] = Math.abs(want[k] - zoom[k]) < 1e-4 ? want[k] : ease(zoom[k], want[k], dt, 20);
       lens();
     }
     draw();
@@ -779,6 +1025,48 @@ async function mount(el: HTMLElement, live: React.RefObject<Live>, alive: () => 
     const lamp = new THREE.PointLight("#FFC07A", 1.6, 3.5);
     node("Glow_Lamp").getWorldPosition(lamp.position);
     scene.add(lamp);
+    // Her camera and her Cowon iAudio U3 with its earbuds on wing B's free right end, and her record player on the
+    // floor between the Strat's amp cable and the skateboard (Sketchfab, CC BY: art/README.md). Not in the bake, so
+    // they're lit like her. [file, sized by this node, to this many metres, at, yaw, standing on (y)]
+    const PROPS: [string, string, number, [number, number], number, number][] = [
+      ["camera", "Camera_01_Camera_01_body_0", 0.13, [-0.72, -1.62], 0.55, 0.75],     // lens toward the room
+      ["mp3", "Korpus_low_Material_0", 0.076, [-0.9, -1.4], -Math.PI / 4, 0.75],     // screen toward the room
+      ["turntable", "Object_4", 0.42, [-1.55, 1.1], -1.92, 0],                        // front toward the room, back to the wall
+    ];
+    for (const [file, ref, size, [x, z], ry, top] of PROPS) void grab(`/models/${file}.glb`).then(parse).then((p) => {
+      if (!p || !alive()) return;
+      const o = p.scene;
+      o.getObjectByName("Plane")?.removeFromParent(); // the U3's product-shot floor
+      const s = new THREE.Box3().setFromObject(o.getObjectByName(ref)!).getSize(new THREE.Vector3());
+      o.scale.setScalar(size / Math.max(s.x, s.y, s.z)); o.rotation.y = ry;
+      o.position.set(x, 0, z); o.updateMatrixWorld(true);
+      o.position.y = top - new THREE.Box3().setFromObject(o).min.y; // standing on the desk or the floor
+      const disc = o.getObjectByName("Object_18"); // the record ("Until I Found You") turns at 33⅓ rpm
+      if (disc) { const c = new THREE.Box3().setFromObject(disc).getCenter(new THREE.Vector3()); spin = new THREE.Group(); spin.position.copy(o.worldToLocal(c)); o.add(spin); spin.attach(disc); }
+      o.traverse((m) => { if ((m as T.Mesh).isMesh) { m.castShadow = true; meshes.push(m as T.Mesh); } }); // the bloom pass blacks them out too
+      scene.add(o);
+      if (reduce) draw();
+    });
+    // Her records, spread on the floor in front of the player as if she'd been flipping through them, short of the rug
+    // and her way to the desk. [sheet tile (sleeve 0-6, disc 7-8), x, z, yaw, the disc slid half out of it (tile)]
+    const sheet = new THREE.CanvasTexture(records()); sheet.colorSpace = THREE.SRGBColorSpace; sheet.anisotropy = 4;
+    const sleeveMat = new THREE.MeshStandardMaterial({ map: sheet, roughness: 0.75 }), discMat = new THREE.MeshStandardMaterial({ map: sheet, roughness: 0.3 });
+    const tile = (g: T.BufferGeometry, i: number) => { const uv = g.getAttribute("uv"); for (let k = 0; k < uv.count; k++) uv.setXY(k, ((i % 3) + uv.getX(k)) / 3, 1 - (Math.floor(i / 3) + 1 - uv.getY(k)) / 3); return g; };
+    const RECORDS: [number, number, number, number, number?][] = [
+      [0, -1.2, 0.98, 0.3], [4, -1.04, 1.16, -0.25], [8, -0.93, 0.95, 0], [5, -1.24, 1.38, 0.9],
+      [2, -0.9, 1.33, -0.6, 7], [3, -1.08, 1.45, 0.15], [6, -0.86, 1.1, 0.5],
+    ];
+    const piled: [number, number, number][] = []; // x, z, top of each record down so far
+    for (const [t, x, z, ry, out] of RECORDS) {
+      const thick = t > 6 ? 0.002 : 0.003, rec = new THREE.Group();
+      rec.add(new THREE.Mesh(t > 6 ? tile(new THREE.CylinderGeometry(0.15, 0.15, thick, 48), t) : tile(new THREE.BoxGeometry(0.314, thick, 0.314), t), t > 6 ? discMat : sleeveMat));
+      if (out !== undefined) { const d = new THREE.Mesh(tile(new THREE.CylinderGeometry(0.15, 0.15, 0.002, 48), out), discMat); d.position.x = 0.14; rec.add(d); } // slid half out
+      const under = Math.max(0.0035, ...piled.filter(([px, pz]) => Math.hypot(px - x, pz - z) < 0.3).map(([, , top]) => top)); // above the floor, or on the ones under it
+      rec.position.set(x, under + thick / 2 + 0.0012, z); rec.rotation.set(under > 0.004 ? 0.006 : 0, ry, under > 0.004 ? -0.005 : 0); // resting on another: a hair of tilt
+      piled.push([x, z, under + thick + 0.0012]);
+      rec.traverse((m) => { if ((m as T.Mesh).isMesh) { m.receiveShadow = true; meshes.push(m as T.Mesh); } });
+      scene.add(rec);
+    }
     renderer.shadowMap.enabled = true; renderer.shadowMap.autoUpdate = false;
     const catchers = ["ShadowFloorMesh", "ShadowBedMesh"].map((n) => room.getObjectByName(n) as T.Mesh);
     for (const m of catchers) { (m.material as T.Material).dispose(); m.material = new THREE.ShadowMaterial({ color: "#1d1433", opacity: 0, depthWrite: false }); m.receiveShadow = m.visible = true; }
@@ -817,18 +1105,46 @@ async function mount(el: HTMLElement, live: React.RefObject<Live>, alive: () => 
       const hold = herMix.clipAction(new THREE.AnimationClip("GuitarHold", td.duration, td.tracks.filter((k) => k.name.startsWith("Guitar."))));
       const cats = ["Siamese", "Burmese"].map((cat) => {
         const m = new THREE.AnimationMixer(char);
-        for (const a of c.animations) if (a.name.startsWith(cat + "_")) m.clipAction(a).play();
+        for (const a of c.animations) if (a.name.startsWith(cat + "_") && a.name !== "Burmese_Stretch") m.clipAction(a).play();
         return m;
       });
+      // Now and then the Burmese stretches out, paws forward and chin up, then curls back to sleep: every 25-45 s,
+      // her sleep loops crossfade out for the ~4.3 s stretch and back in after; no Zzz while she's up.
+      const bm = cats[1], stretch = bm.clipAction(clip("Burmese_Stretch")), zzz = char.getObjectByName("Burmese_Z");
+      const sleeps = [bm.clipAction(clip("Burmese_Loop"))];
+      stretch.setLoop(THREE.LoopOnce, 1);
+      let stretchIn = 25 + Math.random() * 20, back = false;
+      const tickStretch = (dt: number) => {
+        if (stretch.isRunning()) {
+          if (!back && stretch.time > stretch.getClip().duration - 0.5) { back = true; for (const a of sleeps) { a.reset().play(); a.crossFadeFrom(stretch, 0.5, false); } }
+          return;
+        }
+        if (zzz) zzz.visible = true;
+        if ((stretchIn -= dt) > 0) return;
+        stretchIn = 25 + Math.random() * 20;
+        back = false; stretch.reset().play(); for (const a of sleeps) stretch.crossFadeFrom(a, 0.35, false);
+        if (zzz) zzz.visible = false;
+      };
       let state: "strum" | "day" | "bed" | "desk" = "strum", now: T.AnimationAction = strum, inState = 0, queued = false, resume = 0;
       const go = (next: typeof state, to: T.AnimationAction, fadeS: number, at = 0) => {
         to.reset().play(); to.time = at; to.crossFadeFrom(now, fadeS, false);
         state = next; now = to; inState = 0;
       };
       strum.play();
+      let sing = 1; // seconds to the next sung note
+      // The wave runs longer than it was baked: her arm holds up while one baked cycle replays EXTRA more times
+      // (the swing itself is drawn on top, in cartoon()). [cycle start, cycle end], frames of ReactBed / ReactDesk.
+      const WAVE = { bed: [33, 43], desk: [41, 49] }, EXTRA = 3;
+      let encore = 0;
+      const pep = () => {
+        if (state !== "bed" && state !== "desk") return;
+        const a = state === "bed" ? bed : desk, [c0, c1] = WAVE[state];
+        if (encore > 0 && a.time / F >= c1) { a.time -= (c1 - c0) * F; encore--; }
+      };
 
       const bone = (n: string) => char.getObjectByName(n)!;
       const hips = bone("DEF-spineseg0"), head = bone("DEF-spine006"), feet = [bone("DEF-footL"), bone("DEF-footR")];
+      const strumHand = bone("DEF-handR"), guitar = bone("Guitar"); // where her sung notes come from
       const pa = new THREE.Vector3(), pb = new THREE.Vector3(), pc = new THREE.Vector3();
       const near = (r: T.Ray, a: T.Object3D, b: T.Object3D, rad: number, reach = 0) => {
         a.getWorldPosition(pa); b.getWorldPosition(pb);
@@ -861,7 +1177,7 @@ async function mount(el: HTMLElement, live: React.RefObject<Live>, alive: () => 
         if (reduce) draw();
       };
 
-      herStill = () => { const t = day.time; return state === "strum" || (state === "day" && (t < 47 * F || t > 540 * F || (t >= 232 * F && t <= 446 * F))); };
+      herStill = () => { const t = day.time; return state === "strum" || (state === "day" && (t < 47 * F || t > 600 * F || (t >= 232 * F && t <= 506 * F))); };
 
       if (reduce) { // a still: her first strum, the cats at rest; a click shows the wave for 2 s
         herMix.update(0); for (const m of cats) m.update(0); draw(); placeNotes(); stillDemo();
@@ -874,29 +1190,126 @@ async function mount(el: HTMLElement, live: React.RefObject<Live>, alive: () => 
         dropHer = () => { clearTimeout(wave); herMix.stopAllAction(); herMix.uncacheRoot(char); for (const m of cats) { m.stopAllAction(); m.uncacheRoot(char); } };
       } else {
         poke = () => { if (state !== "bed" && state !== "desk") queued = true; };
+
+        // The wave, cartoon: while her hand is up, a fast continuous swing replaces the baked one (a sine, so the hand
+        // passes through every point of the arc each frame, never jumping end to end), the wrist trailing it, the
+        // hand stretching on the fast pass, her head tilting into it. Her DEF bones are flat under Her, so it's all done in Her's space:
+        // the forearm and hand turn rigidly about the elbow (75%) and the whole arm about the shoulder (25%).
+        const arm = [bone("DEF-upper_armRseg0"), bone("DEF-upper_armRseg1"), bone("DEF-upper_armRseg2"), bone("DEF-upper_armR001seg0"), bone("DEF-upper_armR001seg1"), bone("DEF-upper_armR001seg2")];
+        const fore = ["", "001"].flatMap((h) => [0, 1, 2].map((i) => bone(`DEF-forearmR${h}seg${i}`))), hand = bone("DEF-handR");
+        fore.push(hand); arm.push(...fore); // the fingers ride on the hand
+        const shL = bone("DEF-upper_armLseg0"), shR = arm[0], elbow = fore[0];
+        const up = new THREE.Vector3(), right = new THREE.Vector3(), fwd = new THREE.Vector3(), fa = new THREE.Vector3(), pv = new THREE.Vector3(), rq = new THREE.Quaternion();
+        let env = 0, mid = 0, ang = 0, vel = 0, phase = 0, bent = false;
+        const HZ = 2.6, ARC = 0.72; // full swings a second, radians a side (~41°)
+        // The mixer only writes a bone when its keyed value changes, so each edit is undone before the next update.
+        const touched = [...arm, head], rest = touched.map((b) => [b.position.clone(), b.quaternion.clone(), b.scale.clone()] as const);
+        const unbend = () => { if (bent) touched.forEach((b, i) => { b.position.copy(rest[i][0]); b.quaternion.copy(rest[i][1]); b.scale.copy(rest[i][2]); }); bent = false; };
+        const turn = (bones: T.Object3D[], about: T.Vector3, axis: T.Vector3, a: number) => {
+          rq.setFromAxisAngle(axis, a); pv.copy(about);
+          for (const b of bones) { b.position.sub(pv).applyQuaternion(rq).add(pv); b.quaternion.premultiply(rq); }
+        };
+        const cartoon = (dt: number) => {
+          up.subVectors(head.position, hips.position).normalize();
+          right.subVectors(shR.position, shL.position); right.addScaledVector(up, -right.dot(up)).normalize();
+          fwd.crossVectors(up, right); // +angle about fwd swings the arm toward her right
+          fa.subVectors(hand.position, elbow.position).normalize();
+          const baked = Math.atan2(fa.dot(right), fa.dot(up)), raised = state === "bed" || state === "desk" ? THREE.MathUtils.smoothstep(fa.dot(up), 0.15, 0.45) : 0; // hand above the elbow
+          if (env < 0.01 && raised > 0) { mid = baked; ang = baked; vel = 0; phase = 0; } // a fresh wave starts from her pose
+          env += (raised - env) * Math.min(1, dt * 12);
+          if (env < 0.01) { for (const gh of ghost) for (const g of gh.ms) g.visible = false; return; }
+          touched.forEach((b, i) => { rest[i][0].copy(b.position); rest[i][1].copy(b.quaternion); rest[i][2].copy(b.scale); }); bent = true;
+          mid += (baked - mid) * Math.min(1, dt * 0.8); // the middle of her swing, wherever she holds the arm
+          phase += Math.min(dt, 0.05) * Math.PI * 2 * HZ;
+          const s = Math.sin(phase), swing = mid + ARC * s;
+          const want = baked + raised * (swing - baked), was = ang; // as her arm comes down, back to the baked one
+          ang = want; vel = dt > 0 ? (ang - was) / dt : 0;
+          const extra = env * THREE.MathUtils.clamp(ang - baked, -1, 1);
+          turn(fore, elbow.position, fwd, extra * 0.75);
+          turn(arm, shR.position, fwd, extra * 0.25);
+          turn([hand], hand.position, fwd, env * THREE.MathUtils.clamp(-vel * 0.03, -0.35, 0.35)); // the wrist trails the swing
+          const k = 1 + env * Math.min(0.18, Math.abs(vel) * 0.012); // and the hand stretches on the fast pass
+          hand.scale.y *= k; hand.scale.x /= Math.sqrt(k); hand.scale.z /= Math.sqrt(k);
+          turn([head], head.position, fwd, env * (0.14 + 0.07 * s)); // her head tilts into it
+          turn([head], head.position, right, -env * 0.09 * s * s); // and bobs at each end
+          ghosts(dt);
+        };
+
+        // Smear frames: the last few poses of the waving forearm and hand, pale lavender, fading in ~0.13 s. Each
+        // one shows only as far as the hand has since moved, so they bloom on the fast swings and vanish at the holds.
+        const isArm = (n: string) => n.startsWith("DEF-forearmR") || n === "DEF-handR" || /^DEF-(f_|thumb|palm).*R$/.test(n);
+        const parts: { m: T.SkinnedMesh; geo: T.BufferGeometry }[] = [];
+        bone("Her").traverse((o) => {
+          const m = o as T.SkinnedMesh;
+          if (!m.isSkinnedMesh) return;
+          const g = m.geometry, si = g.getAttribute("skinIndex"), sw = g.getAttribute("skinWeight"), on = m.skeleton.bones.map((b) => isArm(b.name));
+          const army = (v: number) => { let w = 0; for (let c = 0; c < 4; c++) if (on[si.getComponent(v, c)]) w += sw.getComponent(v, c); return w >= 0.5; };
+          const idx: number[] = [], n = g.index ? g.index.count : g.getAttribute("position").count;
+          for (let i = 0; i < n; i += 3) {
+            const t = [0, 1, 2].map((j) => (g.index ? g.index.getX(i + j) : i + j));
+            if (t.every(army)) idx.push(...t);
+          }
+          if (!idx.length) return;
+          const geo = new THREE.BufferGeometry(); // her own buffers, fewer triangles
+          for (const a of ["position", "normal", "skinIndex", "skinWeight"]) if (g.getAttribute(a)) geo.setAttribute(a, g.getAttribute(a));
+          geo.setIndex(idx); parts.push({ m, geo });
+        });
+        const GHOSTS = 5, LIFE = 0.09, ghost = Array.from({ length: GHOSTS }, () => {
+          const mat = new THREE.MeshBasicMaterial({ color: "#b39dff", transparent: true, opacity: 0, depthWrite: false });
+          const ms = parts.map(({ m, geo }) => {
+            const sk = new THREE.Skeleton(m.skeleton.bones, m.skeleton.boneInverses);
+            sk.update = () => {}; // frozen: it holds the pose it was given
+            const g = new THREE.SkinnedMesh(geo, mat); g.bind(sk, m.bindMatrix); g.frustumCulled = false; g.visible = false; g.raycast = () => {};
+            smear.add(g); return g;
+          });
+          return { mat, ms, at: -1, hand: new THREE.Vector3() };
+        });
+        let clock = 0, lastShot = 0, next = 0;
+        const ghosts = (dt: number) => {
+          clock += dt;
+          if (clock - lastShot >= 1 / 90) { // a fresh afterimage every rendered frame, into the oldest slot
+            lastShot = clock; bone("Her").updateMatrixWorld(true);
+            const gh = ghost[next]; next = (next + 1) % GHOSTS;
+            for (const g of gh.ms) THREE.Skeleton.prototype.update.call(g.skeleton);
+            gh.at = clock; gh.hand.copy(hand.position);
+          }
+          for (const gh of ghost) {
+            const age = clock - gh.at, o = env * 0.16 * Math.max(0, 1 - age / LIFE) ** 2 * THREE.MathUtils.smoothstep(gh.hand.distanceTo(hand.position), 0.015, 0.06);
+            gh.mat.opacity = o; for (const g of gh.ms) g.visible = o > 0.004;
+          }
+        };
+        const unGhost = () => { for (const gh of ghost) { gh.mat.dispose(); for (const g of gh.ms) { g.skeleton.dispose(); smear.remove(g); } } for (const p of parts) p.geo.dispose(); };
+
         tickHer = (dt) => {
           if (fade < 1) {
             setFade(fade = Math.min(1, fade + dt / 0.4));
             if (fade === 1) for (const [mt, [tr]] of mats) { mt.transparent = tr; mt.needsUpdate = true; }
           }
           const prev = day.time;
-          herMix.update(dt); for (const m of cats) m.update(dt);
+          unbend(); pep(); herMix.update(dt); tickStretch(dt); for (const m of cats) m.update(dt);
+          cartoon(dt);
           inState += dt;
           const t = day.time;
+          herAtPc = state === "desk" || (state === "day" && t >= 232 * F && t <= 506 * F); // on while she works, off as she gets up
+          // While she sings on the bed, a note drifts up every 0.5-0.9 s, off her strumming hand or the guitar's body.
+          if (state === "strum" && fade === 1 && (sing -= dt) < 0) {
+            sing = 0.5 + Math.random() * 0.4;
+            float(Math.random() < 0.5 ? strumHand : guitar, "♪♫♬♪♥"[Math.floor(Math.random() * 5)], Math.random() < 0.6 ? "#fff4e6" : "#ff9ec0", s.sung);
+          }
           if (state === "strum" && inState >= 3 * strum.getClip().duration) go("day", day, 0.25);
           else if (state === "day" && t < prev) go("strum", strum, 0.25); // ToDesk wrapped: she's back on the bed
           else if (state === "bed" && bed.paused) go("strum", strum, 0.25);
           else if (state === "desk" && desk.paused) { go("day", day, 0.25, resume); hold.fadeOut(0.25); } // back where she left off
           if (!queued) return;
-          // A click waits for the next place she can react: on the bed, or seated at the desk (232-446), at once.
+          // A click waits for the next place she can react: on the bed, or seated at the desk (232-506, but not mid-sip), at once.
           // ReactDesk is keyed on ToDesk 330; from any other seated moment the crossfade carries her into it and back.
-          if (state === "strum" || (state === "day" && (t < 47 * F || t > 540 * F))) { queued = false; sfx.hello(); go("bed", bed, 0.15); }
-          else if (state === "day" && t >= 232 * F && t <= 446 * F) {
-            queued = false; sfx.hello(); resume = t; go("desk", desk, 0.25);
+          if (state === "strum" || (state === "day" && (t < 47 * F || t > 600 * F))) { queued = false; sfx.hello(); encore = EXTRA; go("bed", bed, 0.15); }
+          else if (state === "day" && t >= 232 * F && t <= 506 * F && (t < 396 * F || t > 460 * F)) { // not mid-sip (398-458): the mug's in her hand
+            queued = false; sfx.hello(); resume = t; encore = EXTRA; go("desk", desk, 0.25);
             hold.reset().play(); hold.time = t; hold.paused = true; hold.fadeIn(0.25);
           }
         };
-        dropHer = () => { tickHer = null; herMix.stopAllAction(); herMix.uncacheRoot(char); for (const m of cats) { m.stopAllAction(); m.uncacheRoot(char); } };
+        dropHer = () => { tickHer = null; unGhost(); herMix.stopAllAction(); herMix.uncacheRoot(char); for (const m of cats) { m.stopAllAction(); m.uncacheRoot(char); } };
       }
       const drop = dropHer;
       dropHer = () => { drop(); scene.remove(char); free(char); key.shadow.dispose(); lamp.dispose(); };
@@ -924,7 +1337,7 @@ async function mount(el: HTMLElement, live: React.RefObject<Live>, alive: () => 
     window.removeEventListener("keydown", onKey);
     window.removeEventListener("cv:cat", onKonami);
     resetBtn.removeEventListener("click", unzoom);
-    for (const b of Object.values(spots)) b.removeEventListener("click", onSpot);
+    for (const b of Object.values(spots)) { b.removeEventListener("click", onSpot); b.removeEventListener("focus", onFocus); b.removeEventListener("blur", onBlur); }
     strat.geometry.dispose();
     el.removeEventListener("keydown", cancelDemo);
     clearTimeout(hintT);

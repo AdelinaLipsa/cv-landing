@@ -215,6 +215,12 @@
 }
 .photo { border: 0 solid transparent; }
 .buildBtn { border: 1px solid var(--ink); }
+/* Dark: the build button inverts like the page did, a light ink pill with paper text (the night pill read muddy
+   with a white hairline), its play dot a night disc with a broth triangle; a warm glow on hover. The eras below win. */
+:global([data-theme="dark"]) .buildBtn { background: var(--ink); color: var(--paper); box-shadow: 0 10px 28px rgba(0, 0, 0, 0.45); }
+:global([data-theme="dark"]) .buildBtn:hover, :global([data-theme="dark"]) .buildBtn:focus-visible { box-shadow: 0 0 0 4px rgba(245, 181, 63, 0.16), 0 14px 34px rgba(245, 181, 63, 0.24); }
+:global([data-theme="dark"]) .buildBtn > span:first-child { background: var(--night); }
+:global([data-theme="dark"]) .buildBtn > span:first-child path { fill: var(--broth); }
 .media > * { transition: opacity 1.2s var(--ease); }
 .media { border: 0 solid transparent; }
 

@@ -61,6 +61,10 @@ export default function DecryptedText({
   const [isDecrypted, setIsDecrypted] = useState<boolean>(animateOn !== 'click');
   const [direction, setDirection] = useState<Direction>('forward');
 
+  // No hover on touch screens: a hover effect plays once as it scrolls into view instead (a tap still replays it).
+  const [noHover, setNoHover] = useState(false);
+  useEffect(() => setNoHover(matchMedia('(hover: none)').matches), []);
+  const mode = animateOn === 'hover' && noHover ? 'inViewHover' : animateOn;
   const containerRef = useRef<HTMLSpanElement>(null);
   const orderRef = useRef<number[]>([]);
   const pointerRef = useRef<number>(0);
@@ -332,7 +336,7 @@ export default function DecryptedText({
 
   /* View Observer */
   useEffect(() => {
-    if (animateOn !== 'view' && animateOn !== 'inViewHover') return;
+    if (mode !== 'view' && mode !== 'inViewHover') return;
 
     const observerCallback = (entries: IntersectionObserverEntry[]) => {
       entries.forEach(entry => {
@@ -360,7 +364,7 @@ export default function DecryptedText({
         observer.unobserve(currentRef);
       }
     };
-  }, [animateOn, hasAnimated, triggerDecrypt]);
+  }, [mode, hasAnimated, triggerDecrypt]);
 
   useEffect(() => {
     if (animateOn === 'click') {
@@ -374,7 +378,7 @@ export default function DecryptedText({
   }, [animateOn, text, encryptInstantly]);
 
   const animateProps =
-    animateOn === 'hover' || animateOn === 'inViewHover'
+    mode === 'hover' || mode === 'inViewHover'
       ? {
           onMouseEnter: triggerHoverDecrypt,
           onMouseLeave: resetToPlainText

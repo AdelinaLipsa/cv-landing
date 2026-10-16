@@ -9,7 +9,7 @@ decimate, bbone_proxies, refit_weights, build_nla, export, reopen); the whole ru
   GT=<folder with @gltf-transform/core, /extensions, meshoptimizer> sh art/scripts/build_character.sh
 
 Clips (glTF animation = NLA track name, shared by every object that moves in it):
-  Strum 1-97, ToDesk 1-586, ReactBed 1-72, ReactDesk 1-72 (her + props + mouth morphs)
+  Strum 1-97, ToDesk 1-646, ReactBed 1-72, ReactDesk 1-72 (her + props + mouth morphs)
   Cat loops: each sub-loop keeps its own period, so it's its own clip (play them together, each looping)."""
 import bpy, os
 
@@ -28,18 +28,13 @@ PROP_CLIPS = {
     "Chair": {"ToDesk": "ChairAction", "ReactDesk": "Chair_ReactDesk"},
     "ChairSeat": {"ToDesk": "ChairSeatAction", "ReactDesk": "ChairSeat_ReactDesk"},
     **{w: {"ToDesk": f"{w}Action.001", "ReactDesk": f"{w}_ReactDesk"} for w in WHEELS},
-    # cats: grouped by loop period (frames are the actions' own ranges, fcurves have CYCLES)
-    "Siamese_Head": {"Siamese_Loop": "Siamese_HeadAction"},
-    "Siamese_Paw": {"Siamese_Loop": "Siamese_PawAction"},
-    "Siamese_Tail": {"Siamese_Loop": "Siamese_TailAction"},
-    "Siamese_Lids": {"Siamese_Blink": "Siamese_LidsAction"},
-    "Siamese_Tongue": {"Siamese_Lick": "Siamese_TongueAction"},
-    "Burmese_Body": {"Burmese_Loop": "Burmese_BodyAction"},
-    "Burmese_Head": {"Burmese_Loop": "Burmese_HeadAction"},
-    "Burmese_EarR": {"Burmese_Ear": "Burmese_EarRAction"},
+    # cats (build_munchkins.py): one rig each, every clip keys every bone, so they crossfade cleanly
+    "Siamese_Rig": {"Siamese_Loop": "Siamese_Rig_Loop"},
+    "Burmese_Rig": {"Burmese_Loop": "Burmese_Rig_Loop", "Burmese_Stretch": "Burmese_Rig_Stretch"},   # now and then she stretches
     "Burmese_Z": {"Burmese_Z": "Burmese_ZAction"},
+    "Mug": {"ToDesk": "Mug_ToDesk"},   # out of the room bake: she takes a sip at the desk (clip_sip.py)
 }
-ROOTS = ["Her_Rig", "Guitar", "Chair", "Siamese", "Burmese"]
+ROOTS = ["Her_Rig", "Guitar", "Chair", "Siamese", "Burmese", "Mug"]
 MOUTH = {"Yawn": '["mouth_yawn"]', "Smile": '["mouth_smile"]'}   # shape key -> rig prop that drives it
 MORPHS = globals().get("MORPHS", {})   # clip -> {mesh name: {shape: [values per frame]}}
 

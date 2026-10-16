@@ -69,7 +69,25 @@ Downloaded by Adelina from Sketchfab (licence and author read from each GLB's `a
   https://sketchfab.com/3d-models/tomodachi-life-living-the-dream-city-backpack-c0764343c68d43f09af238c3345713ad,
   Sketchfab Standard licence (not CC; check it covers this use; it is a fan model of a Nintendo game asset).
 
-CC BY 4.0 needs visible credit on the site (e.g. a credits line), not only here.
+Loaded live in the room, not baked (`public/models/`, optimized with gltf-transform: meshopt, WebP 512 px):
+
+- Camera (`camera.glb`): "Camera" by White_sniper, https://sketchfab.com/3d-models/camera-8e561c5fc7b6489dadae9c02de30f2db,
+  CC BY 4.0.
+- MP3 player with earbuds (`mp3.glb`): "Cowon iAudio U3" by vodiva83,
+  https://sketchfab.com/3d-models/cowon-iaudio-u3-33bcd92cc90d4690af8e96dd3092fb24, CC BY 4.0 (its floor plane is
+  dropped at load).
+- Record player on the floor (`turntable.glb`): "Vinyl Recorder with "Until i Found You" disc" by ImSiyue,
+  https://sketchfab.com/3d-models/vinyl-recorder-with-until-i-found-you-disc-2c6d0ebeea5c4aeaa0353e23d53f3869,
+  CC BY 4.0 (normal/AO/roughness maps and the screws dropped, textures 256 px: 12 MB → 216 KB; the record spins).
+
+In `character.glb`:
+
+- Both cats: "Munchkin Cat" by Nyilonelycompany, https://sketchfab.com/3d-models/munchkin-cat-58873374a64d482ca1ad7130c2f7e586,
+  CC BY-NC-SA 4.0 (non-commercial; the adapted cats stay under the same licence). Rigged, posed, given fresh UVs and
+  recoloured as a Birman and a European brown tabby by `scripts/build_munchkins.py` + `munchkin_coats.py`; the
+  coats are in `textures/munchkin/`, the download in `downloads/munchkin_cat.glb`.
+
+CC BY 4.0 and CC BY-NC-SA 4.0 need visible credit on the site (e.g. a credits line), not only here.
 
 CC0:
 

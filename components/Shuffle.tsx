@@ -33,6 +33,8 @@ export interface ShuffleProps {
   triggerOnce?: boolean;
   respectReducedMotion?: boolean;
   triggerOnHover?: boolean;
+  /** Play on mount instead of on a window ScrollTrigger (for text inside panes that scroll on their own). */
+  immediate?: boolean;
 }
 
 const Shuffle: React.FC<ShuffleProps> = ({
@@ -58,7 +60,8 @@ const Shuffle: React.FC<ShuffleProps> = ({
   colorTo,
   triggerOnce = true,
   respectReducedMotion = true,
-  triggerOnHover = true
+  triggerOnHover = true,
+  immediate = false
 }) => {
   const ref = useRef<HTMLElement>(null);
   const [fontsLoaded, setFontsLoaded] = useState(false);
@@ -438,15 +441,16 @@ const Shuffle: React.FC<ShuffleProps> = ({
         setReady(true);
       };
 
-      const st = ScrollTrigger.create({
+      const st = immediate ? null : ScrollTrigger.create({
         trigger: el,
         start,
         once: triggerOnce,
         onEnter: create
       });
+      if (immediate) create();
 
       return () => {
-        st.kill();
+        st?.kill();
         removeHover();
         teardown();
         setReady(false);
@@ -472,6 +476,7 @@ const Shuffle: React.FC<ShuffleProps> = ({
         triggerOnce,
         respectReducedMotion,
         triggerOnHover,
+        immediate,
         onShuffleComplete
       ],
       scope: ref

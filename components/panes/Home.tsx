@@ -57,7 +57,7 @@ const OFF = ["Video games", "Anime", "Ramen in the dark", "MMA", "Drawing in Pro
 const dockItems = (ui: UI) => [
   { label: "Change log", icon: <Svg><circle cx="6.5" cy="7" r="1.4" /><circle cx="6.5" cy="12" r="1.4" /><circle cx="6.5" cy="17" r="1.4" /><path d="M10.5 7h8M10.5 12h8M10.5 17h5" /></Svg> },
   { label: "Hookwarden", className: "ink-2", icon: <Mark src="/brand/hookwarden-mark.svg" className="dock-mark-tall" /> },
-  { label: "BITE", icon: <Image src="/brand/bite.png" alt="" width={200} height={200} className="dock-logo" /> },
+  { label: "BITE", icon: <Image src="/brand/bite-logo.png" alt="" width={200} height={200} className="dock-logo" /> },
   { label: "Param Decoder", className: "ink", icon: <Svg><path d="M8 5 3.5 12 8 19M16 5l4.5 7L16 19" /><circle cx="12" cy="12" r="2.2" /></Svg> },
 ].map((d) => ({ ...d, onClick: () => ui.go(1) })).concat(
   // Her streetwear label: opens a short recording of its site, the gate and the hero.
