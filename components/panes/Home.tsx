@@ -43,6 +43,28 @@ export const Play = () => (
   </span>
 );
 
+// The end of the page, on the right: where she is and how to reach her, from the CV data (her local time, live).
+function Where() {
+  const [now, setNow] = useState<string | null>(null), [copied, setCopied] = useState(false);
+  useEffect(() => {
+    const f = new Intl.DateTimeFormat("en-GB", { timeZone: "Europe/Bucharest", hour: "2-digit", minute: "2-digit" });
+    const tick = () => setNow(f.format(new Date()));
+    tick(); const id = window.setInterval(tick, 15000); return () => clearInterval(id);
+  }, []);
+  const copy = () => { void navigator.clipboard?.writeText(profile.email).then(() => { setCopied(true); window.setTimeout(() => setCopied(false), 1600); }); };
+  return (
+    <aside className={s.where} aria-label="Where I am">
+      <span className={s.status}><i aria-hidden="true" />Open to product roles</span>
+      <dl>
+        <div><dt>Based in</dt><dd>{profile.location}</dd></div>
+        <div><dt>My time</dt><dd>{now ?? "–"}</dd></div>
+        <div><dt>Email</dt><dd><button type="button" onClick={copy} aria-label={`Copy ${profile.email}`}>{copied ? "Copied" : profile.email}</button></dd></div>
+        <div><dt>Book a call</dt><dd><a href={profile.booking} target="_blank" rel="noopener">30 minutes, on Calendly</a></dd></div>
+      </dl>
+    </aside>
+  );
+}
+
 // Off duty pieces rise in one after another as they scroll into view.
 const rise = (k: number) => ({ initial: { opacity: 0, y: 14 }, whileInView: { opacity: 1, y: 0 }, viewport: { once: true, amount: 0.3 }, transition: { duration: 0.5, ease, delay: k * 0.12 } }) as const;
 
@@ -259,12 +281,21 @@ export default function Home({ ui }: { ui: UI }) {
 
       {/* The end of the page: somewhere to go next, the same three ways in as the hero and the 30-second version */}
       <Land className={s.outro} delay={0.05}>
-        <h2 className={s.h2}><ShuffleHeading text="You made it to the end of the log." /></h2>
-        <p className={s.outroLine}>Product roles, full-time or contract. Payments, ops, and internal tools. I reply faster than a 3DS challenge.</p>
-        <div className={s.actions}>
-          <Magnet padding={40} magnetStrength={4} disabled={!!reduce}><button type="button" className={p.primary} onClick={ui.contact}><WhatsAppIcon size={17} />Message me</button></Magnet>
-          <a className={s.messageBtn} href={profile.pdf} download><DecryptedText text="Download the PDF" animateOn="hover" speed={40} maxIterations={8} /></a>
-          <a className={s.messageBtn} href={profile.linkedin} target="_blank" rel="noreferrer"><LinkedInIcon /><DecryptedText text="LinkedIn" animateOn="hover" speed={40} maxIterations={8} /></a>
+        <div className={s.outroGrid}>
+        <div className={s.outroMain}>
+          <h2 className={s.h2}><ShuffleHeading text="You made it to the end of the log." /></h2>
+          <p className={s.outroLine}>Product roles, full-time or contract. Payments, ops, and internal tools. I reply faster than a 3DS challenge.</p>
+          <div className={s.actions}>
+            <Magnet padding={40} magnetStrength={4} disabled={!!reduce}><button type="button" className={p.primary} onClick={ui.contact}><WhatsAppIcon size={17} />Message me</button></Magnet>
+            <a className={s.messageBtn} href={profile.pdf} download><DecryptedText text="Download the PDF" animateOn="hover" speed={40} maxIterations={8} /></a>
+            <a className={s.messageBtn} href={profile.linkedin} target="_blank" rel="noreferrer"><LinkedInIcon /><DecryptedText text="LinkedIn" animateOn="hover" speed={40} maxIterations={8} /></a>
+          </div>
+        </div>
+        <Where />
+        <div className={s.signoff}>
+          <span className={s.sig} aria-hidden="true">– Adelina</span>
+          <button type="button" className={s.toTop} onClick={(e) => e.currentTarget.closest("[data-pane]")?.scrollTo({ top: 0, behavior: reduce ? "auto" : "smooth" })}>↑ Back to the top</button>
+        </div>
         </div>
       </Land>
     </div>

@@ -59,7 +59,7 @@ export default function Finale({ className, hot, onHot, onPick, onScreen }: Prop
   }, []);
 
   return (
-    <div ref={host} className={`${s.host} ${className ?? ""}`} role="group" aria-label="My teenage bedroom at dusk: rock posters, a window, my guitars, a skateboard, boxing gloves, a corner desk with my PC, a Nokia phone, an inkjet printer, a bed with bookshelves, and my two cats. I'm in it too, sitting on the bed playing guitar and now and then getting up to work at the desk. Everything marked can be clicked: say hi to me, pet a cat, boot my computer into Windows 95, text me from the phone, or print my CV. Pinch or double-click to zoom in.">
+    <div ref={host} className={`${s.host} ${className ?? ""}`} role="group" aria-label="My teenage bedroom at dusk: rock posters, a window, my guitars, a skateboard, boxing gloves, a corner desk with my PC, a Nokia phone, an inkjet printer, a bed with bookshelves, and my two cats. I'm in it too, sitting on the bed playing guitar and now and then getting up to work at the desk. Everything marked can be clicked: say hi to me, pet a cat, boot my computer into Windows 95, text me from the phone, or print my CV. Drag to look around the room; pinch or double-click to zoom in.">
       <svg className={s.arrows} aria-hidden="true">{NOTES.map(([p]) => <path key={p} data-arrow={p} />)}</svg>
       {NOTES.map(([p, text]) => <span key={p} className={s.note} data-note={p} aria-hidden="true"><span>{text}</span></span>)}
       {SPOTS.map(([k, aria, label], i) => (
@@ -73,8 +73,8 @@ export default function Finale({ className, hot, onHot, onPick, onScreen }: Prop
         <svg className={`${s.cursor} ${s.finger}`} viewBox="0 0 26 32"><path d="M9 4a2 2 0 0 1 4 0v9.2l1.3-.2a2 2 0 0 1 2.2 1.7l1.2-.1a2 2 0 0 1 2.2 1.8l1.1.1a2 2 0 0 1 2 2V24a7 7 0 0 1-7 7h-3.2a6.5 6.5 0 0 1-5.3-2.8L3.8 22a2 2 0 0 1 3.1-2.5L9 22z" /></svg>
         <span className={s.caption} data-caption />
       </div>
-      <span className={s.hint} data-hint aria-hidden="true"><span>pinch or double-click to zoom</span></span>
-      <button type="button" className={s.reset} data-reset aria-label="Zoom the room back out"><span>zoom out</span></button>
+      <span className={s.hint} data-hint aria-hidden="true"><span>drag to look around · double-click to zoom</span></span>
+      <button type="button" className={s.reset} data-reset aria-label="Back to the front, zoomed out"><span>zoom out</span></button>
     </div>
   );
 }
@@ -327,7 +327,7 @@ async function mount(el: HTMLElement, live: React.RefObject<Live>, alive: () => 
     if (m.name.startsWith("LightShaft")) return;
     if (!baked.has(old)) {
       if (old.map) old.map.colorSpace = THREE.SRGBColorSpace;
-      baked.set(old, new THREE.MeshBasicMaterial({ map: old.map, toneMapped: false, transparent: old.transparent, depthWrite: !old.transparent, side: old.side }));
+      baked.set(old, new THREE.MeshBasicMaterial({ name: old.name, map: old.map, toneMapped: false, transparent: old.transparent, depthWrite: !old.transparent, side: old.side }));
       old.dispose();
     }
     m.material = baked.get(old)!;
@@ -545,10 +545,11 @@ async function mount(el: HTMLElement, live: React.RefObject<Live>, alive: () => 
   // and back, the monitor's top corner, the Strat's headstock, above the phone and the printer.
   const LIFT = Object.fromEntries(Object.entries({ her: [0, 0.36, 0], Siamese: [0, 0.1, 0], Burmese: [0, 0.12, 0], pc: [0.1, 0.19, 0], strat: [0, 0.07, 0], phone: [0, 0.01, 0], printer: [0, 0.13, 0], photos: [0, 0.07, 0] })
     .map(([k, v]) => [k, new THREE.Vector3(...(v as [number, number, number]))])) as Record<Spot, T.Vector3>;
+  let wallCut = (_p: T.Vector3) => false; // set by the orbit: on a wall the camera has turned behind
   const placeSpots = () => {
     const up = touch ? 26 : 20;
     for (const [k] of SPOTS) {
-      const o = spotAt[k], v = o && o.getWorldPosition(sv).add(LIFT[k]).project(camera), off = !v || Math.abs(v.x) > 0.97 || Math.abs(v.y) > 0.9;
+      const o = spotAt[k], w = o && o.getWorldPosition(sv).add(LIFT[k]), gone = !!w && wallCut(w), v = w && w.project(camera), off = !v || gone || Math.abs(v.x) > 0.97 || Math.abs(v.y) > 0.9;
       spots[k].toggleAttribute("data-off", off);
       const side = k === "phone" ? up + 4 : 0; // the phone sits in front of the printer: beside it, not above
       if (v && !off) spots[k].style.transform = `translate(${((v.x + 1) / 2) * el.clientWidth - side}px, ${((1 - v.y) / 2) * el.clientHeight - (side ? 0 : up)}px)`;
@@ -630,7 +631,7 @@ async function mount(el: HTMLElement, live: React.RefObject<Live>, alive: () => 
     ray.setFromCamera(ndc, camera);
     const w = who(ray); if (w) return w; // she's in front of the desk: she wins over the objects behind her
     const ph = ray.intersectObjects(framed)[0]; // nearest first: the one on top where they overlap
-    if (ph) { photoAt = framed.indexOf(ph.object as T.Mesh); return "photo"; }
+    if (ph && !wallCut(ph.point)) { photoAt = framed.indexOf(ph.object as T.Mesh); return "photo"; }
     if (ray.intersectObject(strat).length) return "strat";
     for (const p of Object.keys(picks) as Prop[]) if (ray.intersectObject(picks[p], true).length) return p;
     return ray.intersectObject(tower, true).length ? "tower" : null;
@@ -666,9 +667,21 @@ async function mount(el: HTMLElement, live: React.RefObject<Live>, alive: () => 
       pinch = d; return;
     }
     if (drag && want.z > 1.01) { panBy(e.clientX - drag[0], e.clientY - drag[1]); drag = [e.clientX, e.clientY]; }
-    const h = spotHit(e.target) ?? hit(e); // over a hotspot it's its object, so the object lights with it
+    if (orbitDrag && down) {
+      if (!orbiting && Math.hypot(e.clientX - down.x, e.clientY - down.y) > 6) { orbiting = true; el.setPointerCapture(e.pointerId); hint.removeAttribute("data-on"); }
+      if (orbiting) { // ~220° across the room's width; on touch only sideways (up and down scrolls the page)
+        e.stopPropagation();
+        const k = (Math.PI * 1.2) / Math.max(el.clientWidth, 1), dth = -(e.clientX - orbitDrag.x) * k, dph = e.pointerType === "touch" ? 0 : -(e.clientY - orbitDrag.y) * k;
+        const dt = Math.max((e.timeStamp - orbitDrag.t) / 1000, 1 / 240);
+        orbit.th += dth; orbit.ph += dph; placeCam();
+        const cap = (v: number) => THREE.MathUtils.clamp(v, -3, 3); // a flick coasts at most ~35°
+        orbitVel.th = cap(orbitVel.th * 0.6 + (dth / dt) * 0.4); orbitVel.ph = cap(orbitVel.ph * 0.6 + (dph / dt) * 0.4);
+        orbitDrag = { x: e.clientX, y: e.clientY, t: e.timeStamp };
+      }
+    }
+    const h = orbiting ? null : spotHit(e.target) ?? hit(e); // over a hotspot it's its object, so the object lights with it
     aim(h);
-    el.style.cursor = h ? "pointer" : want.z > 1.01 ? (drag ? "grabbing" : "grab") : "";
+    el.style.cursor = h ? "pointer" : (drag || orbiting) ? "grabbing" : "grab";
   };
   // A hotspot stands for its object: pointing at (or focusing) either lights both, the same way.
   const spotHit = (t: EventTarget | null): ReturnType<typeof hit> => {
@@ -693,12 +706,17 @@ async function mount(el: HTMLElement, live: React.RefObject<Live>, alive: () => 
     cancelDemo();
     if (onButton(e)) return;
     if (e.pointerType === "touch") touches.set(e.pointerId, [e.clientX, e.clientY]);
-    if (touches.size > 1 || want.z > 1.01) e.stopPropagation(); // a pinch or a pan is the room's, not a swipe to the next page
-    if (touches.size > 1) { down = drag = null; pinch = 0; return; } // a pinch is never a click
+    e.stopPropagation(); // a drag, pinch or pan on the room is the room's, not a swipe to the next page
+    if (touches.size > 1) { down = drag = null; orbitDrag = null; orbiting = false; pinch = 0; return; } // a pinch is never a click
     down = e.button === 0 ? { h: hit(e), x: e.clientX, y: e.clientY } : null;
     if (down && want.z > 1.01) { drag = [e.clientX, e.clientY]; el.setPointerCapture(e.pointerId); }
+    else if (down) { orbitDrag = { x: e.clientX, y: e.clientY, t: e.timeStamp }; oGlide = null; orbitVel.th = orbitVel.ph = 0; }
   };
-  const onCancel = (e: PointerEvent) => { touches.delete(e.pointerId); pinch = 0; drag = down = null; };
+  const onCancel = (e: PointerEvent) => {
+    touches.delete(e.pointerId); pinch = 0; drag = down = null;
+    if (orbitDrag && (reduce || e.timeStamp - orbitDrag.t > 80)) orbitVel.th = orbitVel.ph = 0; // held still before letting go: no coast
+    orbitDrag = null; orbiting = false;
+  };
   const onUp = (e: PointerEvent) => {
     if (onButton(e)) return;
     const d = down;
@@ -856,6 +874,7 @@ async function mount(el: HTMLElement, live: React.RefObject<Live>, alive: () => 
     camera.projectionMatrix.makePerspective(n * (cx - h * a), n * (cx + h * a), n * (cy + h), n * (cy - h), n, camera.far);
     camera.projectionMatrixInverse.copy(camera.projectionMatrix).invert();
   };
+  const frameLens = () => { FH = (Math.max(fitSize.y, fitSize.x / camera.aspect) * (1 + 2 * MARGIN)) / 2; clampPan(want); clampPan(zoom); lens(); };
   const clampPan = (v: typeof zoom) => {
     const r = 1 - 1 / v.z, X = FH * camera.aspect * r, Y = FH * r;
     v.x = THREE.MathUtils.clamp(v.x, -X, X); v.y = THREE.MathUtils.clamp(v.y, -Y, Y);
@@ -865,9 +884,82 @@ async function mount(el: HTMLElement, live: React.RefObject<Live>, alive: () => 
     clampPan(want);
     const zoomed = want.z > 1.01;
     el.toggleAttribute("data-zoomed", zoomed);
+    resetBtn.firstElementChild!.textContent = zoomed ? "zoom out" : "back to the front";
     el.style.touchAction = zoomed ? "none" : ""; // zoomed, one finger pans the room instead of the page
     if (!zoomed && document.activeElement === resetBtn) resetBtn.blur(); // it's about to hide
     if (reduce) { Object.assign(zoom, want); lens(); draw(); placeNotes(live.current.hot ?? pointer); } // no easing: it jumps
+  };
+  // Orbit: a drag on the bare room turns the camera round it, all the way about the vertical and 10-80° from
+  // overhead, at the hero distance, keeping the hero shot's aim relative to the room's centre; it coasts a little
+  // after the release and stays where it's left. The cut-away walls are single-sided, so from behind the near ones
+  // aren't drawn. Every turn refits the lens on the shell (the room's extent), corrected so the hero angle frames
+  // exactly as before. The zoom-out button, Esc or a double-click glide back to the front.
+  const pivot = shell.getCenter(new THREE.Vector3()), UP = new THREE.Vector3(0, 1, 0), lookM = new THREE.Matrix4();
+  const hero = new THREE.Spherical().setFromVector3(camera.position.clone().sub(pivot));
+  const aimOff = new THREE.Quaternion().setFromRotationMatrix(lookM.lookAt(camera.position, pivot, UP)).invert().multiply(camera.quaternion);
+  const shellMesh = node("Room_ShellMesh") as T.Mesh, sp = shellMesh.geometry.getAttribute("position");
+  const shellPts = new Float32Array(sp.count * 3);
+  for (let i = 0; i < sp.count; i++) c.fromBufferAttribute(sp, i).applyMatrix4(shellMesh.matrixWorld).toArray(shellPts, i * 3);
+  const shellFit = () => {
+    fit.makeEmpty();
+    for (let i = 0; i < shellPts.length; i += 3) { c.fromArray(shellPts, i).applyMatrix4(camera.matrixWorldInverse); if (c.z < -1e-3) fit.expandByPoint(tv.set(c.x / -c.z, c.y / -c.z)); }
+    fit.getCenter(fitMid); fit.getSize(fitSize);
+  };
+  const heroMid = fitMid.clone(), heroSize = fitSize.clone();
+  shellFit();
+  const fixMid = heroMid.clone().sub(fitMid), fixSize = heroSize.clone().divide(fitSize);
+  fitMid.copy(heroMid); fitSize.copy(heroSize);
+  // From outside a wall its face isn't drawn (single-sided), but what hangs on it would float: posters' tape, the
+  // polaroids, the skirting, the window. So a wall the camera is behind also drops everything within 3 cm of its
+  // inner face above the floor (30 cm for the shell's own bake: curtains, rod, sill, fairy lights), and anything
+  // beyond it (its rim, the floor slab under it). Walls: inner faces at x and z = shell min + 0.25 m.
+  const cut = { uCutA: { value: 0 }, uCutB: { value: 0 } }, WALL_X = shell.min.x + 0.25, WALL_Z = shell.min.z + 0.25;
+  for (const mt of new Set(meshes.flatMap((m) => [m.material].flat()))) {
+    if ((mt as T.ShaderMaterial).isShaderMaterial) continue;
+    const band = mt.name === "Baked_Shell" ? 0.3 : 0.03, X = WALL_X.toFixed(3), Z = WALL_Z.toFixed(3), XB = (WALL_X + band).toFixed(3), ZB = (WALL_Z + band).toFixed(3);
+    mt.onBeforeCompile = (sh) => {
+      Object.assign(sh.uniforms, cut);
+      sh.vertexShader = "varying vec3 vCutW;\n" + sh.vertexShader.replace("#include <project_vertex>", "#include <project_vertex>\nvCutW = (modelMatrix * vec4(transformed, 1.0)).xyz;");
+      sh.fragmentShader = `uniform float uCutA, uCutB; varying vec3 vCutW;\n` + sh.fragmentShader.replace("void main() {", `void main() {\n  bool up = vCutW.y > 0.03; if ((uCutA > 0.5 && (vCutW.x < ${X} || (up && vCutW.x < ${XB}))) || (uCutB > 0.5 && (vCutW.z < ${Z} || (up && vCutW.z < ${ZB})))) discard;`);
+    };
+    mt.needsUpdate = true;
+  }
+  const PH0 = THREE.MathUtils.degToRad(10) - hero.phi, PH1 = THREE.MathUtils.degToRad(80) - hero.phi;
+  wallCut = (p) => (cut.uCutA.value > 0 && p.x < WALL_X + 0.15) || (cut.uCutB.value > 0 && p.z < WALL_Z + 0.15);
+  const orbit = { th: 0, ph: 0 }, orbitVel = { th: 0, ph: 0 }, osph = new THREE.Spherical();
+  let orbitDrag: { x: number; y: number; t: number } | null = null, orbiting = false, turned = false;
+  let oGlide: { a: typeof orbit; b: typeof orbit; t0: number; then?: () => void } | null = null;
+  const placeCam = () => {
+    orbit.ph = THREE.MathUtils.clamp(orbit.ph, PH0, PH1);
+    osph.set(hero.radius, hero.phi + orbit.ph, hero.theta + orbit.th);
+    camera.position.setFromSpherical(osph).add(pivot);
+    camera.quaternion.setFromRotationMatrix(lookM.lookAt(camera.position, pivot, UP)).multiply(aimOff);
+    camera.updateMatrixWorld();
+    cut.uCutA.value = camera.position.x < WALL_X ? 1 : 0; cut.uCutB.value = camera.position.z < WALL_Z ? 1 : 0;
+    shellFit(); fitMid.add(fixMid); fitSize.multiply(fixSize); frameLens();
+    turned = Math.abs(Math.atan2(Math.sin(orbit.th), Math.cos(orbit.th))) > 0.01 || Math.abs(orbit.ph) > 0.01;
+    el.toggleAttribute("data-turned", turned);
+    resetBtn.firstElementChild!.textContent = want.z > 1.01 ? "zoom out" : "back to the front";
+    if (reduce) { draw(); placeNotes(live.current.hot ?? pointer); }
+  };
+  const orbitTo = (b: typeof orbit, then?: () => void) => { // a glide, ~0.6 s ease-in-out; reduced motion jumps
+    orbit.th = Math.atan2(Math.sin(orbit.th), Math.cos(orbit.th)); // the short way round
+    orbitVel.th = orbitVel.ph = 0;
+    if (reduce) { Object.assign(orbit, b); placeCam(); then?.(); return; }
+    oGlide = { a: { ...orbit }, b, t0: performance.now() / 1000, then };
+  };
+  const orbitHome = (then?: () => void) => { if (turned || oGlide) orbitTo({ th: 0, ph: 0 }, then); else then?.(); };
+  const orbitStep = (t: number, dt: number) => { // in the loop: a glide, or coasting after a release
+    if (oGlide) {
+      const g = oGlide, u = Math.min(1, (t - g.t0) / 0.6), e = u < 0.5 ? 4 * u * u * u : 1 - (-2 * u + 2) ** 3 / 2;
+      orbit.th = g.a.th + (g.b.th - g.a.th) * e; orbit.ph = g.a.ph + (g.b.ph - g.a.ph) * e;
+      if (u >= 1) { oGlide = null; placeCam(); g.then?.(); return; }
+    } else if (!orbitDrag && (orbitVel.th || orbitVel.ph)) {
+      orbit.th += orbitVel.th * dt; orbit.ph += orbitVel.ph * dt;
+      const k = 0.92 ** (dt * 60); orbitVel.th *= k; orbitVel.ph *= k;
+      if (Math.hypot(orbitVel.th, orbitVel.ph) < 0.02) orbitVel.th = orbitVel.ph = 0;
+    } else return;
+    placeCam();
   };
   const zoomAt = (z: number, cx: number, cy: number) => { // keeps the point under (cx, cy) where it is
     const r = el.getBoundingClientRect(), nx = ((cx - r.left) / r.width) * 2 - 1, ny = 1 - ((cy - r.top) / r.height) * 2, a = camera.aspect;
@@ -894,7 +986,8 @@ async function mount(el: HTMLElement, live: React.RefObject<Live>, alive: () => 
   };
   // A polaroid fills most of the view, centred: up to ~70x, well past the 3x a pinch reaches.
   const pv = new THREE.Vector3();
-  const focusPhoto = (i: number) => {
+  const focusPhoto = (i: number): void => {
+    if (turned || oGlide) return orbitHome(() => focusPhoto(i)); // up at a photo is from the front: turn back first
     i = (i + framed.length) % framed.length;
     photoOn = i; liftPhoto(-1);
     const v = framed[i].getWorldPosition(pv).applyMatrix4(camera.matrixWorldInverse), d = -v.z, { width: w, height: h } = (framed[i].geometry as T.PlaneGeometry).parameters;
@@ -902,6 +995,7 @@ async function mount(el: HTMLElement, live: React.RefObject<Live>, alive: () => 
     fly({ z: Math.min((FH * 2 * fill * d) / h, (FH * 2 * camera.aspect * fill * d) / w), x: v.x / d - fitMid.x, y: v.y / d - fitMid.y });
   };
   const unzoom = () => {
+    orbitHome();
     if (photoOn >= 0) { photoOn = -1; fly({ z: 1, x: 0, y: 0 }); return; }
     flight = null; Object.assign(want, { z: 1, x: 0, y: 0 }); settle();
   };
@@ -918,11 +1012,14 @@ async function mount(el: HTMLElement, live: React.RefObject<Live>, alive: () => 
   };
   const onDbl = (e: MouseEvent) => {
     if (onButton(e) || hit(e as PointerEvent)) return; // on an object its click already acted: double-click zooms only on bare room
-    if (want.z > 1.01) unzoom(); else zoomAt(2, e.clientX, e.clientY);
+    if (want.z > 1.01 || turned) unzoom(); else zoomAt(2, e.clientX, e.clientY); // turned: back to the front first
   };
   const onKey = (e: KeyboardEvent) => {
-    if (e.key === "Escape" && want.z > 1.01) unzoom();
+    if (e.key === "Escape" && (want.z > 1.01 || turned)) unzoom();
     else if (photoOn >= 0 && (e.key === "ArrowLeft" || e.key === "ArrowRight")) { e.preventDefault(); focusPhoto(photoOn + (e.key === "ArrowLeft" ? -1 : 1)); }
+    else if ((e.key === "ArrowLeft" || e.key === "ArrowRight") && want.z <= 1.01 && el.contains(document.activeElement)) { // a hotspot focused: turn the room
+      e.preventDefault(); orbitTo({ th: Math.atan2(Math.sin(orbit.th), Math.cos(orbit.th)) + (e.key === "ArrowLeft" ? 1 : -1) * (Math.PI / 8), ph: orbit.ph });
+    }
   };
   const touches = new Map<number, [number, number]>();
   let drag: [number, number] | null = null, pinch = 0;
@@ -946,8 +1043,7 @@ async function mount(el: HTMLElement, live: React.RefObject<Live>, alive: () => 
     if (!width || !height) return;
     renderer.setSize(width, height, false);
     camera.aspect = width / height;
-    FH = (Math.max(fitSize.y, fitSize.x / camera.aspect) * (1 + 2 * MARGIN)) / 2;
-    clampPan(want); clampPan(zoom); lens();
+    frameLens();
     const px = renderer.getDrawingBufferSize(new THREE.Vector2()).multiplyScalar(touch ? 0.5 : 1);
     glowRT.setSize(px.x, px.y); bloom.setSize(px.x, px.y);
     draw(); placeNotes();
@@ -978,6 +1074,7 @@ async function mount(el: HTMLElement, live: React.RefObject<Live>, alive: () => 
     tickHer?.(dt);
     if (spin) spin.rotation.y -= dt * (100 / 3) * (Math.PI / 30); // 33⅓ rpm, clockwise from above
     runDemo(t, dt);
+    orbitStep(t, dt);
     if (zoom.z !== want.z || zoom.x !== want.x || zoom.y !== want.y) { // ~150 ms ease
       if (flight) flown(t);
       else for (const k of AXES) zoom[k] = Math.abs(want[k] - zoom[k]) < 1e-4 ? want[k] : ease(zoom[k], want[k], dt, 20);

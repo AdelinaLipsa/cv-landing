@@ -34,7 +34,8 @@
 .reset > span { transform: rotate(-4deg); }
 .reset:hover > span { filter: brightness(1.15) drop-shadow(0 0 8px rgba(255, 178, 94, 0.6)); }
 .reset:focus-visible { outline: 2px solid #ff9ec0; outline-offset: 2px; border-radius: 8px; }
-.host[data-zoomed] .reset { opacity: 1; pointer-events: auto; visibility: visible; }
+.host[data-zoomed] .reset, .host[data-turned] .reset { opacity: 1; pointer-events: auto; visibility: visible; }
+.host[data-turned] .hint { opacity: 0; }
 /* Hotspots: a cream dot in a slowly breathing pink ring on everything clickable, placed by Finale.tsx. Real buttons;
    hidden (and out of the tab order) until the demo has played, then on until two different things are clicked, then 40%. */
 .spot {
