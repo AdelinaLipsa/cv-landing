@@ -211,6 +211,11 @@ export const sfx = {
     src.start(t); lfo.start(t); src.stop(t + dur); lfo.stop(t + dur);
     buzz([15, 70, 15, 70, 15, 70, 15]);
   },
+  // The window at the end: the pigeon's two-part coo, a sip of hot chocolate, wings off the sill, a bike bell.
+  coo: () => { tone(340, 300, 0.2, "sine", 0.45); tone(310, 255, 0.5, "sine", 0.5, 0.24); tone(620, 520, 0.5, "sine", 0.06, 0.24); },
+  sip: () => { noise(0.32, 0.22, 900); noise(0.18, 0.16, 1500, 0.4); },
+  flap: () => [0, 0.07, 0.14, 0.21, 0.3].forEach((d) => noise(0.05, 0.3, 3200, d)),
+  bikeBell: () => { bell(2093, 0, 0.16); bell(2093, 0.16, 0.16); },
   win: () => { arp([523, 659, 784, 1047, 784, 1047, 1319], 0.09, "square", 0.3); buzz([40, 40, 40, 40, 140]); },
   lose: () => { arp([494, 440, 392, 330, 262], 0.14, "triangle", 0.4); buzz(250); },
 };

@@ -95,3 +95,32 @@ CC0:
   `potted_plant_02` (Rico Cilliers). https://polyhaven.com
 - Her figures come from `public/models/` (megaman, kid-goku, pokeball, digivice, straw-hat).
 - Everything else is modelled for this room; textures are generated with PIL.
+
+# The window at the end of the page
+
+`public/models/window/` is her POV from her parter window in Bucharest, holding a mug of hot chocolate, a pigeon on
+the tin sill. Built and baked in Blender from `art/window_source.blend` (local only) by `art/scripts/window/`:
+
+1. `build_view.py` (her window, sills, the street, lampposts, cables) → `build_city.py` (houses across, the bloc up
+   the street, trees) → `dacia.py`, `lamppost.py`, `kit_props.py` (downloaded assets placed) → `pov.py` (camera = her
+   eyes, the mug, her arms) → `hands.py` (the rigged hands round the mug) → `pigeon_rig.py` (bones for the site).
+2. `lighting.py` (DAY / NIGHT) → `bake.py` with `STEP="prep"` (saves `art/window.blend`) then `STEP="bake"` →
+   `export.py` → `art/scripts/window/ship.sh` (view.glb + night atlases) and `export_actors.py` (pigeon, Dacia,
+   hands) then `gltf-transform` resize/webp/optimize as in ship.sh.
+
+The site (`components/Window.tsx`) blends the DAY and NIGHT bakes by Bucharest's clock and draws the sky, weather,
+lamp cones, steam, the pigeon's routine, the sip and the passing Dacia live.
+
+Credits (shown on the site under the window):
+
+- Pigeon: "Gascogne Pigeon Bird (Lowpoly) Free" by Nyilonelycompany,
+  https://sketchfab.com/3d-models/gascogne-pigeon-bird-lowpoly-free-10d7975688f740fa9ba34c874da2b9d2, Sketchfab Standard.
+- Hands: "hands animation" by hugo colauto, https://sketchfab.com/3d-models/hands-animation-9f63e924253b4179adb79b117a26d385,
+  Sketchfab Standard.
+- Hot chocolate: "Hot chocolate" by OlegPopka, https://sketchfab.com/3d-models/hot-chocolate-69554e0812484989baef1494a2e18191, CC BY 4.0.
+- Dacia 1300: "Dacia 1300 / Renault 12 LowPoly" by solid3DDD,
+  https://sketchfab.com/3d-models/dacia-1300-renault-12-lowpoly-11ca7a926045419b93af0f87da295c84, CC BY 4.0.
+- Lamppost: "Lamppost" by Liquell, https://sketchfab.com/3d-models/lamppost-cfaae6a74f8a4483bdb0646961967579, CC BY 4.0.
+- Bench, bin, postbox: "Sidewalk" by Kadre, https://sketchfab.com/3d-models/sidewalk-086cb3041cfa4e21a80a93dcfdfe8a9f, CC BY 4.0.
+- (Not used in the end: "Pigeon" by Fadly.W, CC BY 4.0, in `downloads/pigeon/`.)
+- Weather: Open-Meteo (CC BY 4.0), https://open-meteo.com.

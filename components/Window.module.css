@@ -1,0 +1,61 @@
+/* Her window at the end of the page: the canvas full bleed, her clock and a sticky note on the glass over it. */
+.window { position: relative; width: 100%; height: 100%; overflow: hidden; background: #2a2440; color: #fff; isolation: isolate; }
+.stage, .poster { position: absolute; inset: 0; width: 100%; height: 100%; }
+.stage canvas { display: block; width: 100% !important; height: 100% !important; }
+.poster { object-fit: cover; transition: opacity 0.9s var(--ease); pointer-events: none; z-index: 1; }
+.poster[data-gone] { opacity: 0; }
+/* lo-fi: the site's film grain and a soft vignette over the view */
+.grain {
+  position: absolute; inset: -50%; z-index: 2; opacity: 0.12; mix-blend-mode: overlay; pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  animation: grain 0.9s steps(4) infinite;
+}
+.window::after { content: ""; position: absolute; inset: 0; z-index: 2; pointer-events: none; background: radial-gradient(120% 90% at 50% 45%, transparent 55%, rgba(12, 8, 30, 0.45)); }
+@keyframes grain { 25% { transform: translate(-6%, 4%); } 50% { transform: translate(4%, -6%); } 75% { transform: translate(-3%, -2%); } }
+
+/* Her clock, top left over the street */
+/* macOS-style frosted glass under the text, so it reads over anything the street does */
+.clock {
+  position: absolute; left: clamp(16px, 3vw, 40px); top: clamp(16px, 3vw, 36px); z-index: 3; display: flex; flex-direction: column; align-items: flex-start; gap: 6px;
+  padding: 14px 18px 14px 16px; border-radius: 22px; pointer-events: none; text-shadow: 0 1px 2px rgba(10, 8, 30, 0.25);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.22), rgba(255, 255, 255, 0.08));
+  backdrop-filter: blur(22px) saturate(170%); -webkit-backdrop-filter: blur(22px) saturate(170%);
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), inset 0 -1px 0 rgba(255, 255, 255, 0.06), 0 18px 40px -12px rgba(16, 10, 40, 0.45);
+}
+[data-night] .clock { background: linear-gradient(135deg, rgba(40, 34, 90, 0.42), rgba(20, 16, 50, 0.28)); border-color: rgba(255, 255, 255, 0.16); }
+.status { display: inline-flex; align-items: center; gap: 9px; padding: 5px 11px 5px 9px; border-radius: 99px; background: rgba(255, 255, 255, 0.14); border: 1px solid rgba(255, 255, 255, 0.18); font-size: 13px; font-weight: 600; }
+.status i { width: 9px; height: 9px; border-radius: 50%; background: #3ddc84; animation: live 2.4s var(--ease) infinite; }
+@keyframes live { 0% { box-shadow: 0 0 0 0 rgba(61, 220, 132, 0.55); } 70%, 100% { box-shadow: 0 0 0 7px rgba(61, 220, 132, 0); } }
+.time { display: inline-flex; align-items: center; font-family: var(--font-display), sans-serif; letter-spacing: -0.02em; }
+.time b { font-size: 38px; font-weight: 600; margin: -4px 3px 0; animation: blink 2s steps(1) infinite; }
+@keyframes blink { 50% { opacity: 0.55; } }
+.skyNote { font-size: 13.5px; font-weight: 600; opacity: 0.95; max-width: 34ch; }
+
+/* The sticky note, stuck to the glass: placed by the scene (--nx, --ny) on the upper right pane */
+.note {
+  position: absolute; z-index: 3; left: var(--nx, 72%); top: var(--ny, 12%);
+  display: flex; flex-direction: column; gap: 4px; padding: 16px 16px 14px; width: 210px;
+  background: linear-gradient(180deg, #fff3a6, #ffe57f); color: #3a2f10; transform: rotate(-3deg);
+  font-family: var(--font-hand), cursive; font-size: 21px; line-height: 1.15;
+  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.15), 0 14px 24px -8px rgba(0, 0, 0, 0.45);
+  transition: transform 0.4s var(--ease);
+}
+.note:hover { transform: rotate(-1deg) translateY(-2px); }
+.tape { position: absolute; top: -9px; left: 50%; width: 74px; height: 20px; margin-left: -37px; background: rgba(240, 230, 200, 0.62); transform: rotate(4deg); box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1); }
+.note button, .note a { padding: 0; border: 0; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; text-decoration: underline; text-decoration-color: rgba(58, 47, 16, 0.35); text-underline-offset: 4px; overflow-wrap: anywhere; }
+.note button:hover, .note a:hover, .note button:focus-visible, .note a:focus-visible { text-decoration-color: currentColor; }
+.copied { color: #1f7a45 !important; }
+[data-night] .note { background: linear-gradient(180deg, #f3dc8e, #e6c76a); filter: brightness(0.92); }
+
+/* What a click does, by the cursor: handwritten like the room's notes */
+.hint { position: absolute; z-index: 3; transform: translate(-50%, -100%); font-family: var(--font-hand), cursive; font-size: 24px; color: #fff; text-shadow: 0 2px 10px rgba(0, 0, 0, 0.6); opacity: 0; pointer-events: none; transition: opacity 0.25s; white-space: nowrap; }
+.hint[data-on] { opacity: 1; }
+.credit { position: absolute; z-index: 3; right: 12px; bottom: 8px; max-width: min(560px, 70%); text-align: right; font-size: 10px; line-height: 1.4; color: rgba(255, 255, 255, 0.55); }
+.credit a { color: inherit; } .credit a:hover { color: #fff; }
+
+@media (max-width: 700px) {
+  .note { left: auto; right: 14px; top: auto; bottom: 18%; width: 180px; font-size: 18px; padding: 13px 13px 11px; }
+  .skyNote { font-size: 12.5px; }
+}
+@media (prefers-reduced-motion: reduce) { .grain, .status i, .time b { animation: none; } }

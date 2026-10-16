@@ -14,3 +14,7 @@ index.html
 art/*.blend
 art/*.blend1
 art/bake/
+
+# downloaded source models (licences in art/README.md) and blend backups: local only
+art/downloads/
+art/*.blend.bak*

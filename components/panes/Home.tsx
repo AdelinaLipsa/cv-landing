@@ -21,6 +21,7 @@ import ShuffleHeading from "../ShuffleHeading";
 import Land from "../Land";
 // import Workbench from "../Workbench"; // the room took its spot in the hero
 import Finale, { type Prop } from "../Finale";
+import Window from "../Window";
 import { Rich } from "../Keyword";
 import EqualizerRing from "../EqualizerRing";
 import ThemeToggle from "../ThemeToggle";
@@ -42,78 +43,6 @@ export const Play = () => (
     <svg width="9" height="9" viewBox="0 0 16 16" aria-hidden="true"><path d="M4.5 3.2 13 8l-8.5 4.8z" fill="var(--ink)" /></svg>
   </span>
 );
-
-// Bucharest's sky through the day: [hour, top colour, horizon colour]. Read between stops, so it changes by the minute.
-const SKY: [number, string, string][] = [
-  [0, "#0d0e2b", "#2a2456"], [4.5, "#141540", "#3a2f63"], [6, "#4b4a8f", "#e79a8c"], [7.5, "#7d9ad8", "#f6c9a4"],
-  [10, "#5e95e6", "#b9d9fb"], [16, "#5a8fe0", "#c4defa"], [18.3, "#6a6fbf", "#f6b27e"], [19.6, "#3e3a82", "#ec7d8f"],
-  [21, "#1b1a4a", "#4b3570"], [24, "#0d0e2b", "#2a2456"],
-];
-const mix = (a: string, b: string, t: number) => "#" + [1, 3, 5].map((i) => Math.round(parseInt(a.slice(i, i + 2), 16) * (1 - t) + parseInt(b.slice(i, i + 2), 16) * t).toString(16).padStart(2, "0")).join("");
-const sky = (h: number) => {
-  const i = SKY.findIndex(([at]) => at > h), [h0, t0, b0] = SKY[i - 1], [h1, t1, b1] = SKY[i], t = (h - h0) / (h1 - h0);
-  return { top: mix(t0, t1, t), bottom: mix(b0, b1, t) };
-};
-// Sun from 6 to 20, moon the rest of the night: across the window on a low arc.
-const orb = (h: number) => {
-  const sun = h >= 6 && h < 20, t = sun ? (h - 6) / 14 : ((h + 4) % 24) / 10;
-  return { sun, x: 10 + t * 80, y: 70 - Math.sin(Math.PI * t) * 52 };
-};
-const partOfDay = (h: number) => h < 5 ? "Night" : h < 9 ? "Morning" : h < 12 ? "Late morning" : h < 17 ? "Afternoon" : h < 21 ? "Evening" : "Night";
-const STARS = [[12, 18], [24, 40], [33, 12], [47, 30], [58, 14], [71, 36], [80, 10], [90, 26], [64, 52], [18, 58]];
-
-// The end of the page, on the right: a window onto her sky right now (her local time, live), then how to reach her.
-function Where() {
-  const [now, setNow] = useState<{ h: number; m: number; ahead: number } | null>(null), [copied, setCopied] = useState(false);
-  useEffect(() => {
-    const f = new Intl.DateTimeFormat("en-GB", { timeZone: "Europe/Bucharest", hour: "numeric", minute: "numeric", hourCycle: "h23" });
-    const tick = () => {
-      const d = new Date(), [h, m] = f.formatToParts(d).filter((x) => x.type !== "literal").map((x) => +x.value);
-      const here = d.getHours() * 60 + d.getMinutes();
-      const ahead = Math.round((((h * 60 + m - here + 720 + 1440) % 1440) - 720) / 30) / 2; // hours she is ahead of the visitor
-      setNow({ h, m, ahead });
-    };
-    tick(); const id = window.setInterval(tick, 5000); return () => clearInterval(id);
-  }, []);
-  const copy = () => { void navigator.clipboard?.writeText(profile.email).then(() => { sfx.tink(); setCopied(true); window.setTimeout(() => setCopied(false), 1800); }); };
-  const hf = now ? now.h + now.m / 60 : 13.5, c = sky(hf), o = orb(hf), dark = !o.sun || hf > 19.3 || hf < 6.5;
-  const gap = !now ? "" : now.ahead === 0 ? "same time as you" : `${Math.abs(now.ahead)}h ${now.ahead > 0 ? "ahead of" : "behind"} you`;
-  const row = (k: number) => ({ initial: { opacity: 0, y: 10 }, whileInView: { opacity: 1, y: 0 }, viewport: { once: true }, transition: { duration: 0.5, ease, delay: 0.25 + k * 0.09 } }) as const;
-  return (
-    <aside className={s.where} aria-label="Where I am">
-      <div className={s.sky} style={{ "--top": c.top, "--bottom": c.bottom, "--stars": dark ? 1 : 0 } as React.CSSProperties}>
-        <span className={s.stars} aria-hidden="true">{STARS.map(([x, y], i) => <i key={i} style={{ left: `${x}%`, top: `${y}%`, animationDelay: `${i * 0.37}s` }} />)}</span>
-        <span className={o.sun ? s.sun : s.moon} style={{ left: `${o.x}%`, top: `${o.y}%` }} aria-hidden="true" />
-        <svg className={s.cityBack} viewBox="0 0 400 40" preserveAspectRatio="none" aria-hidden="true"><path d="M0 40V22h22V12h16v10h14V6h10v34h12V18h24v22h10V10h8V2h3v8h9v30h14V16h20v24h12V20h18v20h8V8h14v32h10V24h22v16h16V14h12v26h20V18h10v22h16V26h18v14z" /></svg>
-        <svg className={s.city} viewBox="0 0 400 40" preserveAspectRatio="none" aria-hidden="true">
-          <path d="M0 40V28h18V20h14v8h10V14h8V8h4v6h8v26h6V24h20v6h12V18h16v22h8V26h10V12l6-4 6 4v28h8V22h22v8h10V16h12v24h6V28h16V20h8v20h10V10h4V4h2v6h4v30h8V24h18v6h12V18h10v22h8V26h14v14h10V20h16v20z" />
-          {dark && <g className={s.windows}>{[[40, 18], [62, 30], [112, 24], [178, 20], [224, 26], [250, 30], [296, 22], [318, 30], [364, 26]].map(([x, y]) => <rect key={x} x={x} y={y} width="2.4" height="2.4" />)}</g>}
-        </svg>
-        <span className={s.grain} aria-hidden="true" />
-        <span className={s.status}><i aria-hidden="true" />Open to product roles</span>
-        <div className={s.clock}>
-          <span className={s.time} role="timer" aria-label={now ? `My time: ${String(now.h).padStart(2, "0")}:${String(now.m).padStart(2, "0")}` : "My time"}>
-            <Counter value={now?.h ?? 0} places={[10, 1]} fontSize={40} padding={4} gap={0} horizontalPadding={0} borderRadius={0} textColor="#fff" fontWeight={600} gradientFrom="transparent" gradientTo="transparent" />
-            <b aria-hidden="true">:</b>
-            <Counter value={now?.m ?? 0} places={[10, 1]} fontSize={40} padding={4} gap={0} horizontalPadding={0} borderRadius={0} textColor="#fff" fontWeight={600} gradientFrom="transparent" gradientTo="transparent" />
-          </span>
-          <span className={s.skyNote}>{now ? `${partOfDay(hf)} in Bucharest · ${gap}` : "Bucharest"}</span>
-        </div>
-      </div>
-      <dl>
-        <motion.div {...row(0)}><dt>Based in</dt><dd>{profile.location}</dd></motion.div>
-        <motion.div {...row(1)}><dt>Email</dt><dd>
-          <button type="button" onClick={copy} aria-label={`Copy ${profile.email}`} className={copied ? s.copied : undefined}>
-            <DecryptedText key={copied ? "y" : "n"} text={copied ? "Copied to clipboard ✓" : profile.email} animateOn={copied ? "view" : "hover"} speed={30} maxIterations={8} sequential={copied} />
-          </button>
-        </dd></motion.div>
-        <motion.div {...row(2)}><dt>Book a call</dt><dd>
-          <a href={profile.booking} target="_blank" rel="noopener" className={s.book}><DecryptedText text="30 minutes, on Calendly" animateOn="hover" speed={40} maxIterations={8} /><span aria-hidden="true">↗</span></a>
-        </dd></motion.div>
-      </dl>
-    </aside>
-  );
-}
 
 // Off duty pieces rise in one after another as they scroll into view.
 const rise = (k: number) => ({ initial: { opacity: 0, y: 14 }, whileInView: { opacity: 1, y: 0 }, viewport: { once: true, amount: 0.3 }, transition: { duration: 0.5, ease, delay: k * 0.12 } }) as const;
@@ -329,10 +258,9 @@ export default function Home({ ui }: { ui: UI }) {
         {win95 && <Win95 onClose={() => setWin95(false)} contact={ui.contact} />}
       </section>
 
-      {/* The end of the page: somewhere to go next, the same three ways in as the hero and the 30-second version */}
-      <Land className={s.outro} delay={0.05}>
-        <div className={s.outroGrid}>
-        <div className={s.outroMain}>
+      {/* The end of the page: somewhere to go next, the same three ways in as the hero, then her window */}
+      <section className={s.outro}>
+        <Land className={s.outroMain} delay={0.05}>
           <h2 className={s.h2}><ShuffleHeading text="You made it to the end of the log." /></h2>
           <p className={s.outroLine}>Product roles, full-time or contract. Payments, ops, and internal tools. I reply faster than a 3DS challenge.</p>
           <div className={s.actions}>
@@ -340,14 +268,16 @@ export default function Home({ ui }: { ui: UI }) {
             <Magnet padding={30} magnetStrength={5} disabled={!!reduce}><a className={`${s.messageBtn} ${s.outroBtn} ${s.pdfFill} water`} href={profile.pdf} download><DecryptedText text="Download the PDF" animateOn="hover" speed={40} maxIterations={8} /><span className={s.dl} aria-hidden="true">↓</span></a></Magnet>
             <Magnet padding={30} magnetStrength={5} disabled={!!reduce}><a className={`${s.messageBtn} ${s.outroBtn} ${s.linkedin} water`} href={profile.linkedin} target="_blank" rel="noreferrer"><LinkedInIcon /><DecryptedText text="LinkedIn" animateOn="hover" speed={40} maxIterations={8} /></a></Magnet>
           </div>
+        </Land>
+        {/* Her window: the view from her parter in Bucharest, her time and weather right now */}
+        <div className={s.band}>
+          <Window />
         </div>
-        <Where />
         <div className={s.signoff}>
           <span className={s.sig} aria-hidden="true">– Adelina</span>
           <button type="button" className={s.toTop} onClick={(e) => e.currentTarget.closest("[data-pane]")?.scrollTo({ top: 0, behavior: reduce ? "auto" : "smooth" })}>↑ Back to the top</button>
         </div>
-        </div>
-      </Land>
+      </section>
     </div>
   );
 }
