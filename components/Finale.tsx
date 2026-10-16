@@ -161,14 +161,14 @@ function cvPage() {
   return c;
 }
 
-// Her records: seven sleeves in our own lettering for the bands on her walls (no real logos or artwork, like the
-// posters), and two bare discs, on one 480 px sheet of 160 px tiles (sleeves 0-6, discs 7-8).
+// Her records: the real covers of the bands on her walls (/media/records/sleeves.jpg, drawn over tiles 0-6 once it
+// loads; the drawn ones below stand in until then), and two bare discs, on one 1536 px sheet of 512 px tiles.
 function records() {
-  const c = document.createElement("canvas"); c.width = c.height = 480;
-  const x = c.getContext("2d")!;
+  const c = document.createElement("canvas"); c.width = c.height = 1536;
+  const x = c.getContext("2d")!; x.scale(3.2, 3.2); // drawn on the old 480 px grid
   const SLEEVES: [string, string, string][] = [ // band, ground, ink
     ["LED ZEPPELIN", "#d9cdb0", "#2a2420"], ["KORN", "#1c2a2e", "#c9d6b8"], ["SLIPKNOT", "#a8241c", "#151515"], ["OZZY", "#2a1838", "#d9c9ef"],
-    ["PINK FLOYD", "#0d0d14", "#f2f2f2"], ["SONATA ARCTICA", "#1d3550", "#e8f1fb"], ["COROZA", "#e7d9b8", "#3a2a1a"],
+    ["PINK FLOYD", "#0d0d14", "#f2f2f2"], ["SONATA ARCTICA", "#1d3550", "#e8f1fb"], ["NIRVANA", "#e7d9b8", "#3a2a1a"],
   ];
   SLEEVES.forEach(([band, ground, ink], i) => {
     x.save(); x.translate((i % 3) * 160, Math.floor(i / 3) * 160);
@@ -1049,7 +1049,10 @@ async function mount(el: HTMLElement, live: React.RefObject<Live>, alive: () => 
     });
     // Her records, spread on the floor in front of the player as if she'd been flipping through them, short of the rug
     // and her way to the desk. [sheet tile (sleeve 0-6, disc 7-8), x, z, yaw, the disc slid half out of it (tile)]
-    const sheet = new THREE.CanvasTexture(records()); sheet.colorSpace = THREE.SRGBColorSpace; sheet.anisotropy = 4;
+    const sheetCanvas = records(), sheet = new THREE.CanvasTexture(sheetCanvas); sheet.colorSpace = THREE.SRGBColorSpace; sheet.anisotropy = 4;
+    const covers = new Image(); covers.decoding = "async";
+    covers.onload = () => { sheetCanvas.getContext("2d")!.setTransform(1, 0, 0, 1, 0, 0); sheetCanvas.getContext("2d")!.drawImage(covers, 0, 0, 1536, 1024, 0, 0, 1536, 1024); sheetCanvas.getContext("2d")!.drawImage(covers, 0, 1024, 512, 512, 0, 1024, 512, 512); sheet.needsUpdate = true; if (reduce) draw(); };
+    covers.src = "/media/records/sleeves.jpg"; // the seven sleeves: Led Zeppelin IV, Korn, Slipknot, Blizzard of Ozz, Dark Side, Ecliptica, Unplugged
     const sleeveMat = new THREE.MeshStandardMaterial({ map: sheet, roughness: 0.75 }), discMat = new THREE.MeshStandardMaterial({ map: sheet, roughness: 0.3 });
     const tile = (g: T.BufferGeometry, i: number) => { const uv = g.getAttribute("uv"); for (let k = 0; k < uv.count; k++) uv.setXY(k, ((i % 3) + uv.getX(k)) / 3, 1 - (Math.floor(i / 3) + 1 - uv.getY(k)) / 3); return g; };
     const RECORDS: [number, number, number, number, number?][] = [
