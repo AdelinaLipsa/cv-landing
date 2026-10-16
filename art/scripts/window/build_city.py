@@ -108,6 +108,7 @@ def bloc(x0, x1, y0, floors=10, fh=2.75, ground=4.2, bay=3.6):
 roof_tiles = [mat(f"Tiles{k}", c, rough=0.8, bump=0.35) for k, c in enumerate(("#9C4A33", "#874232", "#A85A3C"))]
 stuccos = ["#E8B79A", "#E9D8A6", "#C9D3C0", "#E6C7C9", "#D9CDBE"]
 trim = mat("StuccoTrim", "#F3E6D6", rough=0.9)
+exec(open("/Users/adelinalipsa/Documents/GitHub/adelina-cv/art/scripts/window/house_window.py").read())   # house_window()
 fence_cols = [mat(f"Fence{k}", c, rough=0.6, metal=0.3) for k, c in enumerate(("#2F5E4A", "#33465E", "#5E3A2F", "#3A3A3A"))]
 def gable_roof(name, x0, x1, y0, y1, z, rise, m):
     bm = bmesh.new()
@@ -137,12 +138,10 @@ def house(name, x0, x1, y0, depth=10.0, floors=1, col="#E8B79A", shop=False):
             z = STREET + base + f * fh + 1.85
             if shop and f == 0 and i < 2:
                 continue
-            window(f"{name}W{f}_{i}", xc, y0, z, 1.1, 1.7, R.choice(frames[1:]) if R.random() < 0.7 else frames[0])
-            box(f"{name}Surr{f}_{i}", (1.45, 0.08, 2.05), (xc, y0 - 0.03, z), trim, bevel=0.02, c="Across")
+            fr = R.choice(frames[1:]) if R.random() < 0.7 else frames[0]
+            R.choice((-0.15, 0, 0.15)); R.random() < 0.8 and (R.uniform(0, 1), R.uniform(0, 1))   # the old window's draws: the rest of the street stays put
             box(f"{name}Head{f}_{i}", (1.7, 0.2, 0.25), (xc, y0 - 0.1, z + 1.1), trim, bevel=0.03, c="Across")
-            if R.random() < 0.5:  # wooden shutters, folded open
-                for sx in (-1, 1):
-                    box(f"{name}Shut{f}_{i}{sx}", (0.55, 0.05, 1.7), (xc + sx * 0.88, y0 - 0.05, z), mat("Shutter", "#6E5A3E", rough=0.8), bevel=0.01, c="Across")
+            house_window(f"{name}W{f}_{i}", xc, y0, z, 1.1, 1.7, fr, R.random() < 0.5)
     if shop:   # the NON STOP: the front two bays opened into a shop window, a sign box and a striped awning
         sx0 = x0 + 0.3; sw = 2 * (x1 - x0) / n - 0.6
         box(name + "ShopGlass", (sw, 0.05, 2.4), (sx0 + sw / 2, y0 - 0.02, STREET + base + 1.3), glassW, bevel=0, c="Across")

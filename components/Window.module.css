@@ -32,7 +32,8 @@
 @keyframes blink { 50% { opacity: 0.55; } }
 .skyNote { font-size: 13.5px; font-weight: 600; opacity: 0.95; max-width: 34ch; }
 
-/* The sticky note, stuck to the glass: placed by the scene (--nx, --ny) on the upper right pane */
+/* The Post-it: until the scene is up it sits on the upper right pane; then the scene glues its corners to the
+   window's frame post (an inline matrix3d), so it sits in the room in perspective and moves with her gaze */
 .note {
   position: absolute; z-index: 3; left: var(--nx, 72%); top: var(--ny, 12%);
   display: flex; flex-direction: column; gap: 4px; padding: 16px 16px 14px; width: 210px;
@@ -41,8 +42,10 @@
   box-shadow: 0 1px 1px rgba(0, 0, 0, 0.15), 0 14px 24px -8px rgba(0, 0, 0, 0.45);
   transition: transform 0.4s var(--ease);
 }
-.note:hover { transform: rotate(-1deg) translateY(-2px); }
-.tape { position: absolute; top: -9px; left: 50%; width: 74px; height: 20px; margin-left: -37px; background: rgba(240, 230, 200, 0.62); transform: rotate(4deg); box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1); }
+.note[data-glued] { left: 0; top: 0; transform-origin: 0 0; transition: none; will-change: transform; aspect-ratio: 1; justify-content: center; gap: 12px;
+  /* stuck by its top edge: flat to the frame up there, the bottom curling off it a little */
+  background: linear-gradient(180deg, #fff3a6 0%, #ffe98a 70%, #f6d96c 100%);
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.06), 0 10px 14px -10px rgba(40, 30, 0, 0.55); }
 .note button, .note a { padding: 0; border: 0; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; text-decoration: underline; text-decoration-color: rgba(58, 47, 16, 0.35); text-underline-offset: 4px; overflow-wrap: anywhere; }
 .note button:hover, .note a:hover, .note button:focus-visible, .note a:focus-visible { text-decoration-color: currentColor; }
 .copied { color: #1f7a45 !important; }
@@ -55,7 +58,7 @@
 .credit a { color: inherit; } .credit a:hover { color: #fff; }
 
 @media (max-width: 700px) {
-  .note { left: auto; right: 14px; top: auto; bottom: 18%; width: 180px; font-size: 18px; padding: 13px 13px 11px; }
+  .note:not([data-glued]) { left: auto; right: 14px; top: auto; bottom: 18%; width: 180px; font-size: 18px; padding: 13px 13px 11px; }
   .skyNote { font-size: 12.5px; }
 }
 @media (prefers-reduced-motion: reduce) { .grain, .status i, .time b { animation: none; } }

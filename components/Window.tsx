@@ -78,7 +78,16 @@ async function weather(): Promise<Wx> {
 }
 
 type Hot = "pigeon" | "mug" | null;
-type Live = { wx: Wx | null; onHot: (h: Hot, x: number, y: number) => void; onNote: (x: number, y: number) => void };
+type Live = { wx: Wx | null; onHot: (h: Hot, x: number, y: number) => void; onNote: (q: number[][]) => void; noteAspect: () => number };
+
+// The CSS matrix3d that lays a w×h element onto four screen points (top left, top right, bottom right, bottom left):
+// the square-to-quad projective map (Heckbert), scaled to the element.
+function quadMatrix(w: number, h: number, [[x0, y0], [x1, y1], [x2, y2], [x3, y3]]: number[][]) {
+  const dx1 = x1 - x2, dx2 = x3 - x2, dx3 = x0 - x1 + x2 - x3, dy1 = y1 - y2, dy2 = y3 - y2, dy3 = y0 - y1 + y2 - y3;
+  const den = dx1 * dy2 - dx2 * dy1, g = (dx3 * dy2 - dx2 * dy3) / den, k = (dx1 * dy3 - dx3 * dy1) / den;
+  const a = x1 - x0 + g * x1, b = x3 - x0 + k * x3, d = y1 - y0 + g * y1, e = y3 - y0 + k * y3;
+  return `matrix3d(${[a / w, d / w, 0, g / w, b / h, e / h, 0, k / h, 0, 0, 1, 0, x0, y0, 0, 1].join(",")})`;
+}
 
 export default function Window() {
   const host = useRef<HTMLDivElement>(null), note = useRef<HTMLDivElement>(null);
@@ -86,10 +95,11 @@ export default function Window() {
   const [wx, setWx] = useState<Wx | null>(null);
   const [ready, setReady] = useState(false), [copied, setCopied] = useState(false);
   const [hot, setHot] = useState<{ h: Hot; x: number; y: number }>({ h: null, x: 0, y: 0 });
-  const live = useRef<Live>({ wx: null, onHot: () => {}, onNote: () => {} });
+  const live = useRef<Live>({ wx: null, onHot: () => {}, onNote: () => {}, noteAspect: () => 1 });
   live.current.wx = wx;
   live.current.onHot = (h, x, y) => setHot((o) => (o.h === h && Math.abs(o.x - x) < 1 && Math.abs(o.y - y) < 1 ? o : { h, x, y }));
-  live.current.onNote = (x, y) => { note.current?.style.setProperty("--nx", `${x}%`); note.current?.style.setProperty("--ny", `${y}%`); };
+  live.current.onNote = (q) => { const n = note.current; if (!n) return; n.style.transform = quadMatrix(n.offsetWidth, n.offsetHeight, q); n.dataset.glued = ""; };
+  live.current.noteAspect = () => (note.current ? note.current.offsetHeight / Math.max(1, note.current.offsetWidth) : 1);
 
   useEffect(() => {
     const tick = () => setNow(herClock());
@@ -129,9 +139,8 @@ export default function Window() {
         </span>
         <span className={s.skyNote}>{now ? `${partOfDay(now.h)} in Bucharest · ${gap}${w}` : "Bucharest"}</span>
       </div>
-      {/* A sticky note on the glass: how to reach her, plain text, readable at a glance */}
+      {/* A Post-it stuck on her window's frame: how to reach her, plain text, readable at a glance */}
       <div ref={note} className={s.note}>
-        <span className={s.tape} aria-hidden="true" />
         <button type="button" onClick={copy} aria-label={`Copy ${profile.email}`} className={copied ? s.copied : undefined}>
           <DecryptedText key={copied ? "y" : "n"} text={copied ? "copied ✓" : profile.email} animateOn={copied ? "view" : "hover"} speed={30} maxIterations={8} sequential={copied} />
         </button>
@@ -435,6 +444,17 @@ async function mount(el: HTMLElement, live: React.RefObject<Live>, alive: () => 
   const ray = new THREE.Raycaster(), ndc = new THREE.Vector2(9, 9), lean = { x: 0, y: 0 };
   let hot: Hot = null;
   const project = (p: T.Vector3) => { const v = p.clone().project(camera); return [(v.x * 0.5 + 0.5) * 100, (-v.y * 0.5 + 0.5) * 100]; };
+  // The Post-it, stuck on the frame post right of the middle pane (mullion and the two sash lips, 12 cm of white PVC,
+  // build_view.py): 14 cm square, a touch crooked. Its corners follow her gaze.
+  const NOTE = { c: new THREE.Vector3(0.33, 1.43, -0.112), w: 0.14, tilt: -0.045 };
+  const glueNote = () => {
+    camera.updateMatrixWorld();
+    const hw = NOTE.w / 2, hh = hw * live.current.noteAspect(), cs = Math.cos(NOTE.tilt), sn = Math.sin(NOTE.tilt);
+    live.current.onNote([[-hw, hh], [hw, hh], [hw, -hh], [-hw, -hh]].map(([x, y]) => {
+      const v = new THREE.Vector3(NOTE.c.x + x * cs - y * sn, NOTE.c.y + x * sn + y * cs, NOTE.c.z).project(camera);
+      return [(v.x * 0.5 + 0.5) * el.clientWidth, (-v.y * 0.5 + 0.5) * el.clientHeight];
+    }));
+  };
   const pick = (): Hot => {
     ray.setFromCamera(ndc, camera);
     if (ray.intersectObject(pigeon, true).length) return "pigeon";
@@ -468,18 +488,25 @@ async function mount(el: HTMLElement, live: React.RefObject<Live>, alive: () => 
       m.envMapIntensity = 0;
       if (!/leaf|branch/i.test(m.name)) return; // the leaves and the leafy branch cards: cut out, swaying, by the month
       m.alphaTest = 0.5; m.transparent = false; m.side = THREE.DoubleSide; m.depthWrite = true;
+      m.roughness = 1; m.roughnessMap = null; m.metalness = 0; m.metalnessMap = null; m.normalMap = null; // matte, no foil glints
+      // lit as one soft ball like the trees across the street: each leaf's normal points out from the canopy's centre
+      const geo = (o as T.Mesh).geometry; geo.computeBoundingBox(); const centre = geo.boundingBox!.getCenter(new THREE.Vector3());
       m.onBeforeCompile = (sh) => {
-        Object.assign(sh.uniforms, treeU);
-        sh.vertexShader = "uniform float uTime, uWind; varying float vLeafId;\n" + sh.vertexShader.replace("#include <begin_vertex>", `#include <begin_vertex>
+        Object.assign(sh.uniforms, treeU, { uCanopy: { value: centre } });
+        sh.fragmentShader = sh.fragmentShader.replace("#include <normal_fragment_begin>", "#include <normal_fragment_begin>\n normal = normalize(vCanopyN);");
+        sh.vertexShader = "uniform float uTime, uWind; uniform vec3 uCanopy; flat varying float vLeafId; varying vec3 vCanopyN;\n" + sh.vertexShader.replace("#include <begin_vertex>", `#include <begin_vertex>
+          vCanopyN = normalize(normalMatrix * normalize(position - uCanopy));
           vec4 wp = modelMatrix * vec4(transformed, 1.); float h = max(wp.y + 1.15, 0.) / 6.;
-          vLeafId = fract(sin(dot(floor(wp.xz * 3.), vec2(12.9, 78.2))) * 43758.5);
+          vLeafId = fract(sin(dot(floor(wp.xyz * 1.4), vec3(12.9, 78.2, 37.7))) * 43758.5);   // clumps about 70 cm across, like the blob trees
           float sway = (sin(uTime * 1.1 + wp.x * .4) * .6 + sin(uTime * 2.3 + wp.z) * .3) * (.04 + uWind * .12) * h * h;
           transformed.x += sway; transformed.z += sway * .4; transformed.y += sin(uTime * 3. + vLeafId * 20.) * .015 * h;`);
-        sh.fragmentShader = "uniform float uAutumn, uBare; varying float vLeafId;\n" + sh.fragmentShader.replace("#include <map_fragment>", `#include <map_fragment>
+        sh.fragmentShader = "uniform float uAutumn, uBare; flat varying float vLeafId; varying vec3 vCanopyN;\n" + sh.fragmentShader.replace("#include <map_fragment>", `#include <map_fragment>
           if (vLeafId < uBare) discard;
-          float lum = dot(diffuseColor.rgb, vec3(.3, .59, .11));
-          vec3 gold = mix(vec3(.62, .26, .06), vec3(.98, .7, .22), smoothstep(.1, .55, lum + vLeafId * .25));
-          diffuseColor.rgb = mix(diffuseColor.rgb, gold * (.8 + lum), uAutumn * smoothstep(.0, .3, vLeafId + .2)) * 1.15;`);
+          // autumn in the same plane-tree palette as the baked trees across the street (build_city.py), in clumps
+          float lum = dot(diffuseColor.rgb, vec3(.3, .59, .11)); float k = floor(fract(vLeafId * 7.) * 6.);
+          vec3 fall = k < 1. ? vec3(.584, .259, .023) : k < 2. ? vec3(.701, .379, .05) : k < 3. ? vec3(.33, .259, .038)
+                    : k < 4. ? vec3(.157, .197, .038) : k < 5. ? vec3(.47, .13, .019) : vec3(.751, .465, .101);
+          diffuseColor.rgb = mix(diffuseColor.rgb, fall * (.92 + lum * .12), uAutumn);   // flat per clump, the lo-fi way`);
       };
     });
   }
@@ -539,8 +566,7 @@ async function mount(el: HTMLElement, live: React.RefObject<Live>, alive: () => 
     const need = 2 * Math.atan(Math.tan((62 * Math.PI) / 360) / camera.aspect) * (180 / Math.PI);
     camera.fov = Math.max(baseVfov, need);
     camera.updateProjectionMatrix();
-    const [nx, ny] = project(new THREE.Vector3(0.5, 1.62, -0.12)); // upper right pane of the glass
-    live.current.onNote(Math.min(86, Math.max(58, nx)), Math.max(6, ny));
+    glueNote();
   };
   const ro = new ResizeObserver(() => { size(); render(); }); ro.observe(el);
   size();
@@ -585,6 +611,7 @@ async function mount(el: HTMLElement, live: React.RefObject<Live>, alive: () => 
     if (!reduce && t > nextSip) { sip(); nextSip = t + 15 + Math.random() * 10; }
     const sipping = (() => { const x = t - sipAt; return x < 0.6 ? ease(x / 0.6) : x < 1.6 ? 1 : x < 2.3 ? 1 - ease((x - 1.6) / 0.7) : 0; })();
     camera.quaternion.copy(baseQ).multiply(qa.setFromEuler(new THREE.Euler(lean.y * 0.02 + breathe - sipping * 0.07, -lean.x * 0.03, 0, "YXZ")));
+    glueNote();
     // the pigeon
     poseAt -= dt;
     if (poseAt <= 0) { if (!queue.length) queue = plan(); pose = queue.shift()!; poseAt = pose.dur; }
