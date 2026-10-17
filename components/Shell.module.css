@@ -126,3 +126,12 @@
 .gameNudge { opacity: 0; transition: opacity 0.6s var(--ease); }
 :global(html:has([data-live])) .gameNudge { opacity: 1; transition-delay: 9s; }
 :global(html[data-scrolled]) .gameNudge { opacity: 0; transition-delay: 0s; }
+
+/* The rewind (components/Rewind): the build played backwards, fast. Its era changes are the guide's own
+   (app/eras.css), cut short so three fit in 1.4s; the dial-up band runs back up in 8 steps, not 18. */
+.viewport[data-rewinding] { transition-duration: 0.24s; }
+.viewport[data-rewinding]::view-transition-group(root),
+.viewport[data-rewinding]::view-transition-old(root),
+.viewport[data-rewinding]::view-transition-new(root) { animation-duration: 0.24s; }
+.viewport[data-rewinding][data-shift="undial"]::view-transition-new(root) { animation-timing-function: steps(8, end); }
+.viewport[data-rewinding][data-shift="gloss"] [data-pane] [data-stage] [data-skin] { transition-duration: 0.24s; }

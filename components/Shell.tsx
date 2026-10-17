@@ -5,7 +5,7 @@ import { ease, glide, track } from "@/lib/motion";
 import { useCalm } from "@/lib/useCalm";
 import { useEraShift } from "@/lib/useEraShift";
 import { steps, type BuildKey, type Cue } from "@/content/tour";
-import { jobOf, resolveBuilt } from "@/lib/direction";
+import { builtAt, jobOf, resolveBuilt, rewindAt, rewindUpto } from "@/lib/direction";
 import Boot from "./Boot";
 import EasterEggs from "./EasterEggs";
 import Toasts from "./Toasts";
@@ -23,6 +23,7 @@ import Skills from "./panes/Skills";
 import ClickSpark from "./ClickSpark";
 import SideRays from "./SideRays";
 import SoundToggle from "./SoundToggle";
+import Rewind from "./Rewind";
 
 import s from "./Shell.module.css";
 
@@ -70,6 +71,10 @@ export default function Shell({ character }: { character: boolean }) {
   const [step, setStep] = useState(0);
   const [holdMs, setHoldMs] = useState(0); // the tour waits this long (the boot pull-back) before its clock starts
   const [cue, setCue] = useState<Cue["hot"] | null>(null);
+  // The rewind before a replay from the page: the era and step it shows (null: not rewinding). `tape` outlives it by
+  // the last era change, which runs fast while it is set (Shell.module.css).
+  const [rew, setRew] = useState<{ era: number; upto: number } | null>(null);
+  const [tape, setTape] = useState(false);
   const [sheet, setSheet] = useState<{ label: string; body: ReactNode } | null>(null);
   const [term, setTerm] = useState(false);
   const [mood, setMood] = useState("home");
@@ -142,7 +147,7 @@ export default function Shell({ character }: { character: boolean }) {
   const goRef = useRef(go);
   goRef.current = go;
   const at = useRef({ pane, touring });
-  at.current = { pane, touring };
+  at.current = { pane, touring: touring || rew !== null };
 
   // Trackpad sideways swipe (or shift+wheel) turns the page, one pane per gesture.
   useEffect(() => {
@@ -180,18 +185,38 @@ export default function Shell({ character }: { character: boolean }) {
     setBuilt(true);
   };
 
-  const startTour = (hold = 0) => {
+  const play = (hold: number) => {
+    setStep(0);
+    setHoldMs(hold);
+    setTouring(true);
+  };
+
+  // From the boot screen the page is already 2003 under the pull-back: the guide waits `hold` for it. From the page,
+  // the tape rewinds it to 2003 first. Calm: the chapters in a sheet, once Boot has faded.
+  const startTour = (from: "boot" | "page", hold = 0) => {
     showBuilt();
     if (matchMedia("(prefers-reduced-motion: reduce)").matches) {
-      setSheet({ label: "The build, chapter by chapter", body: <Stepper /> });
+      setTimeout(() => setSheet({ label: "The build, chapter by chapter", body: <Stepper /> }), hold);
       return;
     }
     setSheet(null);
     // The flat era's Open Sans is only fetched once text uses it; ask for it now so it is ready by 2013.
     document.fonts?.load(`300 1em ${getComputedStyle(document.documentElement).getPropertyValue("--font-flat")}`).catch(() => {});
-    setStep(0);
-    setHoldMs(hold);
-    setTouring(true);
+    if (from === "boot") return play(hold);
+    import("./Tour").catch(() => {}); // fetched while the tape runs, so step 1 starts as it stops
+    setRew({ era: 3, upto: steps.length - 1 });
+    setTape(true);
+  };
+
+  const onRewind = useCallback((p: number) => {
+    const era = rewindAt(p).era, upto = rewindUpto(p);
+    setRew((o) => (o && o.era === era && o.upto === upto ? o : { era, upto }));
+  }, []);
+
+  const rewound = () => {
+    setRew(null);
+    play(0);
+    setTimeout(() => setTape(false), 400);
   };
 
   const onStep = useCallback((i: number) => {
@@ -200,14 +225,17 @@ export default function Shell({ character }: { character: boolean }) {
   }, []);
 
   const endTour = useCallback(() => {
+    setRew(null);
+    setTape(false);
     setCue(null);
     setTouring(false);
     remember();
   }, []);
 
   // The era on screen: it follows the step through an era transition (lib/useEraShift, app/eras.css).
-  const { era, shift } = useEraShift(viewport, touring ? steps[step].era : null);
-  const done = resolveBuilt(touring, step);
+  const guide = touring || rew !== null; // the page is the guide's: the tour, or the rewind before it
+  const { era, shift } = useEraShift(viewport, touring ? steps[step].era : rew ? rew.era : null);
+  const done = rew ? builtAt(rew.upto) : resolveBuilt(touring, step);
   // The thing the guide's words light, on <html> for what has no `ui` (the theme toggle's pulse).
   useEffect(() => {
     const d = document.documentElement.dataset;
@@ -215,12 +243,12 @@ export default function Shell({ character }: { character: boolean }) {
   }, [touring, cue]);
 
   const ui: UI = {
-    go: (i) => { if (touring) endTour(); go(i, reduce ? { duration: 0 } : track); },
+    go: (i) => { if (guide) endTour(); go(i, reduce ? { duration: 0 } : track); },
     sheet: (label, body) => setSheet({ label, body }),
-    contact: () => { if (touring) endTour(); setSheet({ label: "Contact", body: <Contact /> }); },
-    build: () => (touring ? endTour() : startTour()),
+    contact: () => { if (guide) endTour(); setSheet({ label: "Contact", body: <Contact /> }); },
+    build: () => (guide ? endTour() : startTour("page")),
     terminal: () => setTerm(true),
-    touring,
+    touring: guide,
     returning,
     character,
     era,
@@ -240,7 +268,7 @@ export default function Shell({ character }: { character: boolean }) {
           <Boot
             key="boot"
             gate={built === null}
-            onBuild={(ms) => { setEnter(ms); startTour(ms); }}
+            onBuild={(ms) => { setEnter(ms); startTour("boot", ms); }}
             onSkip={(ms) => { setEnter(ms); remember(); showBuilt(); }}
           />
         )}
@@ -253,14 +281,14 @@ export default function Shell({ character }: { character: boolean }) {
         transition={{ duration: enter / 1000, ease }}
       >
       {/* Sparks in broth once the page is built. Not during the build, which is its own show. */}
-      <ClickSpark sparkColor={touring || reduce ? "transparent" : "#F5B53F"} sparkSize={9} sparkRadius={18} sparkCount={8} duration={500}>
-      <div ref={viewport} className={s.viewport} data-era={era} data-shift={shift} data-touring={touring || undefined} style={{ "--from": `${dir * 36}px` } as React.CSSProperties}>
+      <ClickSpark sparkColor={guide || reduce ? "transparent" : "#F5B53F"} sparkSize={9} sparkRadius={18} sparkCount={8} duration={500}>
+      <div ref={viewport} className={s.viewport} data-era={era} data-shift={shift} data-touring={guide || undefined} data-rewinding={tape || undefined} style={{ "--from": `${dir * 36}px` } as React.CSSProperties}>
         {/* React Bits SideRays: soft light from the top-right corner, in broth and blueprint. Only once the page is "now". */}
         {era === 3 && !reduce && <div className={s.bg}><SideRays rayColor1={LIGHT[mood][0]} rayColor2={LIGHT[mood][1]} speed={1.2} intensity={2} blend={0.5} opacity={0.8} /></div>}
         <motion.div
           className={s.track}
           style={{ x }}
-          drag={touring ? false : "x"}
+          drag={guide ? false : "x"}
           dragDirectionLock
           dragMomentum={false}
           dragElastic={0.14}
@@ -312,6 +340,7 @@ export default function Shell({ character }: { character: boolean }) {
       </ClickSpark>
       </motion.main>
 
+      {rew && <Rewind onFrame={onRewind} onDone={rewound} />}
       {touring && <Tour holdMs={holdMs} onStep={onStep} onCue={setCue} onClose={endTour} />}
       <EasterEggs contact={ui.contact} terminal={ui.terminal} arcade={() => setArcade(true)} />
       {arcade && <Arcade onClose={() => { setArcade(false); setChallenge(null); }} contact={() => { setArcade(false); ui.contact(); }} challenge={challenge} />}

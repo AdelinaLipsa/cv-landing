@@ -1,0 +1,39 @@
+/* Above the page, under the guide's captions and the sheet. Never catches clicks. */
+.rewind { position: fixed; inset: 0; z-index: 25; pointer-events: none; overflow: hidden; }
+.defs { position: absolute; }
+
+/* The VCR's on-screen display: white mono with a dark edge, the only thing that gets the red/cyan fringe. */
+.osd {
+  position: absolute;
+  top: calc(20px + env(safe-area-inset-top));
+  left: 28px;
+  display: grid;
+  gap: 4px;
+  font: 700 26px/1 var(--font-mono), monospace;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.06em;
+  color: #fff;
+  -webkit-text-stroke: 4px rgba(12, 10, 30, 0.85);
+  paint-order: stroke fill; /* the dark edge sits under the white, so it reads on 2003's white and on dark */
+  text-shadow: -2px 0 rgba(255, 0, 70, 0.8), 2px 0 rgba(0, 190, 255, 0.8);
+  animation: osd 0.12s steps(2, end) both;
+}
+@keyframes osd { from { opacity: 0; } }
+@media (max-width: 640px) { .osd { left: 16px; font-size: 20px; } }
+
+/* The tracking band: the page behind it slides sideways in streaks (the SVG filter, Chromium), with a faint
+   scanline and a bright smear on the band itself, so other browsers still see the band pass. */
+.band {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 40px;
+  backdrop-filter: url(#rewind-band) brightness(1.18);
+  background:
+    repeating-linear-gradient(to bottom, rgba(255, 255, 255, 0.14) 0 1px, transparent 1px 3px),
+    linear-gradient(to bottom, transparent, rgba(255, 255, 255, 0.1) 45%, rgba(255, 255, 255, 0.14) 55%, transparent);
+  animation: band 0.7s linear 2 both;
+  will-change: transform;
+}
+@keyframes band { from { transform: translateY(100dvh); } to { transform: translateY(-40px); } }

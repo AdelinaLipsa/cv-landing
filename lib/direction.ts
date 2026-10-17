@@ -38,3 +38,12 @@ export const rewindAt = (p: number): { era: 0 | 1 | 2 | 3; all: boolean } => ({
   era: (p >= 1 ? 0 : 3 - Math.min(3, Math.floor(p * 4))) as 0 | 1 | 2 | 3,
   all: p < 0.25,
 });
+
+// The step whose page the rewind shows at p (builtAt of it is what is still built): the build backwards. In each
+// quarter the steps of the era on screen come undone newest-first, so an era is bare before the page leaves it.
+export function rewindUpto(p: number) {
+  const { era } = rewindAt(p);
+  const mine = steps.flatMap((s, i) => (s.era === era ? [i] : []));
+  const f = Math.min(1, Math.max(0, p * 4 - (3 - era)));
+  return mine[0] - 1 + Math.round((1 - f) * mine.length);
+}

@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { builtAt, resolveBuilt, wordsShown, cueAt, jobOf, rewindAt, TYPE_CPS } from "./direction.ts";
+import { builtAt, resolveBuilt, wordsShown, cueAt, jobOf, rewindAt, rewindUpto, TYPE_CPS } from "./direction.ts";
 import { steps, ALL_BUILT, type BuildKey } from "../content/tour.ts";
 
 test("nothing is built at the start", () => assert.equal(builtAt(0).size, 0));
@@ -30,4 +30,13 @@ test("rewind steps the eras back, un-building after the first quarter", () => {
   assert.deepEqual(rewindAt(0), { era: 3, all: true });
   assert.deepEqual(rewindAt(0.3), { era: 2, all: false });
   assert.deepEqual(rewindAt(1), { era: 0, all: false });
+});
+test("rewind un-builds newest-first, each era bare before the page leaves it", () => {
+  assert.equal(rewindUpto(0), steps.length - 1);
+  assert.equal(builtAt(rewindUpto(1)).size, 0);
+  let last = Infinity;
+  for (let p = 0; p <= 1; p += 0.01) { const u = rewindUpto(p); assert.ok(u <= last); last = u; }
+  const late = builtAt(rewindUpto(0.249));
+  for (let i = 0; i < steps.length; i++) if (steps[i].era === 3) for (const k of steps[i].builds) assert.ok(!late.has(k));
+  assert.ok(late.has("career.siterocket"));
 });
