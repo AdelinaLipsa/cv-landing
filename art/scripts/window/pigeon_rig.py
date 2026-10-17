@@ -4,7 +4,9 @@ import bpy
 from mathutils import Vector
 o = bpy.data.objects["PigeonSit"]
 old = bpy.data.objects.get("PigeonRig")
-if old: bpy.data.objects.remove(old)
+if old:  # unparent keeping where it stands (pov.py placed the old rig): else the parent inverse drops it, and the new rig, at the origin
+    w = o.matrix_world.copy(); o.parent = None; o.matrix_world = w
+    bpy.data.objects.remove(old)
 for m in [m for m in o.modifiers if m.type == "ARMATURE"]: o.modifiers.remove(m)
 o.vertex_groups.clear()
 arm = bpy.data.armatures.new("PigeonRig"); rig = bpy.data.objects.new("PigeonRig", arm)

@@ -4,6 +4,7 @@ Lightmap UV; the NIGHT atlases ship beside it as WebP (the site blends them). Fa
 art/bake/window_raw.glb and reverts the file. Then: art/scripts/window/ship.sh."""
 exec(open("/Users/adelinalipsa/Documents/GitHub/adelina-cv/art/scripts/lib.py").read())
 OUT = ART + "/bake/window_raw.glb"
+assert D.objects["PigeonRig"].matrix_world.translation.length > 0.1, "PigeonRig is at the origin: re-run pov.py (it puts the pigeon on the sill)"
 bpy.ops.wm.save_mainfile()
 vl = bpy.context.view_layer
 export = []
