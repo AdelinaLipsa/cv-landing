@@ -454,9 +454,6 @@ async function mount(el: HTMLElement, live: React.RefObject<Live>, alive: () => 
   scene.add(hemi, key, lamp, fill, fill.target);
   const pigeon = bird.scene;
   const spot = node("PigeonSpot"); spot.add(pigeon);
-  // view.glb's re-export (2a5fcbf) lost this mark's transform, so the pigeon sat at the scene's origin, below her view:
-  // without one, it stands where the sill export put it (PigeonRig, export.py)
-  if (spot.position.lengthSq() === 0) { spot.position.set(0.27, 0.917, -0.395); spot.quaternion.set(0, -0.9848078, 0, 0.1736482); spot.scale.setScalar(1.15); spot.updateMatrixWorld(true); }
   pigeon.traverse((o) => { if ((o as T.Mesh).isMesh) { const m = (o as T.Mesh).material as T.MeshStandardMaterial; m.roughness = 0.85; m.metalness = 0; o.frustumCulled = false; } });
   const bone = (n: string) => pigeon.getObjectByName(n) as T.Bone;
   const neck = bone("Neck"), head = bone("Head"), bodyB = bone("Body"), tail = bone("Tail");
