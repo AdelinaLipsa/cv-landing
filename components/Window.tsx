@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
+import { motion, useSpring, useTransform, type MotionValue } from "motion/react";
 import type * as T from "three";
-import Counter from "./Counter";
 import DecryptedText from "./DecryptedText";
 import { profile } from "@/content/cv";
 import { sfx } from "@/lib/sfx";
@@ -90,6 +90,44 @@ function quadMatrix(w: number, h: number, [[x0, y0], [x1, y1], [x2, y2], [x3, y3
   return `matrix3d(${[a / w, d / w, 0, g / w, b / h, e / h, 0, k / h, 0, 0, 1, 0, x0, y0, 0, 1].join(",")})`;
 }
 
+// ---------- her desk clock: a little LCD clock on the window frame ----------
+// Seven-segment digits, 9 x 13 like RamenAmp's (and Winamp's), the unlit segments ghosting through.
+const SEG: [string, number, number, number, number][] = [["a", 2, 0, 5, 2], ["b", 7, 1, 2, 5], ["c", 7, 7, 2, 5], ["d", 2, 11, 5, 2], ["e", 0, 7, 2, 5], ["f", 0, 1, 2, 5], ["g", 2, 6, 5, 1]];
+const DIGITS = ["abcdef", "bc", "abged", "abgcd", "fgbc", "afgcd", "afgedc", "abc", "abcdefg", "abcdfg"];
+const segsOf = (ch: string) => (ch === "-" ? "g" : DIGITS[+ch] ?? "");
+const Seg = ({ on, ghost = true }: { on: string; ghost?: boolean }) => (
+  <svg viewBox="0 0 9 13" shapeRendering="crispEdges" aria-hidden="true">
+    {SEG.map(([k, x, y, w, h]) => (on.includes(k) ? <rect key={k} x={x} y={y} width={w} height={h} className={s.lit} /> : ghost && <rect key={k} x={x} y={y} width={w} height={h} />))}
+  </svg>
+);
+// The digits still roll like the Counter did (same spring, same shortest way round), over a fixed ghost 8.
+function RollNum({ mv, n }: { mv: MotionValue<number>; n: number }) {
+  const y = useTransform(mv, (v) => { const o = (10 + n - (v % 10)) % 10; return `${(o > 5 ? o - 10 : o) * 100}%`; });
+  return <motion.span className={s.roll} style={{ y }}><Seg on={DIGITS[n]} ghost={false} /></motion.span>;
+}
+function Roll({ v }: { v: number }) {
+  const mv = useSpring(v);
+  useEffect(() => { mv.set(v); }, [mv, v]);
+  return <span className={s.digit}><Seg on="" />{DIGITS.map((_, n) => <RollNum key={n} mv={mv} n={n} />)}</span>;
+}
+// Pixel weather, 9 x 9, the way a cheap weather clock draws it.
+const CLOUD = ["...###...", "..#####..", ".########", "#########", ".#######."];
+const PIX: Record<Kind | "night", string[]> = {
+  clear: ["....#....", ".#.....#.", "...###...", "..#####..", "#.#####.#", "..#####..", "...###...", ".#.....#.", "....#...."],
+  night: ["..###....", ".###...#.", "###......", "###......", "###...#..", "###......", ".###.....", "..####...", "...##...."],
+  clouds: [".........", ".........", ...CLOUD, ".........", "........."],
+  fog: [".........", "#######..", ".........", "..#######", ".........", "#######..", ".........", "..#######", "........."],
+  drizzle: [...CLOUD, ".........", "..#...#..", ".........", "#...#...#"],
+  rain: [...CLOUD, ".#..#..#.", "#..#..#..", ".........", ".#..#..#."],
+  snow: [...CLOUD, ".........", "#.#...#.#", ".#.....#.", "#.#...#.#"],
+  storm: [...CLOUD, "....##...", "...##....", "....##...", "...#....."],
+};
+const Pix = ({ rows }: { rows: string[] }) => (
+  <svg viewBox="0 0 9 9" shapeRendering="crispEdges" aria-hidden="true" className={s.pix}>
+    <path className={s.lit} d={rows.flatMap((r, y) => [...r].map((c, x) => (c === "#" ? `M${x} ${y}h1v1h-1z` : ""))).join("")} />
+  </svg>
+);
+
 export default function Window() {
   const host = useRef<HTMLDivElement>(null), note = useRef<HTMLDivElement>(null);
   const [now, setNow] = useState<ReturnType<typeof herClock> | null>(null);
@@ -99,7 +137,17 @@ export default function Window() {
   const live = useRef<Live>({ wx: null, onHot: () => {}, onNote: () => {}, noteAspect: () => 1 });
   live.current.wx = wx;
   live.current.onHot = (h, x, y) => setHot((o) => (o.h === h && Math.abs(o.x - x) < 1 && Math.abs(o.y - y) < 1 ? o : { h, x, y }));
-  live.current.onNote = (q) => { const n = note.current; if (!n) return; n.style.transform = quadMatrix(n.offsetWidth, n.offsetHeight, q); n.dataset.glued = ""; };
+  live.current.onNote = (q) => {
+    const n = note.current, box = host.current; if (!n || !box) return;
+    // on a phone the frame post is a sliver at the edge and the glued note too small to read: it sits flat on the
+    // glass under her clock instead (CSS)
+    if (box.clientWidth <= 700) { if (n.dataset.glued !== undefined) { n.style.transform = ""; delete n.dataset.glued; } return; }
+    // the whole note stays in view: where the frame post nears an edge (a wide lens, her head turned) it slides in
+    const xs = q.map((p) => p[0]), ys = q.map((p) => p[1]), m = 14;
+    const dx = Math.max(0, m - Math.min(...xs)) - Math.max(0, Math.max(...xs) - box.clientWidth + m);
+    const dy = Math.max(0, m - Math.min(...ys)) - Math.max(0, Math.max(...ys) - box.clientHeight + m);
+    n.style.transform = quadMatrix(n.offsetWidth, n.offsetHeight, q.map(([x, y]) => [x + dx, y + dy])); n.dataset.glued = "";
+  };
   live.current.noteAspect = () => (note.current ? note.current.offsetHeight / Math.max(1, note.current.offsetWidth) : 1);
 
   useEffect(() => {
@@ -142,27 +190,46 @@ export default function Window() {
   const copy = () => { void navigator.clipboard?.writeText(profile.email).then(() => { sfx.tink(); setCopied(true); window.setTimeout(() => setCopied(false), 1800); }); };
   const sky = now ? skyAt(now.hf) : null;
   const gap = !now ? "" : now.ahead === 0 ? "same time as you" : `${Math.abs(now.ahead)}h ${now.ahead > 0 ? "ahead of" : "behind"} you`;
-  const w = wx?.words ? ` · ${wx.temp !== null ? `${wx.temp}°, ` : ""}${wx.words}` : "";
   return (
     <div className={s.window} data-night={sky && sky.night > 0.5 ? "" : undefined}>
       <img className={s.poster} src={`${BASE}${sky && sky.night > 0.5 ? "poster-night" : "poster-day"}.webp`} alt="" aria-hidden="true" data-gone={ready || undefined} />
       <div ref={host} className={s.stage} aria-hidden="true" />
       <span className={s.grain} aria-hidden="true" />
+      {/* Her desk clock, leaning on the window frame: a little LCD clock, her time and her weather */}
       <div className={s.clock}>
         <span className={s.status}><i aria-hidden="true" />Open to product roles</span>
-        <span className={s.time} role="timer" aria-label={now ? `My time: ${String(now.h).padStart(2, "0")}:${String(now.m).padStart(2, "0")}` : "My time"}>
-          <Counter value={now?.h ?? 0} places={[10, 1]} fontSize={44} padding={4} gap={0} horizontalPadding={0} borderRadius={0} textColor="#fff" fontWeight={600} gradientFrom="transparent" gradientTo="transparent" />
-          <b aria-hidden="true">:</b>
-          <Counter value={now?.m ?? 0} places={[10, 1]} fontSize={44} padding={4} gap={0} horizontalPadding={0} borderRadius={0} textColor="#fff" fontWeight={600} gradientFrom="transparent" gradientTo="transparent" />
+        <span className={s.lcd}>
+          <span className={s.time} role="timer" aria-label={now ? `My time: ${String(now.h).padStart(2, "0")}:${String(now.m).padStart(2, "0")}` : "My time"}>
+            <Roll v={Math.floor((now?.h ?? 0) / 10)} /><Roll v={now?.h ?? 0} />
+            <svg viewBox="0 0 2 13" shapeRendering="crispEdges" aria-hidden="true" className={s.colon}><rect y="3" width="2" height="2" /><rect y="8" width="2" height="2" /></svg>
+            <Roll v={Math.floor((now?.m ?? 0) / 10)} /><Roll v={now?.m ?? 0} />
+          </span>
+          <span className={s.wx} role="img" aria-label={wx?.words ? `${wx.temp !== null ? `${wx.temp}°, ` : ""}${wx.words}` : "Bucharest weather"}>
+            <Pix rows={wx ? PIX[wx.kind === "clear" && sky && sky.night > 0.5 ? "night" : wx.kind] : []} />
+            <span className={s.temp}>
+              {[...(wx?.temp != null ? String(wx.temp) : "").padStart(2, " ")].map((c, i) => <Seg key={i} on={segsOf(c)} />)}
+              <svg viewBox="0 0 3 3" shapeRendering="crispEdges" aria-hidden="true" className={s.deg}><path className={wx?.temp != null ? s.lit : undefined} d="M0 0h3v3h-3zM1 1v1h1v-1z" fillRule="evenodd" /></svg>
+            </span>
+          </span>
         </span>
-        <span className={s.skyNote}>{now ? `${partOfDay(now.h)} in Bucharest · ${gap}${w}` : "Bucharest"}</span>
+        <span className={s.skyNote}>{now ? <><span>{partOfDay(now.h)} in Bucharest</span><b aria-hidden="true"> · </b><span>{gap}</span></> : "Bucharest"}</span>
       </div>
       {/* A Post-it stuck on her window's frame: how to reach her, plain text, readable at a glance */}
       <div ref={note} className={s.note}>
-        <button type="button" onClick={copy} aria-label={`Copy ${profile.email}`} className={copied ? s.copied : undefined}>
-          <DecryptedText key={copied ? "y" : "n"} text={copied ? "copied ✓" : profile.email} animateOn={copied ? "view" : "hover"} speed={30} maxIterations={8} sequential={copied} />
-        </button>
-        <a href={profile.booking} target="_blank" rel="noopener">30 min on Calendly ↗</a>
+        <strong>Hiring? Two ways in:</strong>
+        <ol>
+          <li>
+            <span className={s.label}>Email · click to copy</span>
+            <button type="button" onClick={copy} aria-label={`Copy my email address, ${profile.email}`} className={copied ? s.copied : undefined}>
+              <DecryptedText key={copied ? "y" : "n"} text={copied ? "copied, talk soon ✓" : profile.email} animateOn={copied ? "view" : "hover"} speed={30} maxIterations={8} sequential={copied} />
+            </button>
+          </li>
+          <li>
+            <span className={s.label}>30-min call</span>
+            <a href={profile.booking} target="_blank" rel="noopener" aria-label="Book a 30-minute call on Calendly (opens in a new tab)">Book on Calendly ↗</a>
+          </li>
+        </ol>
+        <small>Full-time or contract.</small>
       </div>
       <span className={s.hint} data-on={hot.h || undefined} style={{ left: `${hot.x}%`, top: `${hot.y}%` }} aria-hidden="true">{hot.h === "pigeon" ? "coo?" : hot.h === "mug" ? "take a sip" : ""}</span>
     </div>
@@ -478,8 +545,8 @@ async function mount(el: HTMLElement, live: React.RefObject<Live>, alive: () => 
   let hot: Hot = null;
   const project = (p: T.Vector3) => { const v = p.clone().project(camera); return [(v.x * 0.5 + 0.5) * 100, (-v.y * 0.5 + 0.5) * 100]; };
   // The Post-it, stuck on the frame post right of the middle pane (mullion and the two sash lips, 12 cm of white PVC,
-  // build_view.py): 14 cm square, a touch crooked. Its corners follow her gaze.
-  const NOTE = { c: new THREE.Vector3(0.33, 1.43, -0.112), w: 0.14, tilt: -0.045 };
+  // build_view.py): 15.5 cm square, under 2° crooked so it reads. Its corners follow her gaze.
+  const NOTE = { c: new THREE.Vector3(0.33, 1.43, -0.112), w: 0.155, tilt: -0.03 };
   const glueNote = () => {
     camera.updateMatrixWorld();
     const hw = NOTE.w / 2, hh = hw * live.current.noteAspect(), cs = Math.cos(NOTE.tilt), sn = Math.sin(NOTE.tilt);
