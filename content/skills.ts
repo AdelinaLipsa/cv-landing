@@ -30,7 +30,7 @@ export const things: Thing[] = [
     used: [
       "Product ownership", "Backlog management", "Requirements gathering", "PRDs", "SOPs", "Stakeholder management", "Cross-functional delivery", "Vendor evaluation", "Cost modelling", "Business plans",
       "Standups", "Dependency & risk tracking", "Change management", "Status reporting",
-      "Gateway & acquirer integration", "3DS", "SCA", "Alternative payment methods", "Buy Now Pay Later",
+      "Gateway & acquirer integration", "3DS", "SCA", "Alternative payment methods", "Buy Now Pay Later", "Fraud prevention (Kount)", "Chargebacks & disputes",
       "SQL", "Datadog", "Log analysis", "Approval & decline analysis", "Checkout conversion", "Dashboards & reporting",
       "ClickUp", "Factorial",
     ],
