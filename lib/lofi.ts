@@ -27,7 +27,7 @@ const rnd = (n: number) => {
   return x - Math.floor(x);
 };
 
-export type Lofi = { stop: () => void; ctx: AudioContext };
+export type Lofi = { stop: () => void; ctx: AudioContext; out: GainNode; pan: StereoPannerNode };
 
 export function startLofi(onEnd: () => void): Lofi {
   const ctx = new AudioContext();
@@ -38,7 +38,10 @@ export function startLofi(onEnd: () => void): Lofi {
   warm.type = "lowpass";
   warm.frequency.value = 1900;
   warm.Q.value = 0.4;
-  master.connect(warm).connect(ctx.destination);
+  // RamenAmp's volume and balance sit after the analyser, so turning it down never quiets the visuals (like Winamp).
+  const out = ctx.createGain();
+  const pan = ctx.createStereoPanner();
+  master.connect(warm).connect(out).connect(pan).connect(ctx.destination);
   // What the photo's equaliser reads.
   const analyser = ctx.createAnalyser();
   analyser.fftSize = 256;
@@ -148,5 +151,5 @@ export function startLofi(onEnd: () => void): Lofi {
     setTimeout(() => { if (bus.analyser === analyser) bus.analyser = null; ctx.close(); onEnd(); }, 1700);
   }
 
-  return { stop, ctx };
+  return { stop, ctx, out, pan };
 }

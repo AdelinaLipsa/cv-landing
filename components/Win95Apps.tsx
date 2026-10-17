@@ -1,84 +1,10 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import { profile } from "@/content/cv";
-import { bus } from "@/lib/audioBus";
-import type { Lofi } from "@/lib/lofi";
 import { sfx } from "@/lib/sfx";
 import s from "./Win95.module.css";
 
-// The fun half of the old computer: a music player, a messenger, the office assistant, and the blue screen.
-
-/* ---------- RamenAmp: a 90s skinned player for the site's own pixel lofi ---------- */
-const TRACK = "Adelina - Ramen in the Dark (pixel lofi)";
-const LENGTH = 600; // the lofi plays ten minutes
-const mmss = (t: number) => `${String(Math.floor(t / 60)).padStart(2, "0")}:${String(Math.floor(t % 60)).padStart(2, "0")}`;
-
-export function Player() {
-  const [state, setState] = useState<"stopped" | "playing" | "paused">("stopped");
-  const [time, setTime] = useState(0);
-  const lofi = useRef<Lofi | null>(null);
-  const t0 = useRef(0);
-  const bars = useRef<HTMLCanvasElement>(null);
-
-  const stop = () => { lofi.current?.stop(); lofi.current = null; setState("stopped"); setTime(0); };
-  const play = async () => {
-    if (lofi.current) { await lofi.current.ctx.resume(); setState("playing"); return; }
-    const { startLofi } = await import("@/lib/lofi");
-    const p = startLofi(() => { if (lofi.current === p) { lofi.current = null; setState("stopped"); setTime(0); } });
-    lofi.current = p; t0.current = p.ctx.currentTime;
-    setState("playing");
-  };
-  const pause = () => { if (lofi.current) { lofi.current.ctx.suspend(); setState("paused"); } };
-  const restart = () => { stop(); setTimeout(play, 60); };
-
-  // The clock and the spectrum: 19 bars, green into yellow into red, with peaks that fall.
-  useEffect(() => {
-    const cv = bars.current!, g = cv.getContext("2d")!;
-    const data = new Uint8Array(128), peaks = new Array(19).fill(0);
-    let raf = 0;
-    const draw = () => {
-      raf = requestAnimationFrame(draw);
-      if (lofi.current) { const t = Math.floor(lofi.current.ctx.currentTime - t0.current); setTime((v) => (v === t ? v : t)); }
-      g.fillStyle = "#000"; g.fillRect(0, 0, cv.width, cv.height);
-      const a = bus.analyser;
-      if (a && state === "playing") a.getByteFrequencyData(data); else data.fill(0);
-      for (let i = 0; i < 19; i++) {
-        const h = Math.round((data[i + 1] / 255) * 16);
-        peaks[i] = Math.max(h, peaks[i] - 0.25);
-        for (let y = 0; y < h; y++) { g.fillStyle = y > 12 ? "#ff3a1a" : y > 8 ? "#e8d81a" : "#2ce02c"; g.fillRect(i * 4, 15 - y, 3, 1); }
-        g.fillStyle = "#c8c8c8"; g.fillRect(i * 4, 15 - Math.round(peaks[i]), 3, 1);
-      }
-    };
-    draw();
-    return () => cancelAnimationFrame(raf);
-  }, [state]);
-  useEffect(() => () => lofi.current?.stop(), []);
-
-  return (
-    <div className={s.amp}>
-      <div className={s.ampDisplay}>
-        <div className={s.ampLeft}>
-          <span className={s.ampState}>{state === "playing" ? "▶" : state === "paused" ? "❚❚" : "■"}</span>
-          <span className={s.ampTime}>{mmss(time)}</span>
-          <canvas ref={bars} width={76} height={16} className={s.ampBars} aria-hidden="true" />
-        </div>
-        <div className={s.ampRight}>
-          <div className={s.ampMarquee}><span>{`1. ${TRACK} (10:00)  ***  `.repeat(2)}</span></div>
-          <div className={s.ampInfo}><b>128</b> kbps <b>44</b> kHz <i data-on={state !== "stopped" || undefined}>stereo</i></div>
-        </div>
-      </div>
-      <div className={s.ampSeek}><span style={{ width: `${Math.min(100, (time / LENGTH) * 100)}%` }} /></div>
-      <div className={s.ampButtons}>
-        <button type="button" onClick={restart} aria-label="Previous">⏮</button>
-        <button type="button" onClick={play} aria-label="Play">▶</button>
-        <button type="button" onClick={pause} aria-label="Pause">❚❚</button>
-        <button type="button" onClick={stop} aria-label="Stop">■</button>
-        <button type="button" onClick={restart} aria-label="Next">⏭</button>
-        <span className={s.ampLogo}>RamenAmp</span>
-      </div>
-    </div>
-  );
-}
+// The fun half of the old computer (the music player lives in RamenAmp.tsx): a messenger, the office assistant, and the blue screen.
 
 /* ---------- ISeekYou: the 90s messenger, wired to her WhatsApp ---------- */
 export const Flower = ({ on = true, size = 14 }: { on?: boolean; size?: number }) => (

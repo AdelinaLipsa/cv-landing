@@ -9,15 +9,16 @@ import { useCalm } from "@/lib/useCalm";
 import { flag, newBoard, reveal, type Board } from "@/lib/mines";
 import s from "./Win95.module.css";
 import Solitaire from "./Solitaire";
-import { Assistant, Bsod, Messenger, Player } from "./Win95Apps";
+import { Assistant, Bsod, Messenger } from "./Win95Apps";
+import { Player, RamenDrop } from "./RamenAmp";
 
 const Pipes = dynamic(() => import("./Pipes"), { ssr: false }); // three.js loads only when the screen saver starts
 
 // The retro computer boots: a Windows 95 desktop with her CV as files, Solitaire, Minesweeper renamed Scope Mines,
 // a Recycle Bin full of what this site deleted, a music player, a messenger, an office assistant, a screen saver,
 // and DONT_CLICK.exe. Start → Shut Down ends on the famous orange line.
-type App = "readme" | "career" | "saints" | "mines" | "solitaire" | "player" | "messenger" | "crash" | "bin";
-type Win = { id: App; x: number; y: number; z: number };
+type App = "readme" | "career" | "saints" | "mines" | "solitaire" | "player" | "vis" | "messenger" | "crash" | "bin";
+type Win = { id: App; x: number; y: number; z: number; max?: boolean };
 
 // Tiny pixel icons, drawn from maps like the arcade sprites. Letters pick colours from PAL.
 const PAL: Record<string, string> = { k: "#000", w: "#fff", g: "#c0c0c0", d: "#808080", y: "#ffd700", b: "#000080", c: "#00a0a0", r: "#c00000", l: "#5fd0ff", o: "#ff8000", n: "#2ce02c", e: "#e83030" };
@@ -28,6 +29,7 @@ const ICONS: Record<App, string[]> = {
   mines: ["gggggggggg", "gwwwwwwwwd", "gwg.k.gggd", "gwgkkkkggd", "gw.kwkk.gd", "gwgkkkkggd", "gwg.k.gggd", "gwggggggd.", "gwggggggd.", "dddddddddd"],
   solitaire: ["..kkkkkk..", ".kwwwwwwk.", "kwrwwwkkwk", "kwrrwkwwwk", "kwwrwkkkwk", "kkkkkkwwwk", "kwbbbbkkwk", "kwbbbbkwwk", "kwbbbbkkk.", "kkkkkkk..."],
   player: ["kkkkkkkkkk", "kddddddddk", "kdkkkkkkdk", "kdknknnkdk", "kdkkkkkkdk", "kddddddddk", "kdgdgdgdgk", "kddddddddk", "kdoooooodk", "kkkkkkkkkk"],
+  vis: ["kkkkkkkkkk", "kbbbbbbbbk", "kbbeeeebbk", "kbeooooebk", "kbeoyyoebk", "kbeoyyoebk", "kbeooooebk", "kbbeeeebbk", "kbbbbbbbbk", "kkkkkkkkkk"],
   messenger: ["....nn....", "...nnnn...", ".nn.nn.nn.", "nnnneennnn", ".nneeeenn.", ".nneeeenn.", "nnnneennnn", ".nn.nn.nn.", "...nnnn...", "....nn...."],
   crash: ["kkkkkkkkkk", "kbbbbbbbbk", "kwwwwwwwwk", "kwrwwwwrwk", "kwwrwwrwwk", "kwwwrrwwwk", "kwwwrrwwwk", "kwwrwwrwwk", "kwrwwwwrwk", "kkkkkkkkkk"],
   bin: ["..kkkkkk..", ".kggggggk.", "kkkkkkkkkk", ".kwgwgwgk.", ".kwgwgwgk.", ".kwgwgwgk.", ".kwgwgwgk.", ".kwgwgwgk.", ".kwgwgwgk.", "..kkkkkk.."],
@@ -38,9 +40,9 @@ const Icon = ({ app, size = 32 }: { app: App; size?: number }) => (
   </svg>
 );
 
-const NAMES: Record<App, string> = { readme: "README.txt", career: "Career.txt", saints: "Ruined_Saints.bmp", mines: "Scope Mines", solitaire: "Solitaire", player: "RamenAmp", messenger: "ISeekYou", crash: "DONT_CLICK.exe", bin: "Recycle Bin" };
-const TITLES: Record<App, string> = { readme: "README.txt - Notepad", career: "Career.txt - Notepad", saints: "Ruined_Saints.bmp - Paint", mines: "Scope Mines", solitaire: "Solitaire", player: "RamenAmp", messenger: "ISeekYou", crash: "DONT_CLICK.exe", bin: "Recycle Bin" };
-const DESKTOP: App[] = ["readme", "career", "saints", "mines", "solitaire", "player", "messenger", "crash", "bin"];
+const NAMES: Record<App, string> = { readme: "README.txt", career: "Career.txt", saints: "Ruined_Saints.bmp", mines: "Scope Mines", solitaire: "Solitaire", player: "RamenAmp", vis: "RamenDrop", messenger: "ISeekYou", crash: "DONT_CLICK.exe", bin: "Recycle Bin" };
+const TITLES: Record<App, string> = { readme: "README.txt - Notepad", career: "Career.txt - Notepad", saints: "Ruined_Saints.bmp - Paint", mines: "Scope Mines", solitaire: "Solitaire", player: "RamenAmp", vis: "RamenDrop", messenger: "ISeekYou", crash: "DONT_CLICK.exe", bin: "Recycle Bin" };
+const DESKTOP: App[] = ["readme", "career", "saints", "mines", "solitaire", "player", "vis", "messenger", "crash", "bin"];
 
 function Readme() {
   return (
@@ -57,6 +59,7 @@ Have a look around.
   Scope Mines        Minesweeper, except every
                      mine is a scope change
   RamenAmp           music to eat ramen in the dark to
+  RamenDrop          what that music looks like
   ISeekYou           say hi. I answer.
 
 Don't open DONT_CLICK.exe.
@@ -128,7 +131,8 @@ function Mines() {
   );
 }
 
-const BODY: Record<App, () => React.ReactNode> = { readme: Readme, career: Career, saints: Saints, mines: Mines, solitaire: Solitaire, player: Player, messenger: Messenger, crash: () => null, bin: Bin };
+type BodyProps = { open: (id: App) => void; close: () => void; drag: (e: React.PointerEvent) => void };
+const BODY: Record<App, (p: BodyProps) => React.ReactNode> = { readme: Readme, career: Career, saints: Saints, mines: Mines, solitaire: Solitaire, player: Player, vis: RamenDrop, messenger: Messenger, crash: () => null, bin: Bin };
 
 // The sky behind the splash and on the desktop: value noise, five octaves, painted small and scaled up so it blurs soft.
 function Clouds({ className }: { className?: string }) {
@@ -288,18 +292,23 @@ export default function Win95({ onClose, contact }: { onClose: () => void; conta
       top.current += 1;
       const had = ws.find((w) => w.id === id);
       if (had) return ws.map((w) => (w.id === id ? { ...w, z: top.current } : w));
-      const n = ws.length;
+      const n = ws.length, amp = ws.find((w) => w.id === "player");
+      // RamenDrop docks under RamenAmp, the way Winamp's windows stacked (the skin is 232px tall at 2x).
+      if (id === "vis" && amp) return [...ws, { id, x: amp.x, y: amp.y + 232, z: top.current }];
       return [...ws, { id, x: 120 + n * 56, y: 30 + n * 40, z: top.current }];
     });
   };
   const focus = (id: App) => setWins((ws) => { top.current += 1; return ws.map((w) => (w.id === id ? { ...w, z: top.current } : w)); });
   const close = (id: App) => setWins((ws) => ws.filter((w) => w.id !== id));
+  const maximize = (id: App) => setWins((ws) => ws.map((w) => (w.id === id ? { ...w, max: !w.max } : w)));
 
   // Drag a window by its title bar.
   const drag = (id: App) => (e: React.PointerEvent) => {
     if ((e.target as HTMLElement).closest("button")) return;
     focus(id);
-    const w = wins.find((x) => x.id === id)!, sx = e.clientX - w.x, sy = e.clientY - w.y;
+    const w = wins.find((x) => x.id === id)!;
+    if (w.max) return;
+    const sx = e.clientX - w.x, sy = e.clientY - w.y;
     const move = (m: PointerEvent) => setWins((ws) => ws.map((x) => (x.id === id ? { ...x, x: Math.max(-200, m.clientX - sx), y: Math.max(0, m.clientY - sy) } : x)));
     const up = () => { window.removeEventListener("pointermove", move); window.removeEventListener("pointerup", up); };
     window.addEventListener("pointermove", move);
@@ -330,12 +339,16 @@ export default function Win95({ onClose, contact }: { onClose: () => void; conta
       {wins.map((w) => {
         const Body = BODY[w.id];
         return (
-          <section key={w.id} className={s.win} style={{ left: w.x, top: w.y, zIndex: w.z }} onPointerDown={() => focus(w.id)} aria-label={TITLES[w.id]} data-app={w.id}>
-            <header className={s.title} onPointerDown={drag(w.id)} data-active={w.z === top.current || undefined}>
-              <Icon app={w.id} size={14} /><span>{TITLES[w.id]}</span>
-              <button type="button" className={`${s.btn} ${s.x}`} onClick={() => close(w.id)} aria-label={`Close ${NAMES[w.id]}`}>✕</button>
-            </header>
-            <div className={s.winBody}><Body /></div>
+          <section key={w.id} className={s.win} style={{ left: w.x, top: w.y, zIndex: w.z }} onPointerDown={() => focus(w.id)} aria-label={TITLES[w.id]} data-app={w.id} data-max={w.max || undefined}>
+            {/* RamenAmp draws its own title bar, like a skinned Winamp; RamenDrop can fill the screen */}
+            {w.id !== "player" && (
+              <header className={s.title} onPointerDown={drag(w.id)} onDoubleClick={w.id === "vis" ? () => maximize(w.id) : undefined} data-active={w.z === top.current || undefined}>
+                <Icon app={w.id} size={14} /><span>{TITLES[w.id]}</span>
+                {w.id === "vis" && <button type="button" className={`${s.btn} ${s.x}`} onClick={() => maximize(w.id)} aria-label={w.max ? `Restore ${NAMES[w.id]}` : `Maximize ${NAMES[w.id]}`}>{w.max ? "❐" : "□"}</button>}
+                <button type="button" className={`${s.btn} ${s.x}`} onClick={() => close(w.id)} aria-label={`Close ${NAMES[w.id]}`}>✕</button>
+              </header>
+            )}
+            <div className={s.winBody}><Body open={open} close={() => close(w.id)} drag={drag(w.id)} /></div>
           </section>
         );
       })}
