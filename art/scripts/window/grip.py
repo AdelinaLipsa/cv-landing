@@ -146,6 +146,23 @@ def fix_normals():
                 bpy.ops.mesh.customdata_custom_splitnormals_clear()
         bm = bmesh.new(); bm.from_mesh(me); bmesh.ops.recalc_face_normals(bm, faces=bm.faces); bm.to_mesh(me); bm.free()
         for poly in me.polygons: poly.use_smooth = True
+def fix_wrist_skin(box=(0.0, 0.375, 0.0, 0.063), ref=(158, 112, 92), feather=0.015):
+    """The download paints the skin of its wrist and forearm stub (this UV box, only those faces sample it) redder than
+    the back of the hand; at her bent left wrist it shows above the cuff as a pale pink patch. Pull the box's colour,
+    row by row, to the hand's own tone (ref, 0-255), easing out over feather at its open edges. Once per image."""
+    import numpy as np
+    img = next(n.image for n in D.objects["HandLMesh"].data.materials[0].node_tree.nodes
+               if n.type == "TEX_IMAGE" and n.image and any(l.to_socket.name == "Base Color" for l in n.outputs[0].links))
+    if img.get("wrist_fixed"): return
+    W_, H_ = img.size; px = np.empty(W_ * H_ * 4, np.float32); img.pixels.foreach_get(px); px = px.reshape(H_, W_, 4)
+    u0, u1, v0, v1 = box; x0, x1 = int(u0 * W_), int(min(1, u1 + feather) * W_); y1 = int(min(1, v1 + feather) * H_)
+    xs = (np.arange(x0, x1) + 0.5) / W_; target = np.array(ref, np.float32) / 255
+    wx = np.clip((u1 + feather - xs) / feather, 0, 1)   # 1 inside the box, easing to 0 past its right edge
+    for y in range(y1):                                  # rows from the bottom (v = 0)
+        wy = min(1.0, max(0.0, (v1 + feather - (y + 0.5) / H_) / feather))
+        row = px[y, x0:x1, :3]; gain = target / np.maximum(row[wx >= 1].mean(axis=0), 1e-4)
+        k = (wx * wy)[:, None]; px[y, x0:x1, :3] = np.clip(row * (1 + k * (gain - 1)), 0, 1)
+    img.pixels.foreach_set(px.ravel()); img.update(); img.pack(); img["wrist_fixed"] = True
 def preserve_volume():
     for h in ("HandLMesh", "HandRMesh"):
         for m in D.objects[h].modifiers:
@@ -162,7 +179,7 @@ POSE = globals().get("GRIP_POSE") or {
               "INDEX": (15, 30, 0, 0), "MIDDLE_F": (20, 25, 10, 0), "RING": (20, 15, 15, 0), "PINK": (15, 10, 0, 0), "THUMB": (5, 40, 0, 10, 5)},
 }
 if not globals().get("GRIP_TOOLS"):
-    preserve_volume(); fix_normals()
+    preserve_volume(); fix_normals(); fix_wrist_skin()
     for h, p in POSE.items():
         a = D.objects[h]; rest_wrist(a)
         for f in FINGERS: finger(a, f, *p[f])
