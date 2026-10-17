@@ -28,7 +28,6 @@ import EqualizerRing from "../EqualizerRing";
 import ThemeToggle from "../ThemeToggle";
 import Magnet from "../Magnet";
 import DecryptedText from "../DecryptedText";
-import ElectricBorder from "../ElectricBorder";
 import QuickRead from "../QuickRead";
 import GuestbookButton from "../Guestbook";
 import { sfx } from "@/lib/sfx";
@@ -194,14 +193,10 @@ export default function Home({ ui }: { ui: UI }) {
           </div>
           {/* Skip the cutscene: the whole CV in 30 seconds, for the busy */}
           {!touring && (
-            // The recruiter's shortcut: a live current runs round it (React Bits ElectricBorder). Calm mode: just the button.
-            <Magnet padding={40} magnetStrength={4} disabled={!!reduce}>
-              {reduce ? quick : (
-                <ElectricBorder color="#3355ff" speed={0.8} chaos={0.035} borderRadius={23} className={s.quickWrap}>
-                  {quick}
-                </ElectricBorder>
-              )}
-            </Magnet>
+            // The recruiter's shortcut: a quiet text link under the two buttons, its underline draws in on hover
+            <button type="button" className={s.quick} onClick={() => ui.sheet("The 30-second version", <QuickRead contact={ui.contact} />)}>
+              <span className={s.quickText}>Busy? Read the 30-second version</span> <span className={s.quickArrow} aria-hidden="true">→</span>
+            </button>
           )}
           {touring && era === 0 && <VisitorCounter />}
           <div className={`${s.dock} ${s.dropper}`} {...drop("home.dock")}>

@@ -260,10 +260,19 @@
 .termHint { display: none; color: var(--on-ink-muted); }
 @media (hover: hover) and (pointer: fine) { .termHint { display: inline; } }
 
-/* "Busy? The 30-second version": a quiet link under the hero buttons */
-/* The 30-second version: a night pill like the build button, with an electric border round it */
-.quickWrap { display: inline-block; margin-top: 8px; border-radius: 23px; }
-.quick { padding: 0 20px; box-shadow: none; }
+/* "Busy? The 30-second version": a quiet link under the hero buttons. A faint underline at rest says "link";
+   on hover/focus an ink one draws over it left to right and the arrow nudges on. */
+.quick { margin-top: -4px; padding: 2px 0; border: 0; background: none; font: inherit; font-size: 15px; font-weight: 500; color: var(--ink); cursor: pointer; text-align: left; }
+.quickText {
+  background: linear-gradient(currentColor, currentColor) 0 100% / 0% 1.5px no-repeat, linear-gradient(var(--line), var(--line)) 0 100% / 100% 1px no-repeat;
+  padding-bottom: 3px; transition: background-size 0.4s var(--ease);
+}
+.quickArrow { display: inline-block; transition: transform 0.4s var(--ease); }
+.quick:hover .quickText, .quick:focus-visible .quickText { background-size: 100% 1.5px, 100% 1px; }
+.quick:hover .quickArrow, .quick:focus-visible .quickArrow { transform: translateX(3px); }
+:global([data-era="0"]) .quick { color: var(--blueprint); font-weight: 400; } /* 2003: a plain blue underlined link */
+:global([data-era="0"]) .quickText { background: none; text-decoration: underline; }
+@media (prefers-reduced-motion: reduce) { .quickText, .quickArrow { transition: none; } .quick:hover .quickArrow, .quick:focus-visible .quickArrow { transform: none; } }
 
 /* The end of the page: the CTA, then her window full bleed, then a signed sign-off, clear of the bottom nav. */
 .outro { display: flex; flex-direction: column; gap: 40px; margin: 72px 0 0; padding: 48px 0 40px; border-top: 1px solid var(--line); }
