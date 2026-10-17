@@ -414,13 +414,22 @@ async function mount(el: HTMLElement, live: React.RefObject<Live>, alive: () => 
   pivot.attach(hands);
   const handsRest = { p: pivot.position.clone(), q: pivot.quaternion.clone() };
   let sipAt = -9, nextSip = 9 + Math.random() * 8;
-  const toMouth = camera.position.clone().add(new THREE.Vector3(0.02, -0.11, -0.06)).sub(pivot.position).multiplyScalar(0.5); // toward her lips: the rim comes up into the bottom of her view
-  const sip = () => { if (U.uTime.value - sipAt > 2.6) { sipAt = U.uTime.value; window.setTimeout(() => sfx.sip(), 650); } };
+  // A first-person sip: the mug comes most of the way to her lips (in her head's frame, so it lands there wherever
+  // she's looking), tips toward her so the rim and the chocolate fill the bottom of the view, her gaze dips onto it.
+  const SIP = { rise: 0.75, hold: 1.0, down: 0.8, reach: 0.9, tilt: 0.7, dip: 0.15, mouth: new THREE.Vector3(0, -0.07, -0.1) };
+  const baseQi = baseQ.clone().invert();
+  const restLocal = handsRest.p.clone().sub(camera.position).applyQuaternion(baseQi); // where her hands rest, seen from her eyes
+  const sip = () => { if (U.uTime.value - sipAt > SIP.rise + SIP.hold + SIP.down + 0.25) { sipAt = U.uTime.value; window.setTimeout(() => sfx.sip(), SIP.rise * 1000 + 50); } };
+  // the lens fogs from the steam while the mug is at her face, then clears
+  const haze = document.createElement("div"); haze.className = s.haze; el.appendChild(haze);
+  haze.style.backdropFilter = "blur(9px) brightness(1.1)"; // inline: the CSS build drops backdrop-filter from the module
+  let hazeWas = -1;
 
   // Steam off the hot chocolate
   const steamSpot = at("SteamSpot"), STEAM = 16;
   const steamMat = new THREE.SpriteMaterial({ map: smokeTex(THREE), color: 0xfff6ee, transparent: true, depthWrite: false, opacity: 0 });
   const steam = Array.from({ length: STEAM }, (_, i) => { const sp = new THREE.Sprite(steamMat.clone()); sp.userData.k = i / STEAM; scene.add(sp); return sp; });
+  const steamLocal = pivot.worldToLocal(steamSpot.clone()), steamAt = new THREE.Vector3(); // rides with the mug
 
   // A Dacia now and then, either way down the street
   let drive: { obj: T.Object3D; wheels: T.Object3D[]; x: number; dir: number; z: number; v: number; lights: T.Sprite[] } | null = null, nextCar = 4 + Math.random() * 6;
@@ -437,7 +446,13 @@ async function mount(el: HTMLElement, live: React.RefObject<Live>, alive: () => 
   }
 
   // Look and click
-  const ray = new THREE.Raycaster(), ndc = new THREE.Vector2(9, 9), lean = { x: 0, y: 0 };
+  const ray = new THREE.Raycaster(), ndc = new THREE.Vector2(9, 9);
+  // Her head turns toward the cursor: a critically damped spring on a target in -1..1 (the screen's edges), so it
+  // glides and settles. Her hands go partway with it, the way you'd turn your head holding a mug.
+  // On touch: a slow idle drift, and a finger on the view leads it (pan-y: vertical drags still scroll the page).
+  const LOOK = { yaw: 0.14, pitch: 0.08, follow: 0.6, w: 6.5 };
+  const look = { x: 0, y: 0, vx: 0, vy: 0, tx: 0, ty: 0, held: false };
+  let lookUp = LOOK.pitch; // how far up she may look: on a tall screen the wide lens already reaches the top of the frame (nothing built above it)
   let hot: Hot = null;
   const project = (p: T.Vector3) => { const v = p.clone().project(camera); return [(v.x * 0.5 + 0.5) * 100, (-v.y * 0.5 + 0.5) * 100]; };
   // The Post-it, stuck on the frame post right of the middle pane (mullion and the two sash lips, 12 cm of white PVC,
@@ -460,15 +475,16 @@ async function mount(el: HTMLElement, live: React.RefObject<Live>, alive: () => 
   const onMove = (e: PointerEvent) => {
     const r = el.getBoundingClientRect();
     ndc.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
-    lean.x = ndc.x; lean.y = ndc.y;
+    look.tx = Math.max(-1, Math.min(1, ndc.x)); look.ty = Math.max(-1, Math.min(1, ndc.y)); look.held = true;
     const h = pick(); if (h !== hot) { hot = h; el.style.cursor = h ? "pointer" : ""; }
     const [x, y] = project(h === "pigeon" ? head.getWorldPosition(new THREE.Vector3()).add(new THREE.Vector3(0, 0.12, 0)) : steamSpot.clone().add(new THREE.Vector3(0, 0.08, 0)));
     live.current.onHot(h, x, y);
     if (reduce) render();
   };
-  const onLeave = () => { ndc.set(9, 9); lean.x = lean.y = 0; hot = null; el.style.cursor = ""; live.current.onHot(null, 0, 0); };
-  const onClick = (e: PointerEvent) => { onMove(e); const h = pick(); if (h === "pigeon") coo(); else if (h === "mug") sip(); if (reduce) { tick(U.uTime.value + 1.2, 1.2); render(); } };
-  el.addEventListener("pointermove", onMove); el.addEventListener("pointerleave", onLeave); el.addEventListener("click", onClick as EventListener);
+  const onLeave = () => { ndc.set(9, 9); look.tx = look.ty = 0; look.held = false; hot = null; el.style.cursor = ""; live.current.onHot(null, 0, 0); };
+  const onClick = (e: PointerEvent) => { onMove(e); const h = pick(); if (h === "pigeon") coo(); else if (h === "mug") sip();
+    if (reduce) { tick(U.uTime.value + 1.2, 1.2); render(); if (h === "mug") window.setTimeout(() => { tick(U.uTime.value + 2, 0); render(); }, 1400); } }; // calm: the sip as two stills, then the view back
+  el.addEventListener("pointermove", onMove); el.addEventListener("pointerleave", onLeave); el.addEventListener("pointercancel", onLeave); el.addEventListener("click", onClick as EventListener);
 
   // The kit's tree by the bench, live: it sways in her wind, and its leaves follow the month
   // (green in summer, gold now in October, thinning in November, bare in winter).
@@ -562,6 +578,7 @@ async function mount(el: HTMLElement, live: React.RefObject<Live>, alive: () => 
     const need = 2 * Math.atan(Math.tan((62 * Math.PI) / 360) / camera.aspect) * (180 / Math.PI);
     camera.fov = Math.max(baseVfov, need);
     camera.updateProjectionMatrix();
+    lookUp = Math.max(0, Math.min(LOOK.pitch, (42 - camera.fov / 2) * (Math.PI / 180))); // the frame's top sits ~42° above her eyeline
     glueNote();
   };
   const ro = new ResizeObserver(() => { size(); render(); }); ro.observe(el);
@@ -596,17 +613,30 @@ async function mount(el: HTMLElement, live: React.RefObject<Live>, alive: () => 
 
   // ---------- the loop ----------
   let flashT = 99;
+  const eul = new THREE.Euler(), qHead = new THREE.Quaternion(), X = new THREE.Vector3(1, 0, 0);
   const spring = (k: keyof typeof cur, target: number, dt: number, w = 26) => { // critically damped: a snap, then still
     const x = cur[k] - target; const a = -w * w * x - 2 * w * vel[k]; vel[k] += a * dt; cur[k] += vel[k] * dt;
   };
   const tick = (t: number, dt: number) => {
     U.uTime.value = t;
-    // her gaze leans toward the cursor, with a slow breath
+    // her head turns toward the cursor, with a slow breath (calm: no look, no drift)
     const breathe = reduce ? 0 : Math.sin(t * 0.9) * 0.0035;
-    // she drinks on her own every so often (a click does it too); her gaze drops a little as the mug comes up
+    if (!reduce) {
+      if (touch && !look.held) { look.tx = Math.sin(t * 0.11) * 0.35; look.ty = Math.sin(t * 0.07 + 1.3) * 0.25; }
+      const h = Math.min(dt, 0.033), w = LOOK.w;
+      look.vx += (-w * w * (look.x - look.tx) - 2 * w * look.vx) * h; look.x += look.vx * h;
+      look.vy += (-w * w * (look.y - look.ty) - 2 * w * look.vy) * h; look.y += look.vy * h;
+    }
+    const yaw = -look.x * LOOK.yaw, pitch = look.y * (look.y > 0 ? lookUp : LOOK.pitch);
+    // she drinks on her own every so often (a click does it too)
     if (!reduce && t > nextSip) { sip(); nextSip = t + 15 + Math.random() * 10; }
-    const sipping = (() => { const x = t - sipAt; return x < 0.6 ? ease(x / 0.6) : x < 1.6 ? 1 : x < 2.3 ? 1 - ease((x - 1.6) / 0.7) : 0; })();
-    camera.quaternion.copy(baseQ).multiply(qa.setFromEuler(new THREE.Euler(lean.y * 0.02 + breathe - sipping * 0.07, -lean.x * 0.03, 0, "YXZ")));
+    const sx = t - sipAt, top = SIP.rise + SIP.hold, end = top + SIP.down;
+    const sipping = sx < SIP.rise ? ease(sx / SIP.rise) : sx < top ? 1 : sx < end ? 1 - ease((sx - top) / SIP.down) : 0;
+    camera.quaternion.copy(baseQ).multiply(qa.setFromEuler(eul.set(pitch + breathe - sipping * SIP.dip, yaw, 0, "YXZ")));
+    // the lens: fogs as the mug reaches her face, clears over ~1.5 s once it's down, from the edges in
+    const fog = reduce ? 0 : sx < top ? smooth((sx - SIP.rise * 0.6) / 0.7) : Math.min(1, Math.max(0, 1 - (sx - top - 0.3) / 1.5)) ** 1.6;
+    const f2 = Math.round(fog * 100) / 100;
+    if (f2 !== hazeWas) { hazeWas = f2; haze.style.opacity = String(f2); haze.style.transform = `scale(${0.8 + 0.2 * Math.min(1, f2 * 1.4)})`; }
     glueNote();
     // the pigeon
     poseAt -= dt;
@@ -617,17 +647,19 @@ async function mount(el: HTMLElement, live: React.RefObject<Live>, alive: () => 
     puff = Math.max(0, puff - dt * 0.8);
     const sc = 1 + Math.sin(t * 2.4) * 0.008 + puff * 0.09 * Math.sin(Math.min(1, (t - cooT) * 2) * Math.PI);
     bodyB.scale.set(sc, sc, sc);
-    // the sip: up toward her mouth, tilt, hold, down
-    const up = sipping;
-    pivot.position.copy(handsRest.p).addScaledVector(toMouth, up);
-    pivot.quaternion.copy(handsRest.q).multiply(qb.setFromAxisAngle(new THREE.Vector3(1, 0, 0), up * 0.38)); // a tip toward her, not a flip
+    // her hands: partway with her head at rest, all the way at her lips; up toward her mouth, tip, hold, down
+    const up = sipping, follow = LOOK.follow + (1 - LOOK.follow) * up;
+    qHead.copy(baseQ).multiply(qa.setFromEuler(eul.set(pitch * follow, yaw * follow, 0, "YXZ")));
+    pivot.position.copy(restLocal).lerp(SIP.mouth, up * SIP.reach).applyQuaternion(qHead).add(camera.position);
+    pivot.quaternion.copy(qHead).multiply(qa.setFromAxisAngle(X, up * SIP.tilt)).multiply(baseQi).multiply(handsRest.q);
+    pivot.updateMatrixWorld(); pivot.localToWorld(steamAt.copy(steamLocal));
     // steam: wisps rising and curling, pushed by the lean; a puff after a sip
     steam.forEach((sp, i) => {
       const life = 3.4, ph = ((t / life + sp.userData.k) % 1);
       const w = Math.sin(t * 1.3 + i * 2.1) * 0.012 + Math.sin(ph * 6 + i) * 0.01 * ph;
-      sp.position.set(steamSpot.x + w + lean.x * 0.03 * ph + (pivot.position.x - handsRest.p.x), steamSpot.y + ph * 0.24 + (pivot.position.y - handsRest.p.y), steamSpot.z + Math.cos(t + i) * 0.008 + (pivot.position.z - handsRest.p.z));
+      sp.position.set(steamAt.x + w + look.x * 0.03 * ph, steamAt.y + ph * 0.24, steamAt.z + Math.cos(t + i) * 0.008);
       sp.scale.setScalar(0.035 + ph * 0.1);
-      (sp.material as T.SpriteMaterial).opacity = Math.sin(ph * Math.PI) * (0.16 + 0.1 * U.uNight.value) * (1 - up * 0.7);
+      (sp.material as T.SpriteMaterial).opacity = Math.sin(ph * Math.PI) * (0.16 + 0.1 * U.uNight.value) * (1 - up * 0.9); // at her face it's the lens that fogs
       (sp.material as T.SpriteMaterial).rotation = ph * 1.5 + i;
     });
     // motes drift in the cones
@@ -696,7 +728,7 @@ async function mount(el: HTMLElement, live: React.RefObject<Live>, alive: () => 
   return () => {
     cancelAnimationFrame(raf); io.disconnect(); ro.disconnect(); clearInterval(skyTimer);
     document.removeEventListener("visibilitychange", wake);
-    el.removeEventListener("pointermove", onMove); el.removeEventListener("pointerleave", onLeave); el.removeEventListener("click", onClick as EventListener);
+    el.removeEventListener("pointermove", onMove); el.removeEventListener("pointerleave", onLeave); el.removeEventListener("pointercancel", onLeave); haze.remove(); el.removeEventListener("click", onClick as EventListener);
     scene.traverse((o) => {
       const m = o as T.Mesh;
       if (m.geometry) m.geometry.dispose();
@@ -707,6 +739,7 @@ async function mount(el: HTMLElement, live: React.RefObject<Live>, alive: () => 
   };
 }
 
+const smooth = (x: number) => { const k = Math.max(0, Math.min(1, x)); return k * k * (3 - 2 * k); };
 const ease = (x: number) => (x < 0.5 ? 2 * x * x : 1 - (-2 * x + 2) ** 2 / 2);
 const fract = (x: number) => x - Math.floor(x);
 // soft round glow, shared

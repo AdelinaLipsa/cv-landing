@@ -1,7 +1,15 @@
 /* Her window at the end of the page: the canvas full bleed, her clock and a sticky note on the glass over it. */
 .window { position: relative; width: 100%; height: 100%; overflow: hidden; background: #2a2440; color: #fff; isolation: isolate; }
 .stage, .poster { position: absolute; inset: 0; width: 100%; height: 100%; }
-.stage canvas { display: block; width: 100% !important; height: 100% !important; }
+.stage canvas { display: block; width: 100% !important; height: 100% !important; touch-action: pan-y pinch-zoom; } /* a sideways drag turns her head; vertical still scrolls */
+/* her glasses fogging from the steam after a sip: a soft white bloom from the bottom, blurred, clearing from the edges in */
+.haze {
+  position: absolute; inset: 0; pointer-events: none; opacity: 0; transform-origin: 50% 100%; will-change: opacity, transform;
+  background: radial-gradient(90% 75% at 50% 100%, rgba(255, 250, 244, 0.62), rgba(255, 247, 238, 0.3) 45%, rgba(255, 246, 236, 0) 78%);
+  /* + a blur(9px) backdrop, set inline by Window.tsx; the mask reaches 0 before the box edges, so no seam */
+  mask-image: radial-gradient(50% 72% at 50% 100%, #000 35%, rgba(0, 0, 0, 0.6) 65%, transparent 100%);
+  -webkit-mask-image: radial-gradient(50% 72% at 50% 100%, #000 35%, rgba(0, 0, 0, 0.6) 65%, transparent 100%);
+}
 .poster { object-fit: cover; transition: opacity 0.9s var(--ease); pointer-events: none; z-index: 1; }
 .poster[data-gone] { opacity: 0; }
 /* lo-fi: the site's film grain and a soft vignette over the view */
