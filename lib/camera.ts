@@ -11,6 +11,6 @@ export function frame(t: Rect, view: { w: number; h: number }, safe: { top: numb
 // clip-path: path() argument; evenodd cuts t (grown by pad, rounded r) out of the viewport.
 export function holePath(view: { w: number; h: number }, t: Rect, r: number, pad: number): string {
   const x0 = t.x - pad, y0 = t.y - pad, x1 = t.x + t.w + pad, y1 = t.y + t.h + pad;
-  const arc = `A${r} ${r} 0 0 1`;
-  return `evenodd, M0 0H${view.w}V${view.h}H0Z M${x0 + r} ${y0}H${x1 - r}${arc} ${x1} ${y0 + r}V${y1 - r}${arc} ${x1 - r} ${y1}H${x0 + r}${arc} ${x0} ${y1 - r}V${y0 + r}${arc} ${x0 + r} ${y0}Z`;
+  const rr = Math.min(r, (x1 - x0) / 2, (y1 - y0) / 2), arc = `A${rr} ${rr} 0 0 1`;
+  return `evenodd, M0 0H${view.w}V${view.h}H0Z M${x0 + rr} ${y0}H${x1 - rr}${arc} ${x1} ${y0 + rr}V${y1 - rr}${arc} ${x1 - rr} ${y1}H${x0 + rr}${arc} ${x0} ${y1 - rr}V${y0 + rr}${arc} ${x0 + rr} ${y0}Z`;
 }
