@@ -2,7 +2,7 @@
 import { gsap } from "gsap";
 import { CustomEase } from "gsap/CustomEase";
 import { useEffect, useRef } from "react";
-import { frame, holePath, type Rect } from "@/lib/camera";
+import { frame, holePath, PAD, type Rect } from "@/lib/camera";
 import { ease, glide, land, slow } from "@/lib/motion";
 import s from "./Tour.module.css";
 
@@ -72,6 +72,13 @@ function band() {
   };
 }
 
+// Has the subject moved off its framing (the page built or restyled under it)?
+function drifted(el: HTMLElement, stage: HTMLElement, pane: HTMLElement) {
+  const Q = plan(el, stage, pane);
+  const off = Math.abs(Q.S - pane.scrollTop) + Math.abs(Q.final.x - num(stage, "x")) + Math.abs(Q.final.y - num(stage, "y"));
+  return off > 24 || Math.abs(Q.final.scale - num(stage, "scaleX")) > 0.03;
+}
+
 type Pose = { scale: number; x: number; y: number };
 // Scale `k` about point (ox, oy) of the stage, as translate + scale about its top-left corner.
 const about = (k: number, ox: number, oy: number): Pose => ({ scale: k, x: (1 - k) * ox, y: (1 - k) * oy });
@@ -86,12 +93,13 @@ function plan(el: HTMLElement, stage: HTMLElement, pane: HTMLElement) {
   const f = frame({ x: g.sx + p.x, y: g.sy + p.y - S0, w: p.w, h: p.h }, { w: W, h: H }, safe, max);
   const S = clamp(Math.round(S0 + f.dy), 0, g.maxS);
   const bc = safe.top + (H - safe.top - safe.bottom) / 2, cx = p.x + p.w / 2, cy = p.y + p.h / 2;
-  // Pose the stage so the subject's centre lands on the band's centre. Sideways the zoom stays about a point inside
+  // Pose the stage so the subject's centre lands where frame() puts it (the band's centre, or its top for a subject
+  // too tall to fit). Sideways the zoom stays about a point inside
   // the stage, so the page never slides off its column; up and down it may go past the scroll's ends (a subject
   // at the foot of a short page still clears the caption).
   const k = f.s;
-  const ox = k - 1 < 1e-3 ? 0 : clamp((g.sx + k * cx - W / 2) / (k - 1), 0, g.sw);
-  const final = { scale: k, x: (1 - k) * ox, y: bc - (g.sy - S) - k * cy };
+  const ox = Math.abs(k - 1) < 1e-3 ? 0 : clamp((g.sx + k * cx - W / 2) / (k - 1), 0, g.sw);
+  const final = { scale: k, x: (1 - k) * ox, y: f.cy - (g.sy - S) - k * cy };
   return {
     g, S, S0, final, W, H,
     // pulled back about what is centred now, and about the subject (where the track ends)
@@ -137,33 +145,41 @@ export default function TourCamera({ target, pane, finale, paused }: { target: s
         if (from) gsap.set(from, { clearProps: STAGE_PROPS });
         if (now.current.finale) return;
         // The page may still be building under the subject: one quiet re-frame if it moved.
-        const Q = plan(el, stage, paneEl);
-        const off = Math.abs(Q.S - paneEl.scrollTop) + Math.abs(Q.final.x - num(stage, "x")) + Math.abs(Q.final.y - num(stage, "y"));
-        if (!c.fixed && (off > 24 || Math.abs(Q.final.scale - num(stage, "scaleX")) > 0.03)) { c.fixed = true; move.current("glide"); return; }
-        if (!now.current.paused) c.tl = gsap.timeline().to(veil.current, { autoAlpha: 1, duration: 0.4, ease: e.track }, 0.3);
+        if (!c.fixed && !now.current.paused && drifted(el, stage, paneEl)) { c.fixed = true; move.current("glide"); return; }
+        if (!now.current.paused) c.tl = gsap.timeline().set(veil.current, { clearProps: "backdropFilter" }, 0.3).to(veil.current, { autoAlpha: 1, duration: 0.4, ease: e.track }, 0.3);
       },
     });
     c.tl = tl;
     vp.dataset.camera = "moving";
     gsap.set(stage, { transformOrigin: "0 0", willChange: "transform" });
+    // The blur goes at once (only the tint fades): backdrop-filter never runs while anything moves.
+    gsap.set(veil.current, { backdropFilter: "none" });
     tl.to(veil.current, { autoAlpha: 0, duration: 0.2 * num(veil.current!, "opacity"), ease: e.track });
     const trackFor = (d: number) => clamp(0.6 + d / 2500, 0.7, 1.4);
+    // The push-in frames the subject as it is when the push starts (it may have been building during the move).
+    const push = (at?: string) => {
+      let Q: ReturnType<typeof plan> | null = null;
+      const q = () => (Q ??= plan(el, stage, paneEl));
+      tl.to(stage, { scale: () => q().final.scale, x: () => q().final.x, y: () => q().final.y, duration: e.glide.duration, ease: e.glide.ease }, at);
+      tl.to(paneEl, { scrollTop: () => q().S, duration: e.glide.duration, ease: e.glide.ease }, "<");
+    };
 
     if (from) {
       // Pane change: the stage on screen pulls back while the shell slides (its own `track`), the next pane arrives
-      // already pulled back on its subject, then pushes in once it has landed.
+      // already pulled back on its subject, and pushes in over the slide's last fifth.
       const fromPane = from.closest<HTMLElement>("[data-pane]")!;
       const fp = plan(from, from, fromPane); // only its pull-back pose is used
       gsap.set(from, { transformOrigin: "0 0", willChange: "transform" });
       tl.to(from, { ...fp.pullNow, duration: 0.5, ease: e.slow.ease }, 0);
       tl.set(paneEl, { scrollTop: finale ? 0 : P.S }, 0);
       tl.set(stage, finale ? about(PULL, P.g.sw / 2, 0) : P.pullOn, 0);
+      const left = () => Math.abs(paneEl.getBoundingClientRect().left - vp.getBoundingClientRect().left);
+      const d0 = Math.max(left(), 1);
       tl.addPause(0.5, () => {
         const t0 = performance.now();
         const wait = () => {
           if (c.tl !== tl) return;
-          const landed = Math.abs(paneEl.getBoundingClientRect().left - vp.getBoundingClientRect().left) < 0.5;
-          if (landed || performance.now() - t0 > 2500) tl.resume();
+          if (left() <= 0.2 * d0 + 0.5 || performance.now() - t0 > 2500) tl.resume();
           else requestAnimationFrame(wait);
         };
         wait();
@@ -179,14 +195,14 @@ export default function TourCamera({ target, pane, finale, paused }: { target: s
       tl.to(stage, { ...about(fit, P.g.sw / 2, 0), duration: e.slow.duration, ease: e.slow.ease });
       tl.to(stage, { ...about(1, 0, 0), duration: e.land.duration, ease: e.land.ease }, "+=1.2");
     } else if (from) {
-      tl.to(stage, { ...P.final, duration: e.glide.duration, ease: e.glide.ease });
+      push();
     } else if (mode === "cut" && Math.abs(P.S - P.S0) > 48) {
       // Same pane, a new subject: pull back, track, push in.
       const d = trackFor(Math.abs(P.S - P.S0));
       tl.to(stage, { ...P.pullNow, duration: 0.5, ease: e.slow.ease });
       tl.to(paneEl, { scrollTop: P.S, duration: d, ease: e.track }, "<0.2");
       tl.to(stage, { ...P.pullOn, duration: d, ease: e.track }, "<");
-      tl.to(stage, { ...P.final, duration: e.glide.duration, ease: e.glide.ease }, ">-0.15");
+      push(">-0.15");
     } else {
       // Close by, a resize or a re-frame: one glide.
       tl.to(paneEl, { scrollTop: P.S, duration: e.glide.duration, ease: e.glide.ease });
@@ -201,8 +217,14 @@ export default function TourCamera({ target, pane, finale, paused }: { target: s
   const first = useRef(true);
   useEffect(() => {
     if (first.current) { first.current = false; return; }
-    // A move under way still lands (it just doesn't bring the focus back).
-    if (paused) gsap.to(veil.current, { autoAlpha: 0, duration: 0.4, ease: eases().track, overwrite: true });
+    // The page is the visitor's at once: a move under way stops where it is (play re-frames from there).
+    if (paused) {
+      cam.current.tl?.kill();
+      if (cam.current.stage) gsap.set(cam.current.stage, { willChange: "auto" });
+      delete document.querySelector<HTMLElement>("[data-era]")?.dataset.camera;
+      gsap.set(veil.current, { backdropFilter: "none" });
+      gsap.to(veil.current, { autoAlpha: 0, duration: 0.4, ease: eases().track, overwrite: true });
+    }
     else move.current("glide");
   }, [paused]);
 
@@ -214,6 +236,24 @@ export default function TourCamera({ target, pane, finale, paused }: { target: s
     return () => { removeEventListener("resize", onResize); clearTimeout(id); };
   }, []);
 
+  // An era change (which runs once the camera has landed) restyles the page and can move the subject: once its
+  // transition is over (the longest, dial-up, takes 1.44s), re-frame if it moved.
+  useEffect(() => {
+    const vp = document.querySelector<HTMLElement>("[data-era]");
+    if (!vp) return;
+    let id = 0;
+    const mo = new MutationObserver(() => {
+      clearTimeout(id);
+      id = window.setTimeout(() => {
+        const c = cam.current, pane = c.stage?.closest<HTMLElement>("[data-pane]");
+        if (now.current.paused || now.current.finale || vp.dataset.camera || !c.el?.isConnected || !c.stage || !pane) return;
+        if (drifted(c.el, c.stage, pane)) move.current("glide");
+      }, 1500);
+    });
+    mo.observe(vp, { attributes: true, attributeFilter: ["data-era"] });
+    return () => { mo.disconnect(); clearTimeout(id); };
+  }, []);
+
   // The hole follows the subject's live rect every frame (builds and the zoom move it).
   useEffect(() => {
     let raf = 0;
@@ -221,7 +261,7 @@ export default function TourCamera({ target, pane, finale, paused }: { target: s
       const v = veil.current, el = cam.current.el;
       if (v && el?.isConnected && v.style.visibility !== "hidden") {
         const r = el.getBoundingClientRect();
-        const d = holePath({ w: innerWidth, h: innerHeight }, { x: r.left, y: r.top, w: r.width, h: r.height }, 18, 14);
+        const d = holePath({ w: innerWidth, h: innerHeight }, { x: r.left, y: r.top, w: r.width, h: r.height }, 18, PAD);
         v.style.clipPath = `path(${d.replace(", ", ', "')}")`;
       }
       raf = requestAnimationFrame(loop);
@@ -234,6 +274,7 @@ export default function TourCamera({ target, pane, finale, paused }: { target: s
   useEffect(() => () => {
     const c = cam.current;
     c.tl?.kill();
+    c.tl = undefined;
     cancelAnimationFrame(c.retry ?? 0);
     for (const st of document.querySelectorAll<HTMLElement>("[data-stage]")) { gsap.killTweensOf(st); gsap.set(st, { clearProps: STAGE_PROPS }); }
     for (const p of document.querySelectorAll<HTMLElement>("[data-pane]")) gsap.killTweensOf(p);
