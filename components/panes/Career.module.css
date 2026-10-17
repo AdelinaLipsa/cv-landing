@@ -85,3 +85,12 @@
   .panel { display: block; position: sticky; top: 24px; }
   .also { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 }
+
+/* The guide's build: HEAD's tag, the commit hashes, and the card waiting for the first job */
+.headTag { font: 600 10px var(--font-mono), monospace; fill: var(--ink); letter-spacing: 0.02em; }
+.rows li { position: relative; }
+.hash { position: absolute; right: 16px; top: 12px; font: 500 11px var(--font-mono), monospace; color: var(--steam); pointer-events: none; }
+.legend, .panel { transition: opacity 0.46s var(--ease); }
+.panel[data-empty] { opacity: 0; }
+/* Glossy and flat paint the selected row as a solid bar: the hash goes light on it */
+:global(:is([data-era="1"], [data-era="2"])) .row:is([data-on], :hover, :focus-visible) ~ .hash { color: rgba(255, 255, 255, 0.75); }
