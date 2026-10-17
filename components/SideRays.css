@@ -6,3 +6,11 @@
   z-index: 3;
   overflow: hidden;
 }
+
+/* It starts once the hero room is in (lib/stagger), so it eases in rather than popping on. */
+.side-rays-container canvas {
+  animation: side-rays-in 1.2s ease-out both;
+}
+@keyframes side-rays-in {
+  from { opacity: 0; }
+}

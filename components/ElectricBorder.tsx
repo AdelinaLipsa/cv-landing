@@ -194,8 +194,15 @@ const ElectricBorder: React.FC<ElectricBorderProps> = ({
     let { width, height } = updateSize();
     let lastDpr = Math.min(window.devicePixelRatio || 1, 2);
 
+    // Drawn only while on screen, at most 60 times a second (a 120 Hz screen would double the noise work for nothing).
+    let visible = true;
     const drawElectricBorder = (currentTime: number) => {
       if (!canvas || !ctx) return;
+      if (!visible) { animationRef.current = null; return; }
+      if (lastFrameTimeRef.current && currentTime - lastFrameTimeRef.current < 1000 / 60 - 4) {
+        animationRef.current = requestAnimationFrame(drawElectricBorder);
+        return;
+      }
 
       const dpr = Math.min(window.devicePixelRatio || 1, 2);
       if (dpr !== lastDpr) {
@@ -205,7 +212,7 @@ const ElectricBorder: React.FC<ElectricBorderProps> = ({
         height = newSize.height;
       }
 
-      const deltaTime = (currentTime - lastFrameTimeRef.current) / 1000;
+      const deltaTime = Math.min((currentTime - lastFrameTimeRef.current) / 1000, 0.1); // back on screen: no jump
       timeRef.current += deltaTime * speed;
       lastFrameTimeRef.current = currentTime;
 
@@ -281,6 +288,11 @@ const ElectricBorder: React.FC<ElectricBorderProps> = ({
       height = newSize.height;
     });
     resizeObserver.observe(container);
+    const io = new IntersectionObserver(([e]) => {
+      visible = e.isIntersecting;
+      if (visible && !animationRef.current) animationRef.current = requestAnimationFrame(drawElectricBorder);
+    }, { rootMargin: '80px' });
+    io.observe(container);
 
     animationRef.current = requestAnimationFrame(drawElectricBorder);
 
@@ -289,6 +301,7 @@ const ElectricBorder: React.FC<ElectricBorderProps> = ({
         cancelAnimationFrame(animationRef.current);
       }
       resizeObserver.disconnect();
+      io.disconnect();
     };
   }, [color, speed, chaos, borderRadius, octavedNoise, getRoundedRectPoint]);
 

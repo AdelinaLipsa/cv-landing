@@ -99,8 +99,13 @@ export default function EqualizerRing({ className }: { className: string }) {
     layout();
     const ro = new ResizeObserver(layout);
     ro.observe(box);
-    raf = requestAnimationFrame(frame);
-    return () => { ro.disconnect(); cancelAnimationFrame(raf); };
+    // Only while the photo is on screen (another tab, or scrolled past: no frames at all).
+    const io = new IntersectionObserver(([e]) => {
+      cancelAnimationFrame(raf);
+      if (e.isIntersecting) { last = 0; raf = requestAnimationFrame(frame); }
+    });
+    io.observe(el);
+    return () => { ro.disconnect(); io.disconnect(); cancelAnimationFrame(raf); };
   }, [reduce]);
 
   return <canvas ref={canvas} className={className} aria-hidden="true" />;

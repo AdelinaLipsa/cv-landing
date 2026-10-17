@@ -3,6 +3,7 @@
 
 import { useRef, useEffect, useState } from 'react';
 import { Renderer, Program, Triangle, Mesh } from 'ogl';
+import { afterHero } from '@/lib/stagger';
 import './SideRays.css';
 
 type Origin = 'top-right' | 'top-left' | 'bottom-right' | 'bottom-left';
@@ -88,13 +89,15 @@ const SideRays = ({
       cleanupFunctionRef.current();
       cleanupFunctionRef.current = null;
     }
+    let cancelStart = () => {}, stopped = false;
 
     const initializeWebGL = async () => {
       if (!containerRef.current) return;
 
-      await new Promise<void>(resolve => setTimeout(resolve, 10));
+      // After the hero room is on screen, in an idle slice of its own (lib/stagger): its context and shader cost ~1 s.
+      await new Promise<void>(resolve => { cancelStart = afterHero(resolve); });
 
-      if (!containerRef.current) return;
+      if (!containerRef.current || stopped) return;
 
       const renderer = new Renderer({
         dpr: Math.min(window.devicePixelRatio, 2),
@@ -210,11 +213,17 @@ void main() {
         uniforms.iResolution.value = [w * renderer.dpr, h * renderer.dpr];
       };
 
+      // 30 frames a second: the rays drift ~1 rad/s, so twice that shows nothing more, and the full-screen shader
+      // at 2x pixels is the page's heaviest GPU job.
+      let drawn = 0;
       const loop = (t: number) => {
         if (!rendererRef.current || !uniformsRef.current || !meshRef.current) return;
+        if (drawn && t - drawn < 1000 / 30 - 4) { animationIdRef.current = requestAnimationFrame(loop); return; }
+        const step = drawn ? Math.min((t - drawn) / 1000, 0.1) : 1 / 30;
+        drawn = t;
         uniforms.iTime.value = t * 0.001;
         // Colours drift toward their target instead of jumping: the room's light changes, it doesn't cut.
-        const k = 1 - Math.exp(-(1 / 60) * 3.5);
+        const k = 1 - Math.exp(-step * 3.5);
         for (const [u, to] of [[uniforms.iRayColor1, target.current.c1], [uniforms.iRayColor2, target.current.c2]] as const) {
           const v = u.value as number[];
           for (let j = 0; j < 3; j++) v[j] += (to[j] - v[j]) * k;
@@ -254,6 +263,8 @@ void main() {
     initializeWebGL();
 
     return () => {
+      stopped = true;
+      cancelStart();
       if (cleanupFunctionRef.current) {
         cleanupFunctionRef.current();
         cleanupFunctionRef.current = null;
