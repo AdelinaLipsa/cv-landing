@@ -2,9 +2,11 @@
 import { useEffect, useRef, useState } from "react";
 import { motion, useSpring, useTransform, type MotionValue } from "motion/react";
 import type * as T from "three";
+import type { GLTF } from "three/examples/jsm/loaders/GLTFLoader.js";
 import DecryptedText from "./DecryptedText";
 import { profile } from "@/content/cv";
 import { sfx } from "@/lib/sfx";
+import { afterHero } from "@/lib/stagger";
 import { createRain, step, mist, paint, painter, type Rain } from "@/lib/rainGlass";
 import s from "./Window.module.css";
 
@@ -159,32 +161,36 @@ export default function Window() {
 
   useEffect(() => {
     const el = host.current!;
-    let cleanup = () => {}, dead = false, cancel = () => {}, mo: MutationObserver | undefined;
-    const start = async () => {
-      const c = await mount(el, live, () => !dead, () => setReady(true));
-      if (dead) c(); else cleanup = c;
+    let cleanup = () => {}, dead = false, began = false, cancel = () => {}, mo: MutationObserver | undefined;
+    const start = () => {
+      if (began) return; began = true; io.disconnect(); mo?.disconnect(); cancel();
+      void mount(el, live, () => !dead, () => setReady(true)).then((c) => { if (dead) c(); else cleanup = c; }, (e) => { if (e !== GONE) throw e; });
     };
-    // The scene's first load blocks the main thread for ~0.5s. During the guide the poster stands in (the finale's
-    // crane too), so it waits for the guide to close, its settle to finish, and the browser to be idle.
-    const vp = el.closest<HTMLElement>("[data-era]");
-    const later = () => {
-      mo?.disconnect();
+    const whenIdle = (f: () => void, wait: number) => {
       const id = window.setTimeout(() => {
-        if (!window.requestIdleCallback) { start(); return; }
-        const ric = requestIdleCallback(start, { timeout: 3000 });
+        if (!window.requestIdleCallback) { f(); return; }
+        const ric = requestIdleCallback(f, { timeout: 4000 });
         cancel = () => cancelIdleCallback(ric);
-      }, 2000);
+      }, wait);
       cancel = () => clearTimeout(id);
     };
-    const io = new IntersectionObserver(([e]) => {
-      if (!e.isIntersecting) return;
-      io.disconnect();
+    // The scene gets ready in the background, in idle slices under the poster (mount below), long before it's in
+    // view: on a computer once the hero room is in (lib/stagger), on a phone (data) once she heads down the page,
+    // 1.5 screens out.
+    // During the guide the poster stands in (the finale's crane too): it waits for the guide to close, its settle to
+    // finish, and the browser to be idle.
+    const vp = el.closest<HTMLElement>("[data-era]");
+    const go = () => {
+      if (began || mo) return;
       if (!vp?.hasAttribute("data-touring")) { start(); return; }
-      mo = new MutationObserver(() => { if (!vp.hasAttribute("data-touring")) later(); });
+      mo = new MutationObserver(() => { if (!vp.hasAttribute("data-touring")) { mo!.disconnect(); whenIdle(start, 2000); } });
       mo.observe(vp, { attributes: true, attributeFilter: ["data-touring"] });
-    }, { rootMargin: "400px" });
-    io.observe(el);
-    return () => { dead = true; io.disconnect(); mo?.disconnect(); cancel(); cleanup(); };
+    };
+    let pane = el.parentElement; // the pane scrolls itself, so it is the root the margin is measured in
+    while (pane && !/auto|scroll/.test(getComputedStyle(pane).overflowY)) pane = pane.parentElement;
+    const io = new IntersectionObserver(([e]) => { if (e.isIntersecting) go(); }, { root: pane, rootMargin: "0px 0px 150% 0px" });
+    const unqueue = afterHero(() => (matchMedia("(pointer: coarse)").matches ? io.observe(el) : go()));
+    return () => { dead = true; io.disconnect(); mo?.disconnect(); cancel(); unqueue(); cleanup(); };
   }, []);
 
   const copy = () => { void navigator.clipboard?.writeText(profile.email).then(() => { sfx.tink(); setCopied(true); window.setTimeout(() => setCopied(false), 1800); }); };
@@ -235,30 +241,83 @@ export default function Window() {
   );
 }
 
-// ---------- the scene ----------
-async function mount(el: HTMLElement, live: React.RefObject<Live>, alive: () => boolean, onReady: () => void) {
+// ---------- getting ready in the background ----------
+// Fetch (low priority) and parse everything the scene needs, without the main thread: the geometry decodes in
+// workers, the images decode off-thread to bitmaps. No GPU work here; mount() does that in idle slices.
+// Getting ready steps aside while she scrolls (the poster stands in until she pauses) and while the guide runs.
+let scrolledAt = 0, watching = false;
+const calm = async (el: HTMLElement, alive: () => boolean) => {
+  if (!watching) { watching = true; document.addEventListener("scroll", () => { scrolledAt = performance.now(); }, { capture: true, passive: true }); }
+  while ((el.closest("[data-touring]") || performance.now() - scrolledAt < 300) && alive()) await new Promise((r) => setTimeout(r, 150));
+};
+async function load(el: HTMLElement, alive: () => boolean) {
   const [THREE, { GLTFLoader }, { MeshoptDecoder }, { EffectComposer }, { RenderPass }, { UnrealBloomPass }, { ShaderPass }, { OutputPass }] = await Promise.all([
     import("three"), import("three/examples/jsm/loaders/GLTFLoader.js"), import("three/examples/jsm/libs/meshopt_decoder.module.js"),
     import("three/examples/jsm/postprocessing/EffectComposer.js"), import("three/examples/jsm/postprocessing/RenderPass.js"),
     import("three/examples/jsm/postprocessing/UnrealBloomPass.js"), import("three/examples/jsm/postprocessing/ShaderPass.js"), import("three/examples/jsm/postprocessing/OutputPass.js"),
   ]);
-  if (!alive()) return () => {};
+  MeshoptDecoder.useWorkers(2);
+  const loader = new GLTFLoader().setMeshoptDecoder(MeshoptDecoder);
+  const get = (n: string) => fetch(BASE + n, { priority: "low" }).then((r) => { if (!r.ok) throw new Error(`${n}: ${r.status}`); return r; });
+  const bytes = (n: string) => get(n).then((r) => r.arrayBuffer());
+  const bitmaps = typeof createImageBitmap === "function";
+  const night = (n: string) => (bitmaps
+    ? get(`${n}-night.webp`).then((r) => r.blob()).then((b) => createImageBitmap(b, { premultiplyAlpha: "none" })).then((b) => { const t = new THREE.Texture(b); t.needsUpdate = true; return t; })
+    : new THREE.TextureLoader().loadAsync(`${BASE}${n}-night.webp`)
+  ).then((t) => { t.flipY = false; t.colorSpace = THREE.SRGBColorSpace; return t; });
+  const [files, nights] = await Promise.all([
+    Promise.all([bytes("view.glb"), bytes("pigeon.glb"), bytes("dacia.glb").catch(() => null), bytes("hands.glb").catch(() => null), bytes("tree.glb").catch(() => null)]),
+    Promise.all([night("near"), night("street"), night("across")]),
+  ]);
+  // parsed one file per idle slice: building a model's objects is a burst of work on the main thread
+  const gltfs = [];
+  for (const [i, b] of files.entries()) {
+    await calm(el, alive); await idle();
+    gltfs.push(b && (await loader.parseAsync(b, BASE).catch((e) => { if (i < 2) throw e; return null; }))); // the view and the pigeon are needed
+  }
+  const [view, bird, car, handsG, treeG] = gltfs as [GLTF, GLTF, GLTF | null, GLTF | null, GLTF | null];
+  return { THREE, EffectComposer, RenderPass, UnrealBloomPass, ShaderPass, OutputPass, view, bird, car, handsG, treeG, nights };
+}
+// One short slice of work per frame, right after it paints (or an idle moment if one comes sooner), so getting ready
+// never holds a frame up.
+const idle = () => new Promise<void>((r) => {
+  let done = false; const go = () => { if (!done) { done = true; r(); } };
+  requestAnimationFrame(() => setTimeout(go, 0));
+  if (typeof requestIdleCallback === "function") requestIdleCallback(go);
+});
+const GONE = new Error("the window scene was unmounted");
+
+// ---------- the scene ----------
+async function mount(el: HTMLElement, live: React.RefObject<Live>, alive: () => boolean, onReady: () => void) {
+  const { THREE, EffectComposer, RenderPass, UnrealBloomPass, ShaderPass, OutputPass, view, bird, car, handsG, treeG, nights } = await load(el, alive);
+  await calm(el, alive); await idle();
+  if (!alive()) throw GONE;
   const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches, touch = matchMedia("(pointer: coarse)").matches;
-  const renderer = new THREE.WebGLRenderer({ antialias: !touch, alpha: false, powerPreference: "high-performance" });
-  renderer.setPixelRatio(Math.min(devicePixelRatio, touch ? 1.5 : 1.75));
+  // the canvas is born at its final size: resizing a live WebGL canvas reallocates its buffers, a stall
+  const pr = Math.min(devicePixelRatio, touch ? 1.5 : 1.75), box0 = el.getBoundingClientRect();
+  const canvas = Object.assign(document.createElement("canvas"), { width: Math.floor(box0.width * pr), height: Math.floor(box0.height * pr) });
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: !touch, alpha: false, powerPreference: "high-performance" });
+  renderer.setPixelRatio(pr);
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.NoToneMapping; // the bakes are graded already; the grade pass below does the rest
   const lavender = new THREE.Color("#9a8cd0"); // her room's haze
   el.appendChild(renderer.domElement);
+  let gone = () => { renderer.dispose(); renderer.domElement.remove(); };
+  let sliceAt = performance.now();
+  const gl = renderer.getContext() as WebGL2RenderingContext;
+  const slice = async () => {
+    if (performance.now() - sliceAt < 6 && alive()) return; // a few small steps share a slice
+    await calm(el, alive);
+    // and the GPU has finished what this slice queued (a fence, polled without blocking), so the next slice's
+    // first question to the GPU doesn't sit waiting behind it
+    const f = gl.fenceSync(gl.SYNC_GPU_COMMANDS_COMPLETE, 0); gl.flush();
+    do await idle(); while (f && alive() && gl.getSyncParameter(f, gl.SYNC_STATUS) !== gl.SIGNALED);
+    gl.deleteSync(f);
+    if (!alive()) { gone(); throw GONE; }
+    sliceAt = performance.now();
+  };
   const scene = new THREE.Scene();
-  const loader = new GLTFLoader().setMeshoptDecoder(MeshoptDecoder);
-  const tex = new THREE.TextureLoader();
-  const night = (n: string) => tex.loadAsync(`${BASE}${n}-night.webp`).then((t) => { t.flipY = false; t.colorSpace = THREE.SRGBColorSpace; return t; });
-  const [view, bird, car, handsG, treeG, ...nights] = await Promise.all([
-    loader.loadAsync(BASE + "view.glb"), loader.loadAsync(BASE + "pigeon.glb"), loader.loadAsync(BASE + "dacia.glb").catch(() => null), loader.loadAsync(BASE + "hands.glb").catch(() => null), loader.loadAsync(BASE + "tree.glb").catch(() => null),
-    night("near"), night("street"), night("across"),
-  ]);
-  if (!alive()) { renderer.dispose(); renderer.domElement.remove(); return () => {}; }
+  await slice();
   const root = view.scene; scene.add(root); root.updateMatrixWorld(true);
   const node = (n: string) => root.getObjectByName(n)!;
   const at = (n: string) => node(n).getWorldPosition(new THREE.Vector3());
@@ -298,6 +357,7 @@ async function mount(el: HTMLElement, live: React.RefObject<Live>, alive: () => 
     m.material = bakedMat(old.map!, NIGHTS[g]); old.dispose();
   }
 
+  await slice();
   // Sky: a dome round her eyes with her sky's colours, the sun or moon, stars, clouds by real cover, lightning.
   const NOISE = `float hash(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
     float noise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f*f*(3.-2.*f); return mix(mix(hash(i), hash(i+vec2(1,0)), f.x), mix(hash(i+vec2(0,1)), hash(i+vec2(1,1)), f.x), f.y); }
@@ -373,6 +433,7 @@ async function mount(el: HTMLElement, live: React.RefObject<Live>, alive: () => 
   const neon = new THREE.Mesh(new THREE.PlaneGeometry(3.2, 0.8), new THREE.MeshBasicMaterial({ map: neonTex, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, toneMapped: false, color: new THREE.Color(0x66ff99) }));
   neon.position.copy(at("NonStopSign")).add(new THREE.Vector3(0, 0, 0.12)); scene.add(neon);
 
+  await slice();
   // Lamp cones: soft light falling from each bulb to the pavement, with motes (or rain) drifting through.
   const ground = -1.15;
   const coneMat = new THREE.ShaderMaterial({
@@ -445,6 +506,7 @@ async function mount(el: HTMLElement, live: React.RefObject<Live>, alive: () => 
     wetPaint();
   };
 
+  await slice();
   // The pigeon, lit live: daylight from up the street, at night the lamp behind her
   const hemi = new THREE.HemisphereLight(0xdfe8ff, 0x6b5a4a, 1.2), key = new THREE.DirectionalLight(0xffe0b8, 2.2), lamp = new THREE.PointLight(0xffb070, 0, 4, 1.4);
   key.position.set(8, 6, -4); lamp.position.set(-0.75, 1.7, 0.95);
@@ -569,8 +631,8 @@ async function mount(el: HTMLElement, live: React.RefObject<Live>, alive: () => 
   const onLeave = () => { ndc.set(9, 9); look.tx = look.ty = 0; look.held = false; hot = null; el.style.cursor = ""; live.current.onHot(null, 0, 0); };
   const onClick = (e: PointerEvent) => { onMove(e); const h = pick(); if (h === "pigeon") coo(); else if (h === "mug") sip();
     if (reduce) { tick(U.uTime.value + 1.2, 1.2); render(); if (h === "mug") window.setTimeout(() => { tick(U.uTime.value + 2, 0); render(); }, 1400); } }; // calm: the sip as two stills, then the view back
-  el.addEventListener("pointermove", onMove); el.addEventListener("pointerleave", onLeave); el.addEventListener("pointercancel", onLeave); el.addEventListener("click", onClick as EventListener);
 
+  await slice();
   // The kit's tree by the bench, live: it sways in her wind, and its leaves follow the month
   // (green in summer, gold now in October, thinning in November, bare in winter).
   const treeU = { uTime: U.uTime, uWind: U.uWind, uAutumn: { value: 0 }, uBare: { value: 0 } };
@@ -635,6 +697,7 @@ async function mount(el: HTMLElement, live: React.RefObject<Live>, alive: () => 
     fragmentShader: "uniform float uNight; varying float vA; void main(){ float d = length(gl_PointCoord - .5); gl_FragColor = vec4(mix(vec3(1., .93, .8), vec3(1., .78, .55), uNight) * smoothstep(.5, 0., d) * vA * .55, 1.); }",
   })));
 
+  await slice();
   // Bloom on what glows (lamps, neon, windows, the sun, the fairy lights), then her room's grade:
   // lavender in the shadows, warm in the lights, a touch more colour.
   // The scene renders with its depth, so the glass pass knows what is in front of the glass (frame, hands, mug).
@@ -705,9 +768,12 @@ async function mount(el: HTMLElement, live: React.RefObject<Live>, alive: () => 
     lookUp = Math.max(0, Math.min(LOOK.pitch, (42 - camera.fov / 2) * (Math.PI / 180))); // the frame's top sits ~42° above her eyeline
     glueNote();
   };
+  let warm = false; // nothing draws until the GPU is warmed (below)
+  const render = () => { if (!warm) return; if (glassPass.enabled) aimGlass(); composer.render(); };
   const ro = new ResizeObserver(() => { size(); render(); }); ro.observe(el);
   size();
 
+  await slice();
   // Her sky right now: every few seconds
   const setSky = () => {
     const { hf } = herClock(), k = skyAt(hf), wx = live.current.wx;
@@ -834,7 +900,6 @@ async function mount(el: HTMLElement, live: React.RefObject<Live>, alive: () => 
       }
     }
   };
-  const render = () => { if (glassPass.enabled) aimGlass(); composer.render(); };
   let raf = 0, visible = false, last = 0;
   const loop = (now: number) => {
     raf = 0;
@@ -844,14 +909,10 @@ async function mount(el: HTMLElement, live: React.RefObject<Live>, alive: () => 
     raf = requestAnimationFrame(loop);
   };
   const wake = () => { if (!raf && visible && !reduce) raf = requestAnimationFrame(loop); };
-  const io = new IntersectionObserver(([e]) => { visible = e.isIntersecting; wake(); }); io.observe(el);
+  const io = new IntersectionObserver(([e]) => { visible = e.isIntersecting; wake(); }); // only drawn while on screen
   document.addEventListener("visibilitychange", wake);
-  // calm: one still frame, the pigeon looking at her
-  if (reduce) { queue = [{ yaw: toHer(1), pitch: -0.1, roll: 0.3, dip: 0, dur: 99 }]; for (let i = 0; i < 40; i++) tick(i * 0.033, 0.033); render(); }
-  else { tick(0, 0); render(); }
-  onReady();
 
-  return () => {
+  const cleanup = () => {
     cancelAnimationFrame(raf); io.disconnect(); ro.disconnect(); clearInterval(skyTimer);
     document.removeEventListener("visibilitychange", wake);
     el.removeEventListener("pointermove", onMove); el.removeEventListener("pointerleave", onLeave); el.removeEventListener("pointercancel", onLeave); haze.remove(); el.removeEventListener("click", onClick as EventListener);
@@ -864,6 +925,75 @@ async function mount(el: HTMLElement, live: React.RefObject<Live>, alive: () => 
     mapTex.dispose(); composer.dispose(); rt.depthTexture?.dispose();
     renderer.dispose(); renderer.domElement.remove();
   };
+  gone = cleanup;
+
+  // Warm the GPU under the poster, one small step per idle slice, so the first real frame costs nothing extra:
+  // 1. textures: a 2048 image uploaded whole holds the main thread ~70 ms, so the big bitmaps are allocated empty
+  //    (dataReady false) and copied in bands of 256 rows, a band a slice, mipmaps after the last;
+  // 2. shaders: compiled in parallel off the main thread (KHR_parallel_shader_compile), at the target they draw into;
+  // 3. pipelines: the GPU (Metal under Chrome on a Mac) builds each one at its first draw, so each material is drawn
+  //    once on its own, into the same target, a material a slice.
+  const texs = new Set<T.Texture>(), grab = (v: unknown) => { if ((v as T.Texture)?.isTexture) texs.add(v as T.Texture); };
+  const post = new THREE.Scene(), quad = new THREE.PlaneGeometry(2, 2);
+  for (const p of composer.passes) for (const v of Object.values(p)) for (const m of [v].flat()) if ((m as T.Material)?.isMaterial) post.add(new THREE.Mesh(quad, m as T.Material));
+  const firsts = new Map<T.Material, T.Object3D>();
+  for (const o of [scene, post]) o.traverse((x) => {
+    for (const m of [(x as T.Mesh).material ?? []].flat()) {
+      if (!firsts.has(m)) firsts.set(m, x);
+      Object.values(m).forEach(grab); Object.values((m as T.ShaderMaterial).uniforms ?? {}).forEach((u) => grab(u?.value));
+    }
+  });
+  const band = new THREE.Box2(), at0 = new THREE.Vector2(), at1 = new THREE.Vector2(), ROWS = 256;
+  for (const t of texs) {
+    await slice();
+    const img = t.image as { width?: number; height?: number } | null, w = img?.width ?? 0, h = img?.height ?? 0;
+    // (bitmaps only: WebGL ignores flipY and colour conversion for them, so a band lands exactly as the whole would)
+    if (!(typeof ImageBitmap !== "undefined" && img instanceof ImageBitmap) || t.flipY || w * h < 512 * 512) { renderer.initTexture(t); continue; }
+    const src = new THREE.Texture(img), mips = t.generateMipmaps;
+    t.source.dataReady = false; renderer.initTexture(t); // allocates every mip level
+    for (let y = 0; y < h; y += ROWS) {
+      await slice();
+      t.generateMipmaps = mips && y + ROWS >= h;
+      renderer.copyTextureToTexture(src, t, band.set(at0.set(0, y), at1.set(w, Math.min(h, y + ROWS))), at0);
+    }
+    t.source.dataReady = true; t.generateMipmaps = mips;
+  }
+  for (const s of [scene, post]) {
+    await slice();
+    renderer.setRenderTarget(composer.readBuffer); const done = renderer.compileAsync(s, camera); renderer.setRenderTarget(null);
+    await done;
+  }
+  const drawn = [...firsts.values()], was = new Map<T.Object3D, [boolean, boolean]>();
+  const keep = (o: T.Object3D) => { if (!was.has(o)) was.set(o, [o.visible, o.frustumCulled]); };
+  drawn.forEach(keep);
+  for (const o of drawn) {
+    await slice();
+    for (const x of drawn) x.visible = x === o;
+    for (let p: T.Object3D | null = o; p; p = p.parent) { keep(p); p.visible = true; } // a hidden Dacia still gets drawn
+    o.frustumCulled = false;
+    renderer.setRenderTarget(composer.readBuffer); renderer.render(o.parent === post ? post : scene, camera); renderer.setRenderTarget(null);
+    o.frustumCulled = was.get(o)![1];
+  }
+  for (const [o, [v, f]] of was) { o.visible = v; o.frustumCulled = f; }
+  quad.dispose();
+  // then the passes, one more each slice (the output to the canvas always last), so their pipelines come one by one
+  warm = true;
+  const on = composer.passes.map((p) => p.enabled), lastPass = on.length - 1;
+  for (let i = 1; i < lastPass; i++) {
+    if (!on[i - 1]) continue;
+    await slice();
+    composer.passes.forEach((p, j) => (p.enabled = on[j] && (j < i || j === lastPass)));
+    render();
+  }
+  composer.passes.forEach((p, j) => (p.enabled = on[j]));
+  await slice();
+  // calm: one still frame, the pigeon looking at her
+  if (reduce) { queue = [{ yaw: toHer(1), pitch: -0.1, roll: 0.3, dip: 0, dur: 99 }]; for (let i = 0; i < 40; i++) tick(i * 0.033, 0.033); render(); }
+  else { tick(0, 0); render(); }
+  io.observe(el);
+  el.addEventListener("pointermove", onMove); el.addEventListener("pointerleave", onLeave); el.addEventListener("pointercancel", onLeave); el.addEventListener("click", onClick as EventListener);
+  onReady();
+  return cleanup;
 }
 
 const smooth = (x: number) => { const k = Math.max(0, Math.min(1, x)); return k * k * (3 - 2 * k); };
