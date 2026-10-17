@@ -21,6 +21,8 @@ type Scope = HTMLElement & { startViewTransition?: (update: () => void) => unkno
 // it would lift the viewport over the captions for the length of every change.
 // `era` null means the guide is closed: era 3, and entering or leaving the guide snaps (the guide starts at 2003
 // from its first frame). Starting a change while one runs skips the running one.
+// The camera (components/TourCamera) sets data-camera on `ref` while it moves: a change waits for it to land, and a
+// move that starts mid-change skips the change to its end. A snapshot never crossfades over a moving page.
 export function useEraShift(ref: RefObject<HTMLElement | null>, era: number | null) {
   const [s, setS] = useState<{ era: number | null; shift?: Shift }>({ era });
   if (era !== s.era && (era === null || s.era === null)) setS({ era }); // snap, before paint
@@ -28,10 +30,21 @@ export function useEraShift(ref: RefObject<HTMLElement | null>, era: number | nu
   useEffect(() => {
     if (era === null || s.era === null || era === s.era) return;
     const el = ref.current as Scope | null;
-    if (!el?.startViewTransition) { setS({ era, shift: "ease" }); return; }
-    const shift = shiftFor(s.era, era);
-    el.dataset.shift = shift; // the pseudo-elements read it as the transition starts
-    el.startViewTransition(() => flushSync(() => setS({ era, shift })));
+    if (!el) return;
+    if (!el.startViewTransition) { setS({ era, shift: "ease" }); return; }
+    const from = s.era;
+    let vt: { skipTransition?: () => void } | undefined;
+    const check = () => {
+      if (el.dataset.camera) { vt?.skipTransition?.(); return; }
+      if (vt) return;
+      const shift = shiftFor(from, era);
+      el.dataset.shift = shift; // the pseudo-elements read it as the transition starts
+      vt = el.startViewTransition!(() => flushSync(() => setS({ era, shift }))) as typeof vt;
+    };
+    const mo = new MutationObserver(check);
+    mo.observe(el, { attributes: true, attributeFilter: ["data-camera"] });
+    check();
+    return () => mo.disconnect();
   }, [era]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return { era: s.era ?? 3, shift: s.shift };

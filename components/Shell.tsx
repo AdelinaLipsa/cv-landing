@@ -307,7 +307,7 @@ export default function Shell({ character }: { character: boolean }) {
       </ClickSpark>
       </motion.main>
 
-      {touring && <Tour from={holdMs ? "boot" : "page"} holdMs={holdMs} onStep={onStep} onCue={setCue} onClose={endTour} />}
+      {touring && <Tour holdMs={holdMs} onStep={onStep} onCue={setCue} onClose={endTour} />}
       <EasterEggs contact={ui.contact} terminal={ui.terminal} arcade={() => setArcade(true)} />
       {arcade && <Arcade onClose={() => { setArcade(false); setChallenge(null); }} contact={() => { setArcade(false); ui.contact(); }} challenge={challenge} />}
       <Toasts />
