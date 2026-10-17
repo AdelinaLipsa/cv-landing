@@ -36,7 +36,7 @@
   box-shadow: 0 18px 40px rgba(14, 13, 28, 0.28);
 }
 .who { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
-.avatar { width: 28px; height: 28px; border-radius: 9px; object-fit: cover; }
+.avatar { width: 28px; height: 28px; border-radius: 50%; object-fit: cover; }
 .name { font-size: 13px; font-variant-caps: all-small-caps; letter-spacing: 0.06em; font-weight: 600; color: var(--on-ink-muted); }
 .line {
   margin: 0;
