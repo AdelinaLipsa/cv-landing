@@ -190,10 +190,16 @@ export default function TourCamera({ target, pane, finale, paused }: { target: s
     }
 
     if (finale) {
-      // The crane: the whole Home page in frame (top centre), one beat on it, then down into the hero on `land`.
-      const fit = clamp(P.H / (P.g.sy + P.g.sh + parseFloat(getComputedStyle(paneEl).paddingBottom)), 0.2, 1);
-      tl.to(stage, { ...about(fit, P.g.sw / 2, 0), duration: e.slow.duration, ease: e.slow.ease });
-      tl.to(stage, { ...about(1, 0, 0), duration: e.land.duration, ease: e.land.ease }, "+=1.2");
+      // The crane: the whole Home page in frame (top centre) on `slow`, one beat on it, then back into the hero on
+      // `land`, whose spring overshoots by 3.6% of the travel: ~2.6% past 1 here, 2% on phones. Phones stop at 0.45, top
+      // aligned (hero, room and what follows): the whole page there is ~0.2 and reads as a thin strip.
+      // First it waits at the top, at full size: her line points at the theme toggle and Message me ("top right"). On
+      // phones the player spans the top bar, so the page drops just below it until the push-in.
+      const phone = matchMedia("(max-width: 640px)").matches, lift = phone ? band().top : 0;
+      const fit = clamp((P.H - lift) / (P.g.sy + P.g.sh + parseFloat(getComputedStyle(paneEl).paddingBottom)), phone ? 0.45 : 0.2, 1);
+      if (lift) tl.to(stage, { y: lift, duration: e.glide.duration, ease: e.glide.ease }, from ? undefined : "<0.3");
+      tl.to(stage, { ...about(fit, P.g.sw / 2, 0), y: lift, duration: e.slow.duration, ease: e.slow.ease }, "+=1.6");
+      tl.to(stage, { ...about(1, P.g.sw / 2, 0), duration: e.land.duration, ease: e.land.ease }, "+=1.2");
     } else if (from) {
       push();
     } else if (mode === "cut" && Math.abs(P.S - P.S0) > 48) {

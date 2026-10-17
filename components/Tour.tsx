@@ -75,13 +75,22 @@ export default function Tour({ holdMs, onStep, onCue, onClose }: {
   const prev = () => { const k = stepAt(clock.current.t); seek(starts[Math.max(0, k - (clock.current.t - starts[k] < 1 ? 1 : 0))]); };
   const next = () => seek(starts[Math.min(steps.length - 1, stepAt(clock.current.t) + 1)]);
 
-  // At the end: hold the last line, then close. The page stays built.
+  // At the end, once the camera has landed (at 1x it already has): her last line holds, the caption and player sink
+  // out (Tour.module.css, data-done), and the guide closes 3.2s in, as they go. The page stays built.
+  const [done, setDone] = useState(false);
   useEffect(() => {
+    setDone(false);
     if (!finished) return;
     unlock("tour");
     setPlaying(false);
-    const id = setTimeout(onClose, 3200);
-    return () => clearTimeout(id);
+    let id = 0, raf = 0;
+    const landed = () => {
+      if (document.querySelector("[data-camera]")) { raf = requestAnimationFrame(landed); return; }
+      setDone(true);
+      id = window.setTimeout(onClose, 3200);
+    };
+    landed();
+    return () => { cancelAnimationFrame(raf); clearTimeout(id); };
   }, [finished, onClose]);
 
   // Keys: space pauses, arrows go a step back or on, Esc closes. During the start hold only Esc works.
@@ -114,7 +123,7 @@ export default function Tour({ holdMs, onStep, onCue, onClose }: {
 
   if (held) return null;
   return (
-    <div className={s.tour}>
+    <div className={s.tour} data-done={done || undefined}>
       <TourCamera target={step.target} pane={step.pane} finale={i === steps.length - 1} paused={!playing && !finished} />
       <Caption step={step} local={local} paused={!playing && !finished} />
 

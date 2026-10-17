@@ -10,6 +10,15 @@ export default function ThemeToggle({ className }: { className?: string }) {
   const [dark, setDark] = useState(false);
   const [touched, setTouched] = useState(false); // the nudge goes once it has done its job
   useEffect(() => setDark(document.documentElement.dataset.theme === "dark"), []);
+  // The guide says "top right": two soft pulses. Shell sets <html data-cue>; the pulse plays out even when the next
+  // cue comes in half a second later.
+  const [pulse, setPulse] = useState(false);
+  useEffect(() => {
+    const html = document.documentElement;
+    const mo = new MutationObserver(() => { if (html.dataset.cue === "theme") setPulse(true); });
+    mo.observe(html, { attributes: true, attributeFilter: ["data-cue"] });
+    return () => mo.disconnect();
+  }, []);
 
   const toggle = () => {
     const next = !dark;
@@ -21,7 +30,7 @@ export default function ThemeToggle({ className }: { className?: string }) {
   };
 
   return (
-    <span className={s.wrap}>
+    <span className={s.wrap} data-pulse={pulse || undefined} onAnimationEnd={(e) => { if (e.animationName.includes("cue")) setPulse(false); }}>
       {/* Hand-drawn nudge, like the sound button's: a joke below, arrow curving up to the button.
           CSS picks the joke from <html data-theme>, so it's right on first paint. */}
       {!touched && <span className={s.nudge} aria-hidden="true">

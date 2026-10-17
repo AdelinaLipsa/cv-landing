@@ -1,5 +1,15 @@
 .tour { position: fixed; inset: 0; z-index: 30; pointer-events: none; }
 
+/* The end (research §7), set once the camera has landed: her last line holds, then the caption and the player sink
+   12px and fade together, gone as the guide closes (Tour: 3.2s in). `translate`, so their own transforms stay. */
+.tour[data-done] > [data-tour-caption],
+.tour[data-done] > [data-tour-player] {
+  opacity: 0;
+  translate: 0 12px;
+  pointer-events: none;
+  transition: opacity 1.4s var(--ease) 1.8s, translate 1.4s var(--ease) 1.8s;
+}
+
 /* The camera's focus: everything but the subject dims and softens. path() is in viewport px, so no transform here.
    Only unprefixed backdrop-filter: Lightning CSS adds the -webkit- copy itself, and drops the unprefixed one when
    both are written (unprefixed first). Phones get the tint only. */

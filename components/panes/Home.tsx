@@ -109,8 +109,18 @@ export default function Home({ ui }: { ui: UI }) {
   const quick = <button type="button" className={`${p.primary} ${s.quick}`} onClick={() => ui.sheet("The 30-second version", <QuickRead contact={ui.contact} />)}><DecryptedText text="Busy? Read the 30-second version →" animateOn="hover" speed={40} maxIterations={8} /></button>;
   const [win95, setWin95] = useState(false); // the retro computer, booted
   // The room's contact objects and the buttons they belong to: hover one, the other lights.
-  const [hot, setHot] = useState<Prop | null>(null);
+  // During the guide, its words light them too ("the phone messages me": ui.cue).
+  const [hover, setHot] = useState<Prop | null>(null);
+  const hot = (ui.cue && ui.cue !== "theme" ? ui.cue : null) ?? hover;
   const lights = (p: Prop) => ({ onPointerEnter: () => setHot(p), onPointerLeave: () => setHot(null), onFocus: () => setHot(p), onBlur: () => setHot(null), "data-lit": hot === p || undefined });
+  // The guide's last beat: once it closes on its final step, the room's lamp warms (Finale). A replay cools it again.
+  const [warm, setWarm] = useState(false);
+  const ended = useRef(false);
+  useEffect(() => {
+    if (ui.finale) ended.current = true;
+    if (touring) setWarm(false);
+    else if (ended.current) { ended.current = false; setWarm(true); }
+  }, [touring, ui.finale]);
   const pdfRef = useRef<HTMLAnchorElement>(null), liRef = useRef<HTMLAnchorElement>(null);
   const pick = (p: Prop) => (p === "phone" ? ui.contact() : (p === "printer" ? pdfRef : liRef).current?.click()); // what the button itself does
   // The guide: the preview tiles draw and fill when home.preview builds, once the camera is back on them.
@@ -209,7 +219,7 @@ export default function Home({ ui }: { ui: UI }) {
 
         {/* Her room, baked in Blender. The Workbench that sat here is retired: <Workbench /> */}
         <div className={`${s.cards} ${s.dropper}`} data-tour="cards" {...drop("home.room")}>
-          <Finale hot={hot} onHot={setHot} onPick={pick} onScreen={() => { sfx.wake(); setWin95(true); }} />
+          <Finale hot={hot} warm={warm} onHot={setHot} onPick={pick} onScreen={() => { sfx.wake(); setWin95(true); }} />
         </div>
       </div>
 

@@ -208,6 +208,11 @@ export default function Shell({ character }: { character: boolean }) {
   // The era on screen: it follows the step through an era transition (lib/useEraShift, app/eras.css).
   const { era, shift } = useEraShift(viewport, touring ? steps[step].era : null);
   const done = resolveBuilt(touring, step);
+  // The thing the guide's words light, on <html> for what has no `ui` (the theme toggle's pulse).
+  useEffect(() => {
+    const d = document.documentElement.dataset;
+    if (touring && cue) d.cue = cue; else delete d.cue;
+  }, [touring, cue]);
 
   const ui: UI = {
     go: (i) => { if (touring) endTour(); go(i, reduce ? { duration: 0 } : track); },

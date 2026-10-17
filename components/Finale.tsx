@@ -9,8 +9,9 @@ import { unlock } from "@/lib/achievements";
 import s from "./Finale.module.css";
 
 export type Prop = "phone" | "printer" | "rolodex";
-type Props = { className?: string; hot: Prop | null; onHot: (p: Prop | null) => void; onPick: (p: Prop) => void; onScreen?: () => void };
-type Live = { hot: Prop | null; onHot: Props["onHot"]; onPick: Props["onPick"]; onScreen?: () => void };
+// warm: the guide has ended and the lamp switches warmer (research §7).
+type Props = { className?: string; hot: Prop | null; warm?: boolean; onHot: (p: Prop | null) => void; onPick: (p: Prop) => void; onScreen?: () => void };
+type Live = { hot: Prop | null; warm?: boolean; onHot: Props["onHot"]; onPick: Props["onPick"]; onScreen?: () => void };
 
 const NOTES: [Prop, string][] = [["phone", "text me"], ["printer", "print me out"], ["rolodex", "my LinkedIn"]];
 // Each note's text sits in open page space just off the room's silhouette (as a fraction of the canvas, for the
@@ -33,14 +34,14 @@ const SPOTS: [Spot, string, string][] = [
 type Bufs = { room: Promise<ArrayBuffer | null>; her: Promise<ArrayBuffer | null> };
 const grab = (url: string) => fetch(url).then((r) => (r.ok ? r.arrayBuffer() : null)).catch(() => null);
 
-export default function Finale({ className, hot, onHot, onPick, onScreen }: Props) {
+export default function Finale({ className, hot, warm, onHot, onPick, onScreen }: Props) {
   // The hero: the preview and both models start downloading with the page, not after it.
   preload("/models/room-preview.webp", { as: "image", fetchPriority: "high" });
   preload("/models/room.glb", { as: "fetch", crossOrigin: "anonymous" });
   preload("/models/character.glb", { as: "fetch", crossOrigin: "anonymous" });
   const host = useRef<HTMLDivElement>(null);
-  const live = useRef<Live>({ hot, onHot, onPick, onScreen });
-  live.current = { hot, onHot, onPick, onScreen };
+  const live = useRef<Live>({ hot, warm, onHot, onPick, onScreen });
+  live.current = { hot, warm, onHot, onPick, onScreen };
 
   useEffect(() => {
     const el = host.current!;
@@ -1065,7 +1066,19 @@ async function mount(el: HTMLElement, live: React.RefObject<Live>, alive: () => 
   });
 
   const ease = (from: number, to: number, dt: number, rate = 7) => from + (to - from) * (1 - Math.exp(-dt * rate));
+  // The lamp warming at the guide's end: the bake lifts ~+0.15 toward the lamp's amber (blue barely moves, so it
+  // reads warmer, not washed out), her live light and the glows with it. ~1.2s to settle. The sky outside stays.
+  let warmth = 0;
+  const exposure = renderer.toneMappingExposure, glowK = bloom.strength, bake = [...baked.values()];
+  const lampTo = (w: number) => {
+    warmth = w;
+    for (const m of bake) m.color.setRGB(1 + 0.15 * w, 1 + 0.09 * w, 1 + 0.02 * w);
+    renderer.toneMappingExposure = exposure * (1 + 0.15 * w);
+    bloom.strength = glowK * (1 + 0.35 * w);
+  };
   toy.run((t, dt) => {
+    const w = live.current.warm ? 1 : 0;
+    if (warmth !== w) lampTo(Math.abs(w - warmth) < 1e-3 ? w : ease(warmth, w, dt, 2.5));
     const hot = live.current.hot ?? pointer;
     if (hot !== wasHot) { since = t; wasHot = hot; }
     for (const p of PROPS) heat[p] = ease(heat[p], p === hot ? 1 : 0, dt, p === "printer" ? 2.5 : 7);

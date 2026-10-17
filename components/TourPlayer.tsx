@@ -106,7 +106,6 @@ export default function TourPlayer({ ref, t, playing, speed, onSeek, onToggle, o
     const k = YEARS[n], lw = (steps[k].year ?? "").length * 5.4, lx = PAD + AT[k] * w - (n === 0 ? 0 : lw / 2);
     return on && (lx + lw < tagL - 3 || lx > tagL + tagW + 3);
   });
-  const finished = t >= total;
 
   return (
     <motion.div
@@ -115,7 +114,7 @@ export default function TourPlayer({ ref, t, playing, speed, onSeek, onToggle, o
       data-tour-player
       data-drag={drag || undefined}
       initial={{ y: "-160%" }}
-      animate={{ y: finished ? "-160%" : 0 }}
+      animate={{ y: 0 }} /* it leaves with the caption at the end (Tour.module.css) */
       transition={{ duration: 1.4, ease }}
       role="group"
       aria-label="Build mode controls"
