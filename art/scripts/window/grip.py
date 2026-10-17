@@ -1,6 +1,6 @@
 """Her grip, posed by hand: both hands cup the hot chocolate's body, like warming them on it, the handle turned away
-between her fingertips. Run after hands_pose.py
-(which imports and places the rigged hands) and before sleeves.py. Nothing here searches or solves: every joint gets
+between her fingertips, each thumb beside its index finger. Run after hands_pose.py (which imports and places the
+rigged hands) and before sleeves.py. Nothing here searches or solves: every joint gets
 an explicit angle, every hand an explicit place round the mug, and report() measures what touches.
 
 The rig is the download's: per finger a knuckle (BASE = MCP), middle (MID = PIP) and tip (TOP = DIP) bone, weights
@@ -136,23 +136,33 @@ def report(a, keys=None):
     out["z"] = {f: round(wp(a, f + "_BASE").z, 3) for f in FINGERS}
     out["deg"] = {f: round(math.degrees(math.atan2(wp(a, f + "_UP_TOP").y - AXIS.y, wp(a, f + "_UP_TOP").x - AXIS.x))) for f in FINGERS + ("THUMB",)}
     return out
+def fix_normals():
+    """The download's mirrored hand carries mirrored custom normals, so it shades inside out (see-through, torn at the
+    thumb's web): drop them and point every face outward, smooth shaded. Both hands, so they shade alike."""
+    for h in ("HandLMesh", "HandRMesh"):
+        o = D.objects[h]; me = o.data
+        if me.has_custom_normals:
+            with bpy.context.temp_override(object=o, active_object=o, selected_objects=[o], selected_editable_objects=[o]):
+                bpy.ops.mesh.customdata_custom_splitnormals_clear()
+        bm = bmesh.new(); bm.from_mesh(me); bmesh.ops.recalc_face_normals(bm, faces=bm.faces); bm.to_mesh(me); bm.free()
+        for poly in me.polygons: poly.use_smooth = True
 def preserve_volume():
     for h in ("HandLMesh", "HandRMesh"):
         for m in D.objects[h].modifiers:
             if m.type == "ARMATURE": m.use_deform_preserve_volume = True
 # ---------------------------------------------------------------- her grip
 # her left hand where it always sat, a little forward so its fingertips stop short of the handle (turned away from her,
-# cocoa.py); her right hand its mirror (place: 180 - deg, lean flipped; same joint angles); her thumbs on the mug's
-# near side, abducted off the palm, pointing up and in toward each other; every pad within 0-3 mm of the ceramic, nothing
-# inside it (the palms sit a few mm off so the thenar doesn't sink)
+# cocoa.py); her right hand its mirror (place: 180 - deg, lean flipped; same joint angles, within a few degrees); each
+# thumb lies beside its index finger like a fifth finger round the side of the mug, below the rim; every pad 1-3 mm off
+# the ceramic, nothing inside it (the palms sit a few mm off so the thenar doesn't sink)
 POSE = globals().get("GRIP_POSE") or {
     "HandL": {"PLACE": {"deg": -142, "z": 1.171, "wrap": -1, "off": 0.029, "yaw": 16, "lean": -5, "forearm_to": (-0.40, -0.5, 0.9)},
-              "INDEX": (15, 30, 10, 0), "MIDDLE_F": (20, 30, 0, 0), "RING": (20, 20, 0, 0), "PINK": (10, 20, 0, 0), "THUMB": (39, 134, 55, 25, 20)},
+              "INDEX": (15, 30, 0, 0), "MIDDLE_F": (20, 25, 15, 0), "RING": (20, 15, 15, 0), "PINK": (10, 15, 5, 0), "THUMB": (0, 45, 0, 15, 10)},
     "HandR": {"PLACE": {"deg": -38, "z": 1.171, "wrap": 1, "off": 0.031, "yaw": 16, "lean": 5, "forearm_to": (0.26, -0.5, 0.9)},
-              "INDEX": (15, 30, 10, 0), "MIDDLE_F": (20, 30, 0, 0), "RING": (20, 20, 0, 0), "PINK": (10, 20, 0, 0), "THUMB": (39, 134, -50, 25, 20)},
+              "INDEX": (15, 30, 0, 0), "MIDDLE_F": (20, 25, 10, 0), "RING": (20, 15, 15, 0), "PINK": (15, 10, 0, 0), "THUMB": (5, 40, 0, 10, 5)},
 }
 if not globals().get("GRIP_TOOLS"):
-    preserve_volume()
+    preserve_volume(); fix_normals()
     for h, p in POSE.items():
         a = D.objects[h]; rest_wrist(a)
         for f in FINGERS: finger(a, f, *p[f])
