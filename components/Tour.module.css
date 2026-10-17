@@ -50,32 +50,6 @@
 .aside[data-on] { transform: none; }
 .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 
-.notch {
-  position: absolute;
-  left: 50%;
-  top: 0;
-  margin-left: calc(min(360px, 100vw - 32px) / -2);
-  width: min(360px, calc(100vw - 32px));
-  padding: 10px 10px 12px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  border-radius: 0 0 24px 24px;
-  background: var(--blueprint);
-  color: #fff;
-  pointer-events: auto;
-}
-.row { display: flex; align-items: center; gap: 4px; }
-.icon, .play, .speed { border: 0; cursor: pointer; display: flex; align-items: center; justify-content: center; }
-.icon { width: 36px; height: 40px; background: transparent; }
-.play { width: 40px; height: 40px; border-radius: 50%; background: rgba(255, 255, 255, 0.22); }
-.title { display: flex; flex-direction: column; margin-left: 6px; min-width: 76px; line-height: 1.2; }
-.title b { font-size: 15px; }
-.title small { font-size: 12px; color: #dce3ff; }
-.speed { height: 32px; padding: 0 10px; margin-left: auto; border-radius: 999px; background: rgba(255, 255, 255, 0.18); color: #fff; font-size: 12px; font-weight: 700; }
-.progress { display: block; height: 3px; border-radius: 2px; background: rgba(255, 255, 255, 0.25); overflow: hidden; }
-.progress span { display: block; height: 100%; background: var(--surface); transform-origin: 0 50%; }
-
 .stepperBox { box-shadow: none; }
 .stepperCount { font-size: 13px; font-weight: 600; color: var(--blueprint); }
 .stepperSay { margin-top: 8px; font-size: 18px; line-height: 1.5; }

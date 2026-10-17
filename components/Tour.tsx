@@ -1,14 +1,13 @@
 "use client";
-import { motion } from "motion/react";
 import { useEffect, useRef, useState } from "react";
 import { steps, starts, total, stepAt, type Cue } from "@/content/tour";
 import { cueAt, wordsShown } from "@/lib/direction";
-import { ease } from "@/lib/motion";
 import { unlock } from "@/lib/achievements";
 import s from "./Tour.module.css";
 import RBStepper, { Step as RBStep } from "./Stepper";
 import TourCamera from "./TourCamera";
 import Caption, { asideAt } from "./Caption";
+import TourPlayer from "./TourPlayer";
 
 const SPEEDS = [0.5, 1, 1.5, 2];
 
@@ -44,8 +43,8 @@ export default function Tour({ holdMs, onStep, onCue, onClose }: {
   useEffect(() => { onCue(cue); }, [cue, onCue]);
 
   // The one clock. Speed scales it, so captions, steps and progress stay in sync.
-  // It re-renders only when a word comes in (or the aside); the progress bar is written straight to the DOM.
-  const bar = useRef<HTMLSpanElement>(null);
+  // It re-renders only when a word comes in (or the aside); the player's playhead is written straight to the DOM.
+  const player = useRef<HTMLDivElement>(null);
   useEffect(() => {
     let raf = 0;
     let last = performance.now();
@@ -59,7 +58,7 @@ export default function Tour({ holdMs, onStep, onCue, onClose }: {
         const key = `${k}:${wordsShown(st.say, local)}:${local >= asideAt(st)}:${c.t >= total}`;
         if (key !== shown) { shown = key; setT(c.t); }
       }
-      if (bar.current) bar.current.style.transform = `scaleX(${c.t / total})`;
+      player.current?.style.setProperty("--p", String(c.t / total));
       last = now;
       raf = requestAnimationFrame(loop);
     };
@@ -72,6 +71,9 @@ export default function Tour({ holdMs, onStep, onCue, onClose }: {
     if (finished) { seek(0); setPlaying(true); return; }
     setPlaying((p) => !p);
   };
+  // Previous: back to this step's start, or to the one before if it has only just begun.
+  const prev = () => { const k = stepAt(clock.current.t); seek(starts[Math.max(0, k - (clock.current.t - starts[k] < 1 ? 1 : 0))]); };
+  const next = () => seek(starts[Math.min(steps.length - 1, stepAt(clock.current.t) + 1)]);
 
   // At the end: hold the last line, then close. The page stays built.
   useEffect(() => {
@@ -82,16 +84,22 @@ export default function Tour({ holdMs, onStep, onCue, onClose }: {
     return () => clearTimeout(id);
   }, [finished, onClose]);
 
-  // Keys: space pauses, arrows seek 5s, Esc closes. Any manual scroll pauses.
-  const api = useRef({ toggle, seek, onClose });
-  api.current = { toggle, seek, onClose };
+  // Keys: space pauses, arrows go a step back or on, Esc closes. During the start hold only Esc works.
+  // Space on a focused button presses that button. Any manual scroll pauses.
+  const api = useRef({ toggle, prev, next, onClose });
+  api.current = { toggle, prev, next, onClose };
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const a = api.current;
-      if (e.key === " ") { e.preventDefault(); a.toggle(); }
-      else if (e.key === "ArrowRight") a.seek(clock.current.t + 5);
-      else if (e.key === "ArrowLeft") a.seek(clock.current.t - 5);
-      else if (e.key === "Escape") a.onClose();
+      if (e.key === "Escape") { a.onClose(); return; }
+      if (clock.current.held) return;
+      if (e.key === " ") {
+        if ((e.target as HTMLElement | null)?.closest?.("button")) return;
+        e.preventDefault();
+        a.toggle();
+      }
+      else if (e.key === "ArrowRight") { e.preventDefault(); a.next(); }
+      else if (e.key === "ArrowLeft") { e.preventDefault(); a.prev(); }
     };
     const pause = () => setPlaying(false);
     window.addEventListener("keydown", onKey);
@@ -110,29 +118,18 @@ export default function Tour({ holdMs, onStep, onCue, onClose }: {
       <TourCamera target={step.target} pane={step.pane} finale={i === steps.length - 1} paused={!playing && !finished} />
       <Caption step={step} local={local} paused={!playing && !finished} />
 
-      <motion.div className={s.notch} initial={{ y: "-110%" }} animate={{ y: finished ? "-110%" : 0 }} transition={{ duration: 1.4, ease }} role="toolbar" aria-label="Build mode controls" data-tour-player>
-        <div className={s.row}>
-          <button type="button" className={s.icon} onClick={() => seek(starts[Math.max(0, i - (local < 1 ? 1 : 0))])} aria-label="Previous step">
-            <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M12 3.5 5.5 8 12 12.5z" fill="#fff" /><rect x="3" y="3.5" width="2" height="9" rx="1" fill="#fff" /></svg>
-          </button>
-          <button type="button" className={s.play} onClick={toggle} aria-label={playing ? "Pause" : "Play"}>
-            {playing ? (
-              <svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><rect x="3.5" y="2.5" width="3" height="11" rx="1" fill="#fff" /><rect x="9.5" y="2.5" width="3" height="11" rx="1" fill="#fff" /></svg>
-            ) : (
-              <svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><path d="M4.5 3.2 13 8l-8.5 4.8z" fill="#fff" /></svg>
-            )}
-          </button>
-          <button type="button" className={s.icon} onClick={() => seek(starts[Math.min(steps.length - 1, i + 1)])} aria-label="Next step">
-            <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 3.5 10.5 8 4 12.5z" fill="#fff" /><rect x="11" y="3.5" width="2" height="9" rx="1" fill="#fff" /></svg>
-          </button>
-          <span className={s.title}><b>{step.title}</b><small>{i + 1} of {steps.length}</small></span>
-          <button type="button" className={s.speed} onClick={() => setSpeed(SPEEDS[(SPEEDS.indexOf(speed) + 1) % SPEEDS.length])} aria-label="Change speed">{speed}×</button>
-          <button type="button" className={s.icon} onClick={onClose} aria-label="Close the tour">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.4" strokeLinecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" /></svg>
-          </button>
-        </div>
-        <span className={s.progress}><span ref={bar} style={{ transform: `scaleX(${t / total})` }} /></span>
-      </motion.div>
+      <TourPlayer
+        ref={player}
+        t={t}
+        playing={playing}
+        speed={speed}
+        onSeek={seek}
+        onToggle={toggle}
+        onPrev={prev}
+        onNext={next}
+        onSpeed={() => setSpeed(SPEEDS[(SPEEDS.indexOf(speed) + 1) % SPEEDS.length])}
+        onClose={onClose}
+      />
     </div>
   );
 }
