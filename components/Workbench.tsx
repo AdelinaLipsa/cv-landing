@@ -1,11 +1,10 @@
 "use client";
 import { motion } from "motion/react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useCalm } from "@/lib/useCalm";
 import SpotlightCard from "./SpotlightCard";
 import PaymentJourney from "./PaymentJourney";
 import j from "./PaymentJourney.module.css";
-import { unlock } from "@/lib/achievements";
 import s from "./Workbench.module.css";
 
 // Hero right side: her four roles at Yomali, one tab each. Facts from content/cv.ts and her own words (2026-10-01); demo data only.
@@ -115,8 +114,7 @@ function Engineering() {
 
 export default function Workbench() {
   const [mode, setMode] = useState<Mode>("Payments");
-  const opened = useRef(new Set<Mode>(["Payments"]));
-  const pick = (m: Mode) => { setMode(m); opened.current.add(m); if (opened.current.size === MODES.length) unlock("roles"); };
+  const pick = (m: Mode) => setMode(m);
   return (
     <SpotlightCard className={s.card} spotlightColor="rgba(51, 85, 255, 0.12)">
       <p className={s.lede}>My four roles at Yomali, at the same time</p>

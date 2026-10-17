@@ -1,8 +1,7 @@
 "use client";
 import { AnimatePresence, motion } from "motion/react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useCalm } from "@/lib/useCalm";
-import { unlock } from "@/lib/achievements";
 import Magnet from "./Magnet";
 import DecryptedText from "./DecryptedText";
 import { timeline, states, type Fail, type State } from "@/lib/checkoutRun";
@@ -44,7 +43,6 @@ export default function PaymentJourney() {
   const [runs, setRuns] = useState(0); // which card gateway this run uses
   const [broken, setBroken] = useState<Break | null>(null);
   const [at, setAt] = useState(-1); // -1 idle, then events played so far
-  const tried = useRef(new Set<Break>());
   const gateway = method === "Card" ? CARD_GATEWAYS[runs % CARD_GATEWAYS.length] : method === "Amazon Pay" ? "Amazon Pay" : method === "Paze" ? CARD_GATEWAYS[runs % CARD_GATEWAYS.length] : "PayPal";
   const next = CARD_GATEWAYS[(runs + 1) % CARD_GATEWAYS.length];
   const list = steps(method, gateway);
@@ -68,8 +66,6 @@ export default function PaymentJourney() {
     setBroken(b);
     if (b) {
       setMethod("Card"); // every break is a card story
-      tried.current.add(b);
-      if (tried.current.size === BREAK_NAMES.length) unlock("chaos");
     }
     setAt(1);
   };

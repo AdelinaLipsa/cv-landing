@@ -51,7 +51,7 @@ const dot = { transformBox: "fill-box", transformOrigin: "center" } as const;
 const NOW = rows.findIndex((r) => r.kind === "job" && r.job.dates.includes("now")); // the current job
 const DESKTOP = ["(min-width:1000px)"];
 const ONE = [1];
-const SHIPPING = "Param Decoder, BITE, change log, Hookwarden";
+const SHIPPING = "Param Decoder, BITE, the change log, Hookwarden";
 
 // The guide: each row is a piece the tour builds, and the pen draws the graph up to the highest one.
 const N = rows.length;
@@ -73,7 +73,7 @@ const RING = { duration: 0.9, ease: [0.22, 1, 0.36, 1] } as const;
 // Numbers for the header, all counted from cv.ts.
 const STATS = [
   { n: new Date().getFullYear() - 2020, label: "years shipping" },
-  { n: jobs.length, label: "teams" },
+  { n: jobs.length, label: "companies" },
   { n: certifications.length, label: "certifications" },
   { n: 2, label: "branches" },
 ];
@@ -83,7 +83,7 @@ const LEVEL: Record<string, number> = { native: 5, "full professional": 4, "limi
 
 const detail = (r: Row) =>
   r.kind === "merge"
-    ? { title: stillShipping.title, meta: `Internal tools, ${stillShipping.dates}. On both branches.`, lines: stillShipping.lines, stack: stillShipping.stack, branch: "both" }
+    ? { title: stillShipping.title, meta: `Tools I build myself, ${stillShipping.dates}. On both branches.`, lines: stillShipping.lines, stack: stillShipping.stack, branch: "both" }
     : r.kind === "job"
       ? { title: r.job.company, meta: `${r.job.role}. ${r.job.dates}, ${r.job.place}.`, lines: r.job.lines, stack: r.job.stack, branch: r.job.branch }
       : null;

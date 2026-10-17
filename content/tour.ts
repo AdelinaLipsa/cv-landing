@@ -42,7 +42,7 @@ export const steps: Step[] = [
   { title: "Products I own", era: 3, pane: 1, target: '[data-key="gateways"]', builds: ["work.owned"], say: "The products I own: the gateways and the ways to pay. What ships, in what order, and how it performs." },
   { title: "Things I built", era: 3, pane: 1, target: '[data-key="bite"]', builds: ["work.built", "home.preview"], say: "And the things that didn’t exist until I built them: BITE, which the whole affiliate managers team uses every day, Param Decoder, the customer support automations, and Hookwarden, open source." },
   { title: "Off duty", era: 3, pane: 0, target: '[data-tour="offduty"]', builds: [], say: "Off duty: MMA, drawing in Procreate, electric guitar, anime, games, and cats. Plus how a psychology degree ended up on the dev branch." },
-  { title: "Done", era: 3, pane: 0, target: '[data-tour="name"]', builds: [], cues: [{ at: "top right", hot: "theme" }, { at: "Message me", hot: "phone" }], say: "Now it exists. Light or dark, your call, top right. Message me, it opens WhatsApp. No cover letter needed." },
+  { title: "Done", era: 3, pane: 0, target: '[data-tour="name"]', builds: [], cues: [{ at: "top right", hot: "theme" }, { at: "Message me", hot: "phone" }], say: "Now it exists. Light or dark, your call, top right. Message me: WhatsApp, email, or a call, your pick. No cover letter needed." },
 ];
 
 export const ALL_BUILT: ReadonlySet<BuildKey> = new Set(steps.flatMap((s) => s.builds));

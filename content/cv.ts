@@ -40,7 +40,7 @@ export const origin = [
   { when: "Then", text: "I spent a lot of time emulating the Nintendo and Game Boy games that weren’t available to me. It was my comfort zone." },
   { when: "2012 to 2015", text: "Studied psychology, with a focus on criminalistics." },
   { when: "After the degree", text: "Interned at SRI, the Romanian Intelligence Service, through the Romanian Government’s internship programme." },
-  { when: "After university", text: "Photographer, cook, salesperson. I did a bit of everything." },
+  { when: "Next", text: "Photographer, cook, salesperson. I did a bit of everything." },
   { when: "2019", text: "I decided computers were my future, because I love spending time with them. Web development at The Informal School of IT." },
   { when: "2020", text: "My first dev job, at AgroCity. The rest is on the Career tab." },
 ];
@@ -68,8 +68,10 @@ export const jobs: Job[] = [
     place: "United States",
     branch: "product",
     lines: [
-      "Owns the payments product: gateway and acquirer integrations, 3DS/SCA, alternative payment methods, and the product side of Kount fraud monitoring, chargebacks and disputes.",
-      "Product manager for the core engineering team and manager of the technical support team. Runs PRDs, standups, weekly reporting and the change log in ClickUp.",
+      "Owns the payments product: gateway and acquirer integrations, 3DS/SCA, alternative payment methods, and the product side of Kount fraud monitoring, chargebacks, and disputes.",
+      "Product manager for the core engineering team and manager of the technical support team: pixels, postbacks, parameters, the API, and checkout integrations. Runs PRDs, standups, weekly reporting, and the change log in ClickUp.",
+      // Adelina's own words, 2026-10-01 (the guide's "Now" line says the same).
+      "With the head of customer support: codes the automations behind their flows and runs their statistics.",
       // Adelina's own words, 2026-10-01.
       "Wrote SOPs for BuyGoods, the platform Yomali owns, and moved HR operations from spreadsheets to Factorial.",
       "Product owner for the refund and return journey (Find Order) and the AI voice agent’s human escalation protocol. Proposed a self-service refund flow, now in testing.",
@@ -86,7 +88,7 @@ export const jobs: Job[] = [
     branch: "product",
     lines: [
       "Led delivery for a digital health client at a Boston and Toronto agency, reporting to the CEO and coordinating third-party API integrations and escalations.",
-      "Wrote the requirements for automated member eligibility processing in Laravel: per-vendor S3 drops, scheduled SFTP transfers, retries, logging and Slack alerts.",
+      "Wrote the requirements for automated member eligibility processing in Laravel: per-vendor S3 drops, scheduled SFTP transfers, retries, logging, and Slack alerts.",
       "Set up per-vendor AWS S3 folders with IAM policies by hand, wrote AWS Lambda functions, and scoped a self-hosted Apple and Google Wallet membership card service.",
       "Built the member app's Caspio DataPages, wallet card pages included, and turned the service catalogue PDF into a JSON source that drives the branded member app.",
     ],
@@ -118,7 +120,7 @@ export const jobs: Job[] = [
       "Full-stack web developer.",
       "Technical Lead from Jul 2023 to Dec 2023.",
       // Adelina's own words, 2026-10-01.
-      "Worked across whatever each project needed: React with TypeScript, Ruby on Rails, Vue.js, Node.js, Next.js, .NET and more, plus Docker.",
+      "Worked across whatever each project needed: React with TypeScript, Ruby on Rails, Vue.js, Node.js, Next.js, .NET, Docker, and more.",
     ],
     stack: ["React", "TypeScript", "Ruby on Rails", "Vue.js", "Node.js", "Next.js", ".NET", "Docker"],
   },
@@ -157,6 +159,7 @@ export const stillShipping = {
   dates: "2025 to now",
   lines: [
     "Builds internal tools hands-on when the team hits a recurring pain point: a link and postback decoder, the change log.",
+    "Built Hookwarden, an open-source CLI that finds webhook signature bugs across 21 providers.",
     // Adelina's own words, 2026-09-30.
     "Built BITE (BuyGoods Internal Tools), a Chrome extension that checks whether BuyGoods tracking is on a page, including injected and network-fired tracking.",
     "Built the reporting pipeline and dashboard that replaced a 1.5 to 2 hour manual daily report.",

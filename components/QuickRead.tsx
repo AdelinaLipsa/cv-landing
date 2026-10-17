@@ -12,10 +12,10 @@ const NOW = [
   "With the head of customer support: I code their automations and run their statistics",
 ];
 const PROOF = [
-  "Own the 3DS/SCA rollout across thousands of accounts, and measured what it did to conversion",
+  "Own the 3DS/SCA rollout across thousands of accounts, and measured its effect on a 25-account sample",
   "Built the reporting pipeline that replaced a 1.5 to 2 hour manual daily report",
   "Built BITE, the Chrome extension the affiliate managers team uses daily",
-  "Full-stack developer since 2020: React and TypeScript, Laravel, Vue, Rails, Node; Tech Lead at Fabel X; Ubisoft",
+  "Full-stack developer since 2020: React with TypeScript, Laravel, Vue, Rails, and Node. Tech Lead at Fabel X, web developer at Ubisoft",
 ];
 
 export default function QuickRead({ contact }: { contact: () => void }) {

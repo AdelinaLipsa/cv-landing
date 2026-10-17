@@ -83,7 +83,7 @@ export default function Terminal({ onClose, onContact, onWork }: { onClose: () =
               displayScrollbar={false}
             />
           </div>,
-          <span className={s.muted}>Click one to open the wall.</span>
+          <span className={s.muted}>Click one to open the Work tab.</span>
         );
       case "cat about.txt":
         return print(...about);
@@ -100,7 +100,7 @@ export default function Terminal({ onClose, onContact, onWork }: { onClose: () =
       case "curl /api/cv":
         return print(`curl ${location.origin}/api/cv`, <span className={s.muted}>The whole CV, as JSON. Pipe it into jq if you’re that kind of person.</span>);
       case "sudo hire adelina":
-        print(<span className={s.muted}>[sudo] password for recruiter: ********</span>, <span className={s.dev}>Permission granted. Opening WhatsApp with a first line already written.</span>);
+        print(<span className={s.muted}>[sudo] password for recruiter: ********</span>, <span className={s.dev}>Permission granted. Opening my contact details.</span>);
         setTimeout(() => { onClose(); onContact(); }, 1400);
         return;
       case "sudo":

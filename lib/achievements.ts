@@ -17,8 +17,6 @@ export const ACHIEVEMENTS = {
   guestbook: { name: "It’s 2003 again", hint: "Sign the guestbook" },
   recruiter: { name: "Speed run", hint: "Open the 30-second version" },
   explorer: { name: "Explorer", hint: "Visit all four tabs" },
-  roles: { name: "Four hats", hint: "Open all four roles in the hero card" },
-  chaos: { name: "Chaos engineer", hint: "Break the checkout all five ways" },
   win98: { name: "Plug and play", hint: "Boot the retro computer" },
   bsod: { name: "Fatal exception", hint: "Crash the old computer" },
   pipes: { name: "Screen saver", hint: "Leave the old computer alone for 30 seconds" },
