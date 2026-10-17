@@ -82,14 +82,14 @@ export default function Tour({ holdMs, onStep, onCue, onFinish, onClose }: {
   useEffect(() => {
     setDone(false);
     if (!finished) return;
-    unlock("tour");
     setPlaying(false);
     let id = 0, raf = 0;
     const landed = () => {
       if (document.querySelector("[data-camera]")) { raf = requestAnimationFrame(landed); return; }
       setDone(true);
       onFinish();
-      id = window.setTimeout(onClose, 3200);
+      // The achievement toast waits for the player to leave: it drops in at the top, where the player sits.
+      id = window.setTimeout(() => { unlock("tour"); onClose(); }, 3200);
     };
     landed();
     return () => { cancelAnimationFrame(raf); clearTimeout(id); };
