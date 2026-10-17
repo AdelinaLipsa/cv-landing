@@ -1,6 +1,7 @@
-/* Her teenage PC at night: a C64 monitor on a desk, the 2003 page on its screen. The page and the room are CSS, so they
-   paint at once; the monitor (three.js, Boot.tsx) fades in around the glass. The camera looks straight at the glass, and
-   the --ar/--oy/--glass/--m/--note-* values come from it (Boot.tsx), so the page sits exactly on the model's glass. */
+/* Her teenage PC at night: a C64 monitor on her desk, the 2003 page on its screen. The page is CSS and the room starts
+   as a tiny blurred copy, so both paint at once; the room's render and the monitor (three.js, Boot.tsx) fade in around
+   the glass. The camera looks straight at the glass, and the --ar, --oy, --glass, --m, --note-* and --p* values come from it
+   (Boot.tsx), so the page sits exactly on the model's glass and the model on the rendered desk. */
 .room {
   --w: min(92vw, 900px, calc((100dvh - var(--desk) * 0.55 - 64px) * var(--ar))); /* the frame's width: as big as the height allows */
   --desk: clamp(48px, 9dvh, 96px);
@@ -18,23 +19,30 @@
 }
 .room[data-off] { pointer-events: none; }
 
-/* Dusk-blue dark, the hero room's palette; the screen's light pools on the desk under it. */
+/* The night around the room's render: its edges fade into this, and it is what paints before the render arrives. */
 .night {
   position: absolute;
   inset: 0;
-  background:
-    radial-gradient(60% 55% at 50% 48%, rgba(96, 120, 255, 0.16), transparent 70%),
-    radial-gradient(120% 90% at 50% 100%, #241c44, #1a1530 45%, #0d0b1c 100%);
+  background: linear-gradient(#4b3b3d, #3b2e32 60%, #140d0c);
 }
-.desk {
+
+/* Her desk corner at night (Boot.tsx, PLATE): placed on the glass's centre and sized in frame widths, so the desk
+   stays under the monitor on every screen and follows the camera. Its edges fade out; a 24 px copy paints first. */
+.plate {
   position: absolute;
-  left: 0; right: 0; bottom: 0;
-  height: var(--desk);
-  background:
-    radial-gradient(40% 120% at 50% 0%, rgba(120, 140, 255, 0.2), transparent 70%),
-    linear-gradient(#2c2347, #17122b 40%, #0e0b1c);
-  box-shadow: 0 -1px 0 rgba(170, 160, 255, 0.22); /* the front edge catching the screen's light */
+  left: calc(50% - var(--w) * var(--px));
+  top: calc(var(--oy) - var(--w) * var(--pt));
+  width: calc(var(--w) * var(--px) * 2);
+  height: calc(var(--w) * (var(--pt) + var(--pb)));
+  pointer-events: none;
+  background: url("data:image/webp;base64,UklGRtYAAABXRUJQVlA4IMoAAACQBQCdASoYABMAPrVUo00nJKMiKAgA4BaJYwCdL68VjQZ6XEgCTN/5cDgmTBBtNhglKKaDYAD+298bQ1WK81YVE696SN0VNBkVDdRnWr3JY5N6nXnlTj4998yRPMALHP4YU1wb+UTLiA3X8ZwlBQ8ldP23MMjMvdaFx7F6pHRvCNEloz1Mc3WwayX+42tKQYQ3JbC9oHKxpazdmhDELeKHkLVJCMfkXjXGc+m4rGiZ/ZECvMnVe8CNdjY8RvlhszaNBNe+1ogIYAAA") 0 0 / 100% 100%;
+  --fade: linear-gradient(90deg, transparent, #000 16%, #000 84%, transparent), linear-gradient(transparent, #000 13%, #000 87%, transparent);
+  mask-image: var(--fade);
+  mask-composite: intersect;
 }
+.plate img { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; transition: opacity 0.6s ease; }
+.plate img[data-ready] { opacity: 1; }
+.room[data-off] .plate .on { opacity: 0; transition-duration: 0.26s; } /* the tube's light leaves the desk */
 
 /* The camera's frame: the canvas covers it, the glass's centre is at (50%, --oy). */
 .rig {
@@ -226,5 +234,5 @@
 @media (prefers-reduced-motion: reduce) {
   .glow, .glass::before, .glass::after { animation: none; }
   .build:hover { animation: none; }
-  .model canvas { transition: none; }
+  .model canvas, .plate img { transition: none; }
 }

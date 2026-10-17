@@ -98,6 +98,27 @@ CC0:
 - Her figures come from `public/models/` (megaman, kid-goku, pokeball, digivice, straw-hat).
 - Everything else is modelled for this room; textures are generated with PIL.
 
+# The boot screen's room
+
+`public/media/boot/room-on.webp` and `room-off.webp` are the room behind the boot screen's C64 (`components/Boot.tsx`):
+her desk corner at night, rendered in Cycles from `room_source.blend` by `art/scripts/boot_plate.py` from exactly
+where the boot screen's three.js camera stands (160 cm straight in front of the glass, level). The C64 glb stands in
+the corner unseen by the camera, so only its shadow and the tube's light on the desk are in the render; the live
+model is drawn over it. The script only changes its copy of the scene for the shot: the LCD, chair and preview dust
+go, the corner posters hang lower, a second fairy-light string droops just above the monitor, the sun is down.
+`off` is the same frame with the tube dark (the site crossfades to it at switch-off).
+
+```
+cp art/room_source.blend /tmp/boot.blend          # never render from (or save over) the source
+B=/Applications/Blender.app/Contents/MacOS/Blender
+$B -b /tmp/boot.blend --python art/scripts/boot_plate.py -- on  /tmp/boot-on.png  2400 128
+$B -b /tmp/boot.blend --python art/scripts/boot_plate.py -- off /tmp/boot-off.png 2400 128
+cwebp -q 80 -sharp_yuv /tmp/boot-on.png  -o public/media/boot/room-on.webp
+cwebp -q 75 -sharp_yuv /tmp/boot-off.png -o public/media/boot/room-off.webp
+magick /tmp/boot-on.png -resize 24x -strip -quality 60 webp:- | base64   # the instant placeholder in Boot.module.css (.plate)
+```
+The plate spans `PLATE` frame widths round the glass (same numbers in the script and in Boot.tsx); change one, change both.
+
 # The window at the end of the page
 
 `public/models/window/` is her POV from her parter window in Bucharest, holding a mug of hot chocolate, a pigeon on

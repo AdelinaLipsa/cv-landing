@@ -26,6 +26,10 @@ const F = (() => {
   return { r, top, bot, w: 2 * r, h: top - bot };
 })();
 const FACE = depth(BODY.z); // the body's front face, where the note is stuck
+// The room behind it: a Cycles render of her desk corner from this same camera (art/scripts/boot_plate.py), the C64
+// standing in it unseen so only its shadow and the tube's light on the desk are baked. It spans PLATE frame widths
+// from the glass's centre (x: each side, top: up, bot: down); keep it in step with PLATE in the script.
+const PLATE = { x: 1.75, top: 1.5, bot: 1.21 };
 const n = (x: number) => +x.toFixed(5);
 const RIG = {
   "--ar": n(F.w / F.h), // the frame's aspect
@@ -35,7 +39,10 @@ const RIG = {
   "--note-x": `${n(((F.r + 7.5 * FACE) / F.w) * 100)}%`, // the note's corner, stuck over the top edge
   "--note-x-phone": `${n(((F.r + 1 * FACE) / F.w) * 100)}%`, // phones start close in: nearer the middle, in shot
   "--note-y": `${n(((F.top - (BODY.top + 1.6 - GLASS.cy) * FACE) / F.h) * 100)}%`,
+  "--px": PLATE.x, "--pt": PLATE.top, "--pb": PLATE.bot,
 } as React.CSSProperties;
+const ready = (e: React.SyntheticEvent<HTMLImageElement>) => { e.currentTarget.dataset.ready = ""; };
+const lit = (img: HTMLImageElement | null) => { if (img?.complete && img.naturalWidth) img.dataset.ready = ""; }; // loaded before hydration: no load event
 const BODY_W = (BODY.half * 2 * FACE) / F.w; // the monitor's width, in frame widths: phones pull back until it fits
 
 // The model around the page: loads after first paint and fades in. The screen's light on the plastic goes out with the tube.
@@ -49,6 +56,7 @@ async function monitor(el: HTMLDivElement, alive: () => boolean) {
   renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.NeutralToneMapping; // lit as authored: the night is the room around it, not a tint on it
+  renderer.toneMappingExposure = 0.7; // untinted, a touch less studio light: it stands in a room lit by the tube and fairy lights
   el.appendChild(renderer.domElement);
 
   const scene = new THREE.Scene(), camera = new THREE.PerspectiveCamera();
@@ -143,13 +151,17 @@ export default function Boot({ onBuild, onSkip, gate }: { onBuild: Leave; onSkip
   const t = { duration: pull / 1000, ease };
   return (
     <motion.div ref={scope} className={`${s.room} ${gate ? "gate-boot" : ""}`} style={RIG} data-off={off || undefined} exit={calm ? { opacity: 0, transition: t } : undefined}>
-      <motion.div className={s.night} aria-hidden="true" exit={calm ? undefined : { opacity: 0, transition: t }}>
-        <div className={s.desk} />
-      </motion.div>
+      <motion.div className={s.night} aria-hidden="true" exit={calm ? undefined : { opacity: 0, transition: t }} />
 
       {/* The camera pulls back: the monitor drops away into the dark while the page comes up around it. */}
       <motion.div className={s.rig} exit={calm ? undefined : { scale: 0.26, y: "-4%", opacity: [1, 1, 0], transition: { ...t, opacity: { ...t, times: [0, 0.55, 1] } } }}>
         <div ref={cam} className={s.cam}>
+        {/* Her desk corner at night: a tiny blurred copy paints at once, the render fades in over it; with the tube
+            off, the screen's light leaves the desk (the "off" render under it shows through). */}
+        <div className={s.plate} aria-hidden="true">
+          <img ref={lit} src="/media/boot/room-off.webp" alt="" fetchPriority="low" onLoad={ready} />
+          <img ref={lit} className={s.on} src="/media/boot/room-on.webp" alt="" onLoad={ready} />
+        </div>
         <div className={s.glow} aria-hidden="true" />
         <div ref={model} className={s.model} aria-hidden="true" />
           <div className={s.screen}>
