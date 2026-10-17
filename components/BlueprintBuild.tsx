@@ -22,7 +22,7 @@ if (typeof window !== "undefined") gsap.registerPlugin(DrawSVGPlugin, Flip, useG
 const SVG = "http://www.w3.org/2000/svg";
 const CLEAR = "opacity,pointerEvents,transform,clipPath";
 const RIPPLE = { grid: "auto", from: "start", amount: 0.4 } as const;
-const MASK = "inset(100% -12px -12px -12px)", OPEN = "inset(-12px -12px -12px -12px)"; // sides and foot open: shadows show
+const MASK = "inset(100% -12px 0px -12px)", OPEN = "inset(-12px -12px -12px -12px)"; // closed foot: no shadow before the outline; open once risen
 const CAMERA = "-10% -30% -10% -30%"; // the middle of the screen: the pane has mostly slid in
 
 type Opts = { touring: boolean; era: number; sel: string; bare?: string; deck?: string; delay?: number };
@@ -82,6 +82,7 @@ export function useBlueprint(scope: RefObject<HTMLElement | null>, on: boolean, 
     st.current = "built";
     stop();
     if (calm || !all.length) { gsap.set(all, { clearProps: CLEAR }); return; }
+    gsap.set(all, { opacity: 0 }); // a killed un-build can leave pieces half-faded
 
     // One overlay for the scope, at its static position; the outlines are measured from it, in unscaled px.
     const svg = document.createElementNS(SVG, "svg");

@@ -161,7 +161,11 @@ function Viewer({ list, at, onMove, onClose }: { list: Tile[]; at: number; onMov
 function Section({ sec, ui, list, desktop, onOpen }: { sec: (typeof sections)[number]; ui: UI; list: Tile[]; desktop: boolean; onOpen: (i: number) => void }) {
   const ref = useRef<HTMLElement>(null);
   const { touring, era } = ui;
-  useBlueprint(ref, ui.built(`work.${sec.id}` as BuildKey), { touring, era, sel: "[data-bp]", bare: "[data-bp-bare]" });
+  const on = ui.built(`work.${sec.id}` as BuildKey);
+  useBlueprint(ref, on, { touring, era, sel: "[data-bp]", bare: "[data-bp-bare]" });
+  // Once the guide has built them, the tiles stay plain divs: swapping back to Land would remount them and land them again.
+  const plain = useRef(false);
+  if (touring && on) plain.current = true;
   return (
     <section ref={ref} className={s.section}>
       <div className={s.sectionHead} data-bp-bare>
@@ -178,7 +182,7 @@ function Section({ sec, ui, list, desktop, onOpen }: { sec: (typeof sections)[nu
               <TileLinks tile={t} />
             </>
           );
-          return touring ? <div key={t.id} className={s.tileWrap} data-bp>{body}</div> : <Land key={t.id} className={s.tileWrap} delay={(k % 3) * 0.09}>{body}</Land>;
+          return touring || plain.current ? <div key={t.id} className={s.tileWrap} data-bp>{body}</div> : <Land key={t.id} className={s.tileWrap} delay={(k % 3) * 0.09}>{body}</Land>;
         })}
       </div>
     </section>

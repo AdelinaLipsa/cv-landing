@@ -115,7 +115,10 @@ export default function Home({ ui }: { ui: UI }) {
   const pick = (p: Prop) => (p === "phone" ? ui.contact() : (p === "printer" ? pdfRef : liRef).current?.click()); // what the button itself does
   // The guide: the preview tiles draw and fill when home.preview builds, once the camera is back on them.
   const tilesRef = useRef<HTMLDivElement>(null);
-  useBlueprint(tilesRef, ui.built("home.preview"), { touring, era, sel: "[data-bp]" });
+  const previewOn = ui.built("home.preview");
+  useBlueprint(tilesRef, previewOn, { touring, era, sel: "[data-bp]" });
+  const plain = useRef(false); // built by the guide: stay plain divs after it, so closing it doesn't remount and re-land them
+  if (touring && previewOn) plain.current = true;
   const buildLabel = touring ? "Stop the build" : ui.returning ? "Replay the build" : "Watch me build it";
 
   return (
@@ -225,7 +228,7 @@ export default function Home({ ui }: { ui: UI }) {
                 <TileLinks tile={t} />
               </>
             );
-            return touring ? <div key={t.id} className={s.tileWrap} data-bp>{body}</div> : <Land key={t.id} className={s.tileWrap} delay={i * 0.09}>{body}</Land>;
+            return touring || plain.current ? <div key={t.id} className={s.tileWrap} data-bp>{body}</div> : <Land key={t.id} className={s.tileWrap} delay={i * 0.09}>{body}</Land>;
           })}
         </div>
       </section>
