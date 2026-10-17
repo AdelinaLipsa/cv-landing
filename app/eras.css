@@ -42,9 +42,6 @@
 
 /* body sets font-family once; the eras re-declare it so their --font-body reaches the panes. */
 [data-era="0"], [data-era="1"], [data-era="2"] { font-family: var(--font-body); }
-[data-era="0"] { background: var(--surface); }
-[data-era="1"] { background: var(--surface-2); }
-[data-era="2"] { background: var(--surface); }
 
 /* ---------- Shared shapes (eras 0–2) ---------- */
 /* One image per skin in every early era, so the gloss can deflate token by token instead of snapping. */
