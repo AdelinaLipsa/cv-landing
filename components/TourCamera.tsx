@@ -128,6 +128,7 @@ export default function TourCamera({ target, pane, finale, paused }: { target: s
   move.current = (mode) => {
     const c = cam.current, { target, pane: pi, finale } = now.current, e = eases();
     c.tl?.kill();
+    gsap.killTweensOf("[data-stage]"); // a close's settle still running when a replay starts
     cancelAnimationFrame(c.retry ?? 0);
     gsap.killTweensOf(veil.current);
     const vp = document.querySelector<HTMLElement>("[data-era]");
@@ -286,13 +287,17 @@ export default function TourCamera({ target, pane, finale, paused }: { target: s
     return () => cancelAnimationFrame(raf);
   }, []);
 
-  // The guide closing leaves the page as it is, unzoomed.
+  // The guide closing leaves the page as it is, unzoomed: a zoomed stage settles home on `slow`, not a cut.
   useEffect(() => () => {
-    const c = cam.current;
+    const c = cam.current, e = eases();
     c.tl?.kill();
     c.tl = undefined;
     cancelAnimationFrame(c.retry ?? 0);
-    for (const st of document.querySelectorAll<HTMLElement>("[data-stage]")) { gsap.killTweensOf(st); gsap.set(st, { clearProps: STAGE_PROPS }); }
+    for (const st of document.querySelectorAll<HTMLElement>("[data-stage]")) {
+      gsap.killTweensOf(st);
+      if (!st.style.transform) { gsap.set(st, { clearProps: STAGE_PROPS }); continue; }
+      gsap.to(st, { scale: 1, x: 0, y: 0, duration: e.slow.duration, ease: e.slow.ease, onComplete: () => { gsap.set(st, { clearProps: STAGE_PROPS }); } });
+    }
     for (const p of document.querySelectorAll<HTMLElement>("[data-pane]")) gsap.killTweensOf(p);
     delete document.querySelector<HTMLElement>("[data-era]")?.dataset.camera;
   }, []);
