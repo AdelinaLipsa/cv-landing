@@ -5,12 +5,13 @@ import Counter from "./Counter";
 import DecryptedText from "./DecryptedText";
 import { profile } from "@/content/cv";
 import { sfx } from "@/lib/sfx";
+import { createRain, step, mist, paint, painter, type Rain } from "@/lib/rainGlass";
 import s from "./Window.module.css";
 
 // The end of the page, from her eyes: sitting at her window on the parter, hot chocolate in both hands, a pigeon on
 // the tin sill outside. Baked in Blender (art/scripts/window/), the street live on top: Bucharest's real time of day
 // and weather (hers, not the visitor's), the pigeon's routine, steam, a sip, lamp cones at night, a passing Dacia.
-// ?hour=21.5 and ?weather=rain|snow|fog|storm|clear force a sky, for testing.
+// ?hour=21.5 and ?weather=drizzle|rain|storm|snow|fog|clear force a sky, for testing.
 
 const BASE = "/models/window/";
 const LAT = 44.43, LON = 26.1;
@@ -354,28 +355,29 @@ async function mount(el: HTMLElement, live: React.RefObject<Live>, alive: () => 
   const rnd = (a: number, b: number) => a + Math.random() * (b - a);
   for (let i = 0; i < DROPS; i++) { const x = rnd(-box.x, box.x), y = rnd(box.y0, box.y1), z = rnd(box.z1, box.z0); rp.set([x, y, z, x, y - 0.25, z], i * 6); }
   for (let i = 0; i < FLAKES; i++) sp.set([rnd(-box.x, box.x), rnd(box.y0, box.y1), rnd(box.z1, box.z0)], i * 3);
-  const glassP = at("WindowGlass");
-  const glass = new THREE.Mesh(new THREE.PlaneGeometry(2.1, 1.25), new THREE.ShaderMaterial({
-    transparent: true, depthWrite: false, uniforms: { uTime: U.uTime, uRain: { value: 0 }, uNight: U.uNight },
-    vertexShader: "varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.); }",
-    fragmentShader: `uniform float uTime, uRain, uNight; varying vec2 vUv; ${NOISE}
-      float drops(vec2 uv, float scale, float t){
-        vec2 g = uv * vec2(scale, scale * .6); vec2 id = floor(g), f = fract(g) - .5;
-        float h = hash(id); vec2 o = vec2(h - .5, fract(h * 7.3) - .5) * .6;
-        float slide = fract(t * .05 * h + h); float y = h > .82 ? -slide * 1.2 + .6 : 0.;   // a few run down
-        float d = length((f - o - vec2(0., y)) * vec2(1., 1.5));
-        return smoothstep(.16 * (.5 + h), .05, d) * step(.35, h);
-      }
-      void main(){
-        float a = drops(vUv, 34., uTime) + drops(vUv + .37, 58., uTime * 1.3) * .7;
-        float trail = smoothstep(.5, .48, abs(fract(vUv.x * 34.) - .5)) * 0.;
-        a = clamp(a, 0., 1.) * uRain;
-        vec3 c = mix(vec3(.85, .9, 1.), vec3(1., .82, .6), uNight * .6);
-        gl_FragColor = vec4(c, a * .55);
-        #include <colorspace_fragment>
-      }`,
-  }));
-  glass.position.copy(glassP).add(new THREE.Vector3(0, 0, 0.0)); scene.add(glass);
+  // Water on her glass (lib/rainGlass.ts): a drop sim painted into a normal map in the glass's own plane, so the drops
+  // stay on the window when she turns her head; the glass pass below refracts the street through them.
+  const glassP = at("WindowGlass"), GLASS = { w: 2.1, h: 1.25 };
+  const mapW = touch ? 512 : 1024, mapH = Math.round((mapW * GLASS.h) / GLASS.w), mk = mapH / 600;
+  const wet = painter(mapW, mapH);
+  const mapTex = new THREE.CanvasTexture(wet.map); mapTex.colorSpace = THREE.NoColorSpace; mapTex.generateMipmaps = false; mapTex.minFilter = THREE.LinearFilter;
+  let drops: Rain | null = null, dropsKind = "", evap = 0;
+  const RAIN: Record<string, { rate: number; maxR: number; mist: number }> = { drizzle: { rate: 12, maxR: 8, mist: 450 }, rain: { rate: 34, maxR: 12, mist: 800 }, storm: { rate: 50, maxR: 14, mist: 1000 } };
+  const wetStep = (dt: number) => {
+    if (!drops) return;
+    step(drops, dt); mist(wet, drops, dt);
+    if ((evap += dt) > 1) { evap = 0; wet.m.globalAlpha = 0.05; wet.m.globalCompositeOperation = "destination-out"; wet.m.fillRect(0, 0, mapW, mapH); wet.m.globalAlpha = 1; wet.m.globalCompositeOperation = "source-over"; } // the mist dries slowly
+  };
+  if (process.env.NODE_ENV !== "production") (window as unknown as { __rain?: () => Rain | null }).__rain = () => drops; // dev: peek at the drops
+  const wetPaint = () => { if (drops) { paint(wet, drops); mapTex.needsUpdate = true; } };
+  const setDrops = (kind: string) => {
+    if (kind === dropsKind) return; dropsKind = kind;
+    const k = RAIN[kind]; drops = null; wet.m.clearRect(0, 0, mapW, mapH);
+    if (!k) return;
+    drops = createRain({ w: mapW, h: mapH, max: touch ? 220 : 500, rate: k.rate * (touch ? 0.6 : 1), minR: 1.6 * mk, maxR: k.maxR * mk, mist: k.mist * (touch ? 0.5 : 1), run: !reduce });
+    for (let i = 0; i < 80; i++) wetStep(0.1); // it has been raining a while
+    wetPaint();
+  };
 
   // The pigeon, lit live: daylight from up the street, at night the lamp behind her
   const hemi = new THREE.HemisphereLight(0xdfe8ff, 0x6b5a4a, 1.2), key = new THREE.DirectionalLight(0xffe0b8, 2.2), lamp = new THREE.PointLight(0xffb070, 0, 4, 1.4);
@@ -572,8 +574,47 @@ async function mount(el: HTMLElement, live: React.RefObject<Live>, alive: () => 
 
   // Bloom on what glows (lamps, neon, windows, the sun, the fairy lights), then her room's grade:
   // lavender in the shadows, warm in the lights, a touch more colour.
-  const composer = new EffectComposer(renderer);
+  // The scene renders with its depth, so the glass pass knows what is in front of the glass (frame, hands, mug).
+  const rt = new THREE.WebGLRenderTarget(1, 1, { type: THREE.HalfFloatType, depthTexture: new THREE.DepthTexture(1, 1) });
+  const composer = new EffectComposer(renderer, rt);
   composer.addPass(new RenderPass(scene, camera));
+  // Her window glass: each pixel's ray meets the glass plane; where nothing nearer is in the way and there's water,
+  // the drop is a little lens: the street behind, small and upside down, a dark rim, a glint.
+  const glassPass = new ShaderPass({
+    uniforms: { tDiffuse: { value: null }, tDepth: { value: null }, tMap: { value: mapTex }, uO: { value: new THREE.Vector3() }, uU: { value: new THREE.Vector3() }, uV: { value: new THREE.Vector3() },
+      uTan: { value: new THREE.Vector2() }, uNear: { value: camera.near }, uFar: { value: camera.far }, uK: { value: 0.22 }, uAspect: { value: 1 }, uNight: U.uNight },
+    vertexShader: "varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.); }",
+    fragmentShader: `#include <packing>
+      uniform sampler2D tDiffuse, tDepth, tMap; uniform vec3 uO, uU, uV; uniform vec2 uTan; uniform float uNear, uFar, uK, uAspect, uNight; varying vec2 vUv;
+      float dist(vec2 uv){ return -perspectiveDepthToViewZ(texture2D(tDepth, uv).x, uNear, uFar); }
+      void main(){
+        vec4 base = texture2D(tDiffuse, vUv);
+        vec3 dir = vec3((vUv * 2. - 1.) * uTan, -1.), N = cross(uU, uV);
+        float t = dot(uO, N) / dot(dir, N);                       // how far ahead the glass is, along her view
+        vec3 p = dir * t - uO; vec2 g = vec2(dot(p, uU) / dot(uU, uU), dot(p, uV) / dot(uV, uV));
+        vec4 d = texture2D(tMap, g);
+        if (t <= 0. || g.x < 0. || g.y < 0. || g.x > 1. || g.y > 1. || d.a < .01 || dist(vUv) < t - .004) { gl_FragColor = base; return; }
+        vec2 n = (d.rg * 2. - 1.) * vec2(1., -1.); float l = length(n);
+        vec2 s = clamp(vUv - n * uK * vec2(1. / uAspect, 1.), .001, .999); // a lens: the view from the far side, flipped
+        if (dist(s) < t - .004) s = vUv;                                   // never her hands or the frame in a drop
+        vec3 c = texture2D(tDiffuse, s).rgb * (.9 + .18 * d.b);
+        c *= 1. - .6 * smoothstep(.62, .98, l);                              // the rim, where the light bends away
+        vec3 n3 = normalize(vec3(n, sqrt(max(.04, 1. - l * l))));
+        c += pow(max(dot(n3, normalize(vec3(-.45, .6, .65))), 0.), 36.) * mix(vec3(.9, .95, 1.), vec3(1., .82, .6), uNight) * (.7 - .35 * uNight);
+        gl_FragColor = vec4(mix(base.rgb, c, d.a), base.a);
+      }`,
+  });
+  const glassRender = glassPass.render.bind(glassPass);
+  glassPass.render = (r, w, read, dt, mask) => { glassPass.uniforms.tDepth.value = read.depthTexture; glassRender(r, w, read, dt, mask); };
+  glassPass.enabled = false; composer.addPass(glassPass);
+  const qInv = new THREE.Quaternion();
+  const aimGlass = () => { // the glass plane in her eyes' frame, this frame
+    camera.updateMatrixWorld(); qInv.copy(camera.quaternion).invert();
+    const u = glassPass.uniforms;
+    (u.uO.value as T.Vector3).set(glassP.x - GLASS.w / 2, glassP.y - GLASS.h / 2, glassP.z).applyMatrix4(camera.matrixWorldInverse);
+    (u.uU.value as T.Vector3).set(GLASS.w, 0, 0).applyQuaternion(qInv); (u.uV.value as T.Vector3).set(0, GLASS.h, 0).applyQuaternion(qInv);
+    const ty = Math.tan((camera.fov * Math.PI) / 360); (u.uTan.value as T.Vector2).set(ty * camera.aspect, ty); u.uAspect.value = camera.aspect;
+  };
   const bloom = new UnrealBloomPass(new THREE.Vector2(512, 256), 0.32, 0.7, 0.92); composer.addPass(bloom);
   const grade = new ShaderPass({
     uniforms: { tDiffuse: { value: null }, uNight: { value: 0 } },
@@ -618,7 +659,7 @@ async function mount(el: HTMLElement, live: React.RefObject<Live>, alive: () => 
     (litMat.uniforms.uLit as { value: number }).value = k.night * (hf > 17 || hf < 1 ? 0.55 : hf < 5 ? 0.12 : 0.3);
     rain.visible = kind === "rain" || kind === "storm" || kind === "drizzle"; (rain.material as T.LineBasicMaterial).opacity = kind === "drizzle" ? 0.18 : 0.32;
     snow.visible = kind === "snow";
-    (glass.material as T.ShaderMaterial).uniforms.uRain.value = rain.visible ? (kind === "drizzle" ? 0.5 : 1) : 0;
+    setDrops(kind); glassPass.enabled = !!drops;
     // the pigeon's light
     hemi.intensity = 0.35 + 0.9 * (1 - k.night); hemi.color.set(k.night > 0.5 ? "#7b86c8" : "#e4ecff");
     key.intensity = 1.5 * (1 - k.night) * (1 - 0.5 * fogK); key.color.set(g > 0.3 ? "#ffc58a" : "#ffe7c4");
@@ -706,6 +747,8 @@ async function mount(el: HTMLElement, live: React.RefObject<Live>, alive: () => 
       }
       snowGeo.attributes.position.needsUpdate = true;
     }
+    // water on the glass
+    if (drops && dt > 0) { wetStep(Math.min(dt, 0.05)); wetPaint(); }
     // a storm: lightning every so often
     if (live.current.wx?.kind === "storm") { flashT -= dt; if (flashT < 0) flashT = 6 + Math.random() * 12; }
     U.uFlash.value = flashT > 0 && flashT < 0.18 ? (flashT < 0.06 || flashT > 0.12 ? 0.6 : 0.1) : 0;
@@ -728,7 +771,7 @@ async function mount(el: HTMLElement, live: React.RefObject<Live>, alive: () => 
       }
     }
   };
-  const render = () => composer.render();
+  const render = () => { if (glassPass.enabled) aimGlass(); composer.render(); };
   let raf = 0, visible = false, last = 0;
   const loop = (now: number) => {
     raf = 0;
@@ -755,6 +798,7 @@ async function mount(el: HTMLElement, live: React.RefObject<Live>, alive: () => 
       if (m.material) (Array.isArray(m.material) ? m.material : [m.material]).forEach((mt) => { for (const v of Object.values(mt)) if ((v as T.Texture)?.isTexture) (v as T.Texture).dispose(); mt.dispose(); });
     });
     for (const t of Object.values(NIGHTS)) t.dispose();
+    mapTex.dispose(); composer.dispose(); rt.depthTexture?.dispose();
     renderer.dispose(); renderer.domElement.remove();
   };
 }
