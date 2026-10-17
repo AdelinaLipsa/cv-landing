@@ -34,15 +34,25 @@ transparent) to use as the loading poster.
    ```
    node art/scripts/pivot_nodes.mjs art/bake/room_raw.glb /tmp/room_pivot.glb   # meshes onto <name>Mesh children
    npx @gltf-transform/cli webp /tmp/room_pivot.glb /tmp/room_webp.glb --quality 90
-   npx @gltf-transform/cli optimize /tmp/room_webp.glb public/models/room.glb --compress meshopt \
+   npx @gltf-transform/cli optimize /tmp/room_webp.glb /tmp/room_opt.glb --compress meshopt \
      --texture-compress false --flatten false --join false --simplify false --prune false --instance false --palette false
-   node art/scripts/list_nodes.mjs public/models/room.glb     # check the node tree
+   node art/scripts/list_nodes.mjs /tmp/room_opt.glb          # check the node tree
+   node art/scripts/meshopt_v1.mjs /tmp/room_opt.glb public/models/room.glb   # lossless repack, see below
    ```
    The `false` flags matter: the defaults flatten the hierarchy, join the named meshes and prune the empties.
    `pivot_nodes.mjs` matters too: meshopt quantization folds an offset/scale into any node that carries a mesh,
    so every named node keeps its Blender pivot and its mesh sits on a `<name>Mesh` child (e.g. `ChairSeat` →
    `ChairSeatMesh`; rotate `ChairSeat` to swivel, `Plant` to sway).
    The two `.mjs` need `@gltf-transform/core`, `@gltf-transform/extensions` and `meshoptimizer` installed.
+
+## Last step for every model in `public/models/` (not `c64-monitor.glb`, which stays the untouched download)
+
+`node art/scripts/meshopt_v1.mjs in.glb out.glb` re-packs a gltf-transform meshopt file as `KHR_meshopt_compression`
+with meshopt's v1 vertex codec at its top level (three r186's `MeshoptDecoder` reads it; up to a fifth smaller geometry).
+It is lossless: it checks every stream decodes to the same bytes, and the JSON is untouched apart from offsets.
+gltf-transform 4.5 can't read `KHR_meshopt_compression` yet, so inspect or edit the file from before this step.
+`window/tree.glb` also drops the normal and metal/roughness maps of its leaf and branch materials, which
+`Window.tsx` sets to null at load (the base colours and the bark's maps stay).
 
 ## Mood and preview-only parts
 
@@ -131,7 +141,7 @@ the tin sill. Built and baked in Blender from `art/window_source.blend` (local o
    `COCOA_TURN` 90 in `cocoa.py`) → `pigeon_rig.py` (bones for the site).
 2. `lighting.py` (DAY / NIGHT) → `bake.py` with `STEP="prep"` (saves `art/window.blend`) then `STEP="bake"` →
    `export.py` → `art/scripts/window/ship.sh` (view.glb + night atlases) and `export_actors.py` (pigeon, Dacia,
-   hands) then `gltf-transform` resize/webp/optimize as in ship.sh.
+   hands) then `gltf-transform` resize/webp/optimize as in ship.sh, then `meshopt_v1.mjs` (above).
 
 The site (`components/Window.tsx`) blends the DAY and NIGHT bakes by Bucharest's clock and draws the sky, weather,
 lamp cones, steam, the pigeon's routine, the sip and the passing Dacia live.
