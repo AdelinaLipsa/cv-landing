@@ -89,6 +89,8 @@
 /* The guide's build: HEAD's tag, the commit hashes, and the card waiting for the first job */
 .headTag { font: 600 10px var(--font-mono), monospace; fill: var(--ink); letter-spacing: 0.02em; }
 .rows li { position: relative; }
+/* The guide frames and lights a row with its commit: the li reaches back over the lanes (the row stays put) */
+:global([data-touring]) .rows li { margin-left: -72px; padding-left: 72px; }
 .hash { position: absolute; right: 16px; top: 12px; font: 500 11px var(--font-mono), monospace; color: var(--steam); pointer-events: none; }
 .legend, .panel { transition: opacity 0.46s var(--ease); }
 .panel[data-empty] { opacity: 0; }

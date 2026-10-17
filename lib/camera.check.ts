@@ -25,3 +25,8 @@ test("past 0.85 a tall subject sits at the top of the band", () => {
 });
 test("hole path: evenodd, viewport first", () => assert.match(holePath(view, { x: 10, y: 10, w: 100, h: 50 }, 16, 8), /^evenodd, M0 0H1440V900H0Z M/));
 test("a tiny target clamps the corner radius to half the inner box", () => assert.match(holePath(view, { x: 100, y: 100, w: 2, h: 2 }, 18, 14), /A15 15 0 0 1 .*A15 15 0 0 1 .*A15 15 0 0 1 .*A15 15 0 0 1/));
+test("apart, two parts cut two holes; overlapping, one around both", () => {
+  const holes = (d: string) => d.split(" M").length - 2;
+  assert.equal(holes(holePath(view, [{ x: 0, y: 0, w: 100, h: 50 }, { x: 500, y: 0, w: 100, h: 50 }], 18, 14)), 2);
+  assert.equal(holes(holePath(view, [{ x: 0, y: 0, w: 100, h: 50 }, { x: 0, y: 60, w: 100, h: 50 }], 18, 14)), 1);
+});

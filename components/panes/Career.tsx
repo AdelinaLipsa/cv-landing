@@ -296,7 +296,7 @@ export default function Career({ ui }: { ui: UI }) {
         </div>
 
         {/* Desktop: the selected commit, in full */}
-        <aside className={s.panel} aria-live="polite" data-empty={!cur || undefined}>
+        <aside className={s.panel} data-tour="card" aria-live="polite" data-empty={!cur || undefined}>
           <SpotlightCard className={s.panelCard} data-skin="card" spotlightColor="rgba(51, 85, 255, 0.12)">
             <AnimatePresence mode="wait" initial={false}>
               {cur && (

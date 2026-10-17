@@ -2,7 +2,7 @@
 // One clock; each step lasts 3s + its line length / 20, scaled by speed.
 // era: how the page looks (0 = 2003, 1 = glossy, 2 = flat, 3 = now). The web's history is a side note (`web`), not the story.
 // builds: the pieces of the page this step builds (earlier ones stay). cues: when a word is typed, a thing lights up. year: the clock's label.
-// target: CSS selectors, first visible wins.
+// target: CSS selectors, first visible wins. also: more of the subject (every visible match), framed and lit with it.
 // Every fact here is on the CV or in Adelina's own words.
 
 // Pieces of the page the tour builds; a step builds its keys and keeps every earlier one.
@@ -15,6 +15,7 @@ export type Step = {
   era: 0 | 1 | 2 | 3;
   pane: 0 | 1 | 2 | 3;
   target: string;
+  also?: string;
   say: string;
   builds: BuildKey[];
   cues?: Cue[];
@@ -22,17 +23,20 @@ export type Step = {
   web?: string;
 };
 
+// Career rows: the commit's detail card (desktop) is part of the shot.
+const CARD = '[data-tour="card"]';
+
 export const steps: Step[] = [
   { title: "Start", era: 0, pane: 0, target: '[data-tour="name"]', builds: [], year: "2003", say: "Every build starts as raw HTML. Mine did too, it just took the scenic route.", web: "Meanwhile, the web: 2003. Please sign the guestbook." },
   { title: "High school", era: 1, pane: 0, target: '[data-tour="offduty"]', builds: ["home.offduty"], say: "High school: I modded my Windows, broke it, and emulated the Nintendo and Game Boy games I couldn’t get. My comfort zone, then and now.", web: "Meanwhile, the web got glossy. The buttons looked edible." },
   { title: "2012", era: 1, pane: 2, target: '[data-tour="edu-psychology"]', builds: ["career.head", "career.edu-psychology"], year: "2012", say: "2012 to 2015: psychology, with a focus on criminalistics. After the degree, an internship at SRI, the Romanian Intelligence Service. Yes, that one." },
   { title: "2019", era: 2, pane: 2, target: '[data-tour="edu-web"]', builds: ["career.edu-web"], year: "2019", say: "Photographer, cook, salesperson. Then in 2019 I decided computers were my future. They didn’t get a vote. Web development at The Informal School of IT.", web: "Meanwhile, the web went flat. We deleted every shadow, then quietly missed them." },
-  { title: "2020", era: 2, pane: 2, target: '[data-tour="job-agrocity"]', builds: ["career.agrocity"], year: "2020", say: "2020: AgroCity, starting as an intern. PHP, Laravel, Vue, then the mobile apps with Capacitor. My first commit on the dev branch." },
-  { title: "2022", era: 2, pane: 2, target: '[data-tour="job-fabelx"]', builds: ["career.innovational", "career.fabelx"], year: "2022", say: "Fabel X: full-stack, then tech lead for the second half of 2023. Same desk, more meetings." },
-  { title: "2024", era: 2, pane: 2, target: '[data-tour="job-ubisoft"]', builds: ["career.ubisoft"], year: "2024", say: "Ubisoft: the QA platform testers used every day. Laravel and Vue, shipped to Kubernetes. No, I can’t get you free games." },
-  { title: "2025", era: 2, pane: 2, target: '[data-tour="fork"]', builds: ["career.fork"], year: "2025", say: "2025: product branches off. The dev branch never got deleted. I checked." },
-  { title: "2025", era: 2, pane: 2, target: '[data-tour="job-siterocket"]', builds: ["career.siterocket"], say: "SiteRocket Labs: technical project manager for a digital health client. I wrote the requirements, built the Caspio side, and wrote the AWS Lambda functions." },
-  { title: "Now", era: 3, pane: 2, target: '[data-tour="job-yomali"]', builds: ["career.yomali", "career.rest"], year: "Now", say: "Now, Yomali: product owner on payments, product manager for the core engineering team, manager of technical support, and the automations and statistics behind customer support. At the same time, yes." },
+  { title: "2020", era: 2, pane: 2, target: '[data-tour="job-agrocity"]', also: CARD, builds: ["career.agrocity"], year: "2020", say: "2020: AgroCity, starting as an intern. PHP, Laravel, Vue, then the mobile apps with Capacitor. My first commit on the dev branch." },
+  { title: "2022", era: 2, pane: 2, target: '[data-tour="job-fabelx"]', also: CARD, builds: ["career.innovational", "career.fabelx"], year: "2022", say: "Fabel X: full-stack, then tech lead for the second half of 2023. Same desk, more meetings." },
+  { title: "2024", era: 2, pane: 2, target: '[data-tour="job-ubisoft"]', also: CARD, builds: ["career.ubisoft"], year: "2024", say: "Ubisoft: the QA platform testers used every day. Laravel and Vue, shipped to Kubernetes. No, I can’t get you free games." },
+  { title: "2025", era: 2, pane: 2, target: '[data-tour="fork"]', also: CARD, builds: ["career.fork"], year: "2025", say: "2025: product branches off. The dev branch never got deleted. I checked." },
+  { title: "2025", era: 2, pane: 2, target: '[data-tour="job-siterocket"]', also: CARD, builds: ["career.siterocket"], say: "SiteRocket Labs: technical project manager for a digital health client. I wrote the requirements, built the Caspio side, and wrote the AWS Lambda functions." },
+  { title: "Now", era: 3, pane: 2, target: '[data-tour="job-yomali"]', also: CARD, builds: ["career.yomali", "career.rest"], year: "Now", say: "Now, Yomali: product owner on payments, product manager for the core engineering team, manager of technical support, and the automations and statistics behind customer support. At the same time, yes." },
   { title: "The stack", era: 3, pane: 3, target: '[data-tour="product"]', builds: ["skills.product", "skills.rest"], say: "Product on top, because that’s the job now. I still ship in every layer under it." },
   { title: "My room", era: 3, pane: 0, target: '[data-tour="cards"]', builds: ["home.room", "home.dock"], cues: [{ at: "phone", hot: "phone" }, { at: "printer", hot: "printer" }, { at: "monitor", hot: "rolodex" }], say: "My teenage room at dusk: guitars, boxing gloves, a skateboard, and two cats. The phone messages me, the printer prints my CV, and the monitor has my LinkedIn." },
   { title: "Products I own", era: 3, pane: 1, target: '[data-key="gateways"]', builds: ["work.owned"], say: "The products I own: the gateways and the ways to pay. What ships, in what order, and how it performs." },

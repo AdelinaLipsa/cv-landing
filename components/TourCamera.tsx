@@ -49,6 +49,19 @@ function findTarget(root: ParentNode, sel: string) {
   }
   return null;
 }
+// The subject: the step's target, then every visible match of its `also` (framed and lit with it).
+function findSubject(root: ParentNode, sel: string, also?: string) {
+  const el = findTarget(root, sel);
+  if (!el) return null;
+  const more = also ? [...root.querySelectorAll<HTMLElement>(also)].filter((m) => { const r = m.getBoundingClientRect(); return r.width > 0 && r.height > 0; }) : [];
+  return [el, ...more];
+}
+const rectOf = (el: Element): Rect => { const r = el.getBoundingClientRect(); return { x: r.left, y: r.top, w: r.width, h: r.height }; };
+// The box around all of a subject's parts, in viewport px.
+function box(els: HTMLElement[]): Rect {
+  const rs = els.map(rectOf), x = Math.min(...rs.map((r) => r.x)), y = Math.min(...rs.map((r) => r.y));
+  return { x, y, w: Math.max(...rs.map((r) => r.x + r.w)) - x, h: Math.max(...rs.map((r) => r.y + r.h)) - y };
+}
 
 const num = (el: Element, p: string) => Number(gsap.getProperty(el, p)) || 0;
 const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v));
@@ -73,8 +86,8 @@ function band() {
 }
 
 // Has the subject moved off its framing (the page built or restyled under it)?
-function drifted(el: HTMLElement, stage: HTMLElement, pane: HTMLElement) {
-  const Q = plan(el, stage, pane);
+function drifted(els: HTMLElement[], stage: HTMLElement, pane: HTMLElement) {
+  const Q = plan(els, stage, pane);
   const off = Math.abs(Q.S - pane.scrollTop) + Math.abs(Q.final.x - num(stage, "x")) + Math.abs(Q.final.y - num(stage, "y"));
   return off > 24 || Math.abs(Q.final.scale - num(stage, "scaleX")) > 0.03;
 }
@@ -83,10 +96,10 @@ type Pose = { scale: number; x: number; y: number };
 // Scale `k` about point (ox, oy) of the stage, as translate + scale about its top-left corner.
 const about = (k: number, ox: number, oy: number): Pose => ({ scale: k, x: (1 - k) * ox, y: (1 - k) * oy });
 
-// Where to scroll and how to pose the stage so `el` sits in the safe band, zoomed to fit.
-function plan(el: HTMLElement, stage: HTMLElement, pane: HTMLElement) {
-  const g = geo(stage, pane), r = el.getBoundingClientRect(), sr = stage.getBoundingClientRect();
-  const p: Rect = { x: (r.left - sr.left) / g.k, y: (r.top - sr.top) / g.k, w: r.width / g.k, h: r.height / g.k };
+// Where to scroll and how to pose the stage so the subject (all its parts) sits in the safe band, zoomed to fit.
+function plan(els: HTMLElement[], stage: HTMLElement, pane: HTMLElement) {
+  const g = geo(stage, pane), r = box(els), sr = stage.getBoundingClientRect();
+  const p: Rect = { x: (r.x - sr.left) / g.k, y: (r.y - sr.top) / g.k, w: r.w / g.k, h: r.h / g.k };
   const W = pane.clientWidth, H = pane.clientHeight, safe = band();
   const max = matchMedia("(max-width: 640px)").matches ? 1.1 : 1.25;
   const S0 = pane.scrollTop;
@@ -108,25 +121,25 @@ function plan(el: HTMLElement, stage: HTMLElement, pane: HTMLElement) {
   };
 }
 
-export default function TourCamera({ target, pane, finale, paused }: { target: string; pane: number; finale: boolean; paused: boolean }) {
+export default function TourCamera({ target, also, pane, finale, paused }: { target: string; also?: string; pane: number; finale: boolean; paused: boolean }) {
   const veil = useRef<HTMLDivElement>(null);
-  const cam = useRef<{ tl?: gsap.core.Timeline; stage?: HTMLElement; el?: HTMLElement | null; fixed?: boolean; tries?: number; retry?: number }>({});
-  const now = useRef({ target, pane, finale, paused });
-  now.current = { target, pane, finale, paused };
+  const cam = useRef<{ tl?: gsap.core.Timeline; stage?: HTMLElement; el?: HTMLElement[] | null; fixed?: boolean; tries?: number; retry?: number }>({});
+  const now = useRef({ target, also, pane, finale, paused });
+  now.current = { target, also, pane, finale, paused };
 
   // The subject, found again if it was remounted (Home's name is keyed per era, so an era change replaces it).
   const subject = () => {
     const c = cam.current;
-    if (c.el && !c.el.isConnected) {
+    if (c.el?.some((e) => !e.isConnected)) {
       const pane = document.querySelectorAll<HTMLElement>("[data-pane]")[now.current.pane];
-      c.el = pane ? findTarget(pane, now.current.target) : null;
+      c.el = pane ? findSubject(pane, now.current.target, now.current.also) : null;
     }
     return c.el;
   };
 
   const move = useRef((_mode: "cut" | "glide") => {});
   move.current = (mode) => {
-    const c = cam.current, { target, pane: pi, finale } = now.current, e = eases();
+    const c = cam.current, { target, also, pane: pi, finale } = now.current, e = eases();
     c.tl?.kill();
     gsap.killTweensOf("[data-stage]"); // a close's settle still running when a replay starts
     cancelAnimationFrame(c.retry ?? 0);
@@ -135,7 +148,7 @@ export default function TourCamera({ target, pane, finale, paused }: { target: s
     if (vp) delete vp.dataset.camera;
     const paneEl = document.querySelectorAll<HTMLElement>("[data-pane]")[pi];
     const stage = paneEl?.querySelector<HTMLElement>("[data-stage]");
-    const el = paneEl && findTarget(paneEl, target);
+    const el = paneEl && findSubject(paneEl, target, also);
     if (!paneEl || !stage || !el || !vp) {
       // A subject that is still being built: look again next frame, for about a second.
       if ((c.tries = (c.tries ?? 0) + 1) < 60) c.retry = requestAnimationFrame(() => move.current(mode));
@@ -179,7 +192,7 @@ export default function TourCamera({ target, pane, finale, paused }: { target: s
       // Pane change: the stage on screen pulls back while the shell slides (its own `track`), the next pane arrives
       // already pulled back on its subject, and pushes in over the slide's last fifth.
       const fromPane = from.closest<HTMLElement>("[data-pane]")!;
-      const fp = plan(from, from, fromPane); // only its pull-back pose is used
+      const fp = plan([from], from, fromPane); // only its pull-back pose is used
       gsap.set(from, { transformOrigin: "0 0", willChange: "transform" });
       tl.to(from, { ...fp.pullNow, duration: 0.5, ease: e.slow.ease }, 0);
       tl.set(paneEl, { scrollTop: finale ? 0 : P.S }, 0);
@@ -228,7 +241,7 @@ export default function TourCamera({ target, pane, finale, paused }: { target: s
   };
 
   // A new subject: a full move.
-  useEffect(() => { cam.current.fixed = false; cam.current.tries = 0; move.current("cut"); }, [target, pane, finale]);
+  useEffect(() => { cam.current.fixed = false; cam.current.tries = 0; move.current("cut"); }, [target, also, pane, finale]);
 
   // Paused: the focus lifts and the page is yours. Play: the camera finds the subject again.
   const first = useRef(true);
@@ -277,8 +290,7 @@ export default function TourCamera({ target, pane, finale, paused }: { target: s
     const loop = () => {
       const v = veil.current, el = v && v.style.visibility !== "hidden" ? subject() : null;
       if (v && el) {
-        const r = el.getBoundingClientRect();
-        const d = holePath({ w: innerWidth, h: innerHeight }, { x: r.left, y: r.top, w: r.width, h: r.height }, 18, PAD);
+        const d = holePath({ w: innerWidth, h: innerHeight }, el.map(rectOf), 18, PAD);
         v.style.clipPath = `path(${d.replace(", ", ', "')}")`;
       }
       raf = requestAnimationFrame(loop);
