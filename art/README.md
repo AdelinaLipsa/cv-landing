@@ -80,14 +80,16 @@ Loaded live in the room, not baked (`public/models/`, optimized with gltf-transf
   https://sketchfab.com/3d-models/vinyl-recorder-with-until-i-found-you-disc-2c6d0ebeea5c4aeaa0353e23d53f3869,
   CC BY 4.0 (normal/AO/roughness maps and the screws dropped, textures 256 px: 12 MB → 216 KB; the record spins).
 
+The boot screen's monitor (`c64-monitor.glb`, `components/Boot.tsx`): "C64 Monitor" by hoschu,
+https://sketchfab.com/3d-models/c64-monitor-b005d2125a1545ad9e0994e0deb5e82e, CC BY 4.0 (the download, unmodified;
+the 2003 page is real DOM laid over its glass).
+
 In `character.glb`:
 
 - Both cats: "Munchkin Cat" by Nyilonelycompany, https://sketchfab.com/3d-models/munchkin-cat-58873374a64d482ca1ad7130c2f7e586,
   CC BY-NC-SA 4.0 (non-commercial; the adapted cats stay under the same licence). Rigged, posed, given fresh UVs and
   recoloured as a Birman and a European brown tabby by `scripts/build_munchkins.py` + `munchkin_coats.py`; the
   coats are in `textures/munchkin/`, the download in `downloads/munchkin_cat.glb`.
-
-CC BY 4.0 and CC BY-NC-SA 4.0 need visible credit on the site (e.g. a credits line), not only here.
 
 CC0:
 
@@ -111,7 +113,7 @@ the tin sill. Built and baked in Blender from `art/window_source.blend` (local o
 The site (`components/Window.tsx`) blends the DAY and NIGHT bakes by Bucharest's clock and draws the sky, weather,
 lamp cones, steam, the pigeon's routine, the sip and the passing Dacia live.
 
-Credits (shown on the site under the window):
+Credits:
 
 - Pigeon: "Gascogne Pigeon Bird (Lowpoly) Free" by Nyilonelycompany,
   https://sketchfab.com/3d-models/gascogne-pigeon-bird-lowpoly-free-10d7975688f740fa9ba34c874da2b9d2, Sketchfab Standard.

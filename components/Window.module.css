@@ -54,8 +54,6 @@
 /* What a click does, by the cursor: handwritten like the room's notes */
 .hint { position: absolute; z-index: 3; transform: translate(-50%, -100%); font-family: var(--font-hand), cursive; font-size: 24px; color: #fff; text-shadow: 0 2px 10px rgba(0, 0, 0, 0.6); opacity: 0; pointer-events: none; transition: opacity 0.25s; white-space: nowrap; }
 .hint[data-on] { opacity: 1; }
-.credit { position: absolute; z-index: 3; right: 12px; bottom: 8px; max-width: min(560px, 70%); text-align: right; font-size: 10px; line-height: 1.4; color: rgba(255, 255, 255, 0.55); }
-.credit a { color: inherit; } .credit a:hover { color: #fff; }
 
 @media (max-width: 700px) {
   .note:not([data-glued]) { left: auto; right: 14px; top: auto; bottom: 18%; width: 180px; font-size: 18px; padding: 13px 13px 11px; }

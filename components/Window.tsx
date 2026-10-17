@@ -147,10 +147,6 @@ export default function Window() {
         <a href={profile.booking} target="_blank" rel="noopener">30 min on Calendly ↗</a>
       </div>
       <span className={s.hint} data-on={hot.h || undefined} style={{ left: `${hot.x}%`, top: `${hot.y}%` }} aria-hidden="true">{hot.h === "pigeon" ? "coo?" : hot.h === "mug" ? "take a sip" : ""}</span>
-      <span className={s.credit}>
-        <a href="https://open-meteo.com/" target="_blank" rel="noopener">Weather: Open-Meteo</a> · 3D: pigeon by Nyilonelycompany, hands by hugo colauto, hot chocolate by OlegPopka,
-        Dacia by solid3DDD, lamppost by Liquell, street props by Kadre (Sketchfab, CC BY 4.0)
-      </span>
     </div>
   );
 }
