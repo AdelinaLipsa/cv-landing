@@ -126,12 +126,13 @@ export default function Shell({ character }: { character: boolean }) {
     return () => { done = true; po.disconnect(); clearTimeout(late); };
   }, [built]);
 
-  // The dock's hand-drawn nudges ("click me!", "games!") belong to the first screen; past it they'd sit on the content.
+  // The hand-drawn nudges ("click me!", "games!", the theme's) belong to Home's first screen; past it, or on another
+  // pane, they'd sit on the content. data-scrolled is excluded from their show rule (the CSS), so it always wins.
   // The panes scroll, not the window, so listen in the capture phase (scroll doesn't bubble) and read the active one.
   useEffect(() => {
     const onScroll = () => {
       const top = document.querySelector<HTMLElement>("[data-pane][data-active]")?.scrollTop ?? 0;
-      document.documentElement.toggleAttribute("data-scrolled", Math.max(top, scrollY) > 200);
+      document.documentElement.toggleAttribute("data-scrolled", pane !== 0 || Math.max(top, scrollY) > 200);
       const off = pane === 0 && (document.querySelector('[data-tour="offduty"]')?.getBoundingClientRect().top ?? Infinity) < innerHeight * 0.6;
       setMood(off ? "room" : ["home", "work", "career", "skills"][pane]);
     };
