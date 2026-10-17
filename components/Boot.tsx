@@ -50,6 +50,7 @@ async function monitor(el: HTMLDivElement, alive: () => boolean) {
   const [THREE, { GLTFLoader }, { RoomEnvironment }] = await Promise.all([
     import("three"), import("three/examples/jsm/loaders/GLTFLoader.js"), import("three/examples/jsm/environments/RoomEnvironment.js"),
   ]);
+  if (!alive()) return null;
   const gltf = await new GLTFLoader().loadAsync("/models/c64-monitor.glb"); // the model as authored, untouched
   if (!alive()) return null;
   const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
@@ -121,6 +122,7 @@ export default function Boot({ onBuild, onSkip, gate }: { onBuild: Leave; onSkip
   const model = useRef<HTMLDivElement>(null), set = useRef<Awaited<ReturnType<typeof monitor>>>(null);
 
   useEffect(() => {
+    if (document.documentElement.dataset.built) return; // returning visitors, deep links, challenges: Boot is hidden, no model
     let dead = false;
     monitor(model.current!, () => !dead).then((m) => { if (dead) m?.dispose(); else set.current = m; }).catch(() => {}); // no model: the page still works, floating in the dark
     return () => { dead = true; set.current?.dispose(); };
