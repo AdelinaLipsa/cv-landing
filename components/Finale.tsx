@@ -595,7 +595,7 @@ async function mount(el: HTMLElement, live: React.RefObject<Live>, alive: () => 
     else if (demoT < 2.4) gp.copy(her);
     else if (demoT < 3.2) glide(her, pc, (demoT - 2.4) / 0.8);
     else gp.copy(pc);
-    if (prev < 0.9 && demoT >= 0.9) { tap(); poke(); }
+    if (prev < 0.9 && demoT >= 0.9) { tap(); hush = true; poke(); }
     if (prev < 3.2 && demoT >= 3.2) pointPc(true);
     if (prev < 3.4 && demoT >= 3.4) ghost.setAttribute("data-out", "");
     if (demoT >= 4) { ghost.removeAttribute("data-out"); finishDemo(); return; }
@@ -624,6 +624,7 @@ async function mount(el: HTMLElement, live: React.RefObject<Live>, alive: () => 
   // Which object is under the pointer.
   const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
   type Who = "her" | "Siamese" | "Burmese";
+  let hush = false; // the onboarding ghost's click waves without a sound: "hello" only answers a real click
   let who = (_r: T.Raycaster): Who | null => null, poke = () => {}, tickHer: ((dt: number) => void) | null = null, dropHer = () => {}; // filled in once she loads
   let photoAt = 0; // which polaroid hit() last found
   const hit = (e: PointerEvent): Prop | "tower" | "strat" | "photo" | Who | null => {
@@ -648,7 +649,7 @@ async function mount(el: HTMLElement, live: React.RefObject<Live>, alive: () => 
   const touched = (k: Spot | null) => { if (!k) return; used.add(k); if (used.size >= 2) el.toggleAttribute("data-quiet", true); };
   const act = (k: Spot) => { // what each hotspot does: the same as clicking its object
     sfx.wake(); // first, inside the click, so the browser lets every sound play
-    if (k === "her") poke();
+    if (k === "her") { hush = false; poke(); }
     else if (k === "strat") riff();
     else if (k === "Siamese" || k === "Burmese") pet([k]);
     else if (k === "pc") live.current.onScreen?.();
@@ -728,7 +729,7 @@ async function mount(el: HTMLElement, live: React.RefObject<Live>, alive: () => 
     if (h) sfx.wake(); // first, inside the click, so the browser lets every sound play
     touched(spotOf(h));
     if (e.pointerType !== "mouse" && spotOf(h)) { hoverSpot(spotOf(h)); window.setTimeout(() => hoverSpot(null), 2000); } // no hover on touch: a tap shows its word
-    if (h === "her") poke();
+    if (h === "her") { hush = false; poke(); }
     else if (h === "strat") riff();
     else if (h === "Siamese" || h === "Burmese") pet([h]);
     else if (h === "photo") focusPhoto(photoAt);
@@ -1297,7 +1298,7 @@ async function mount(el: HTMLElement, live: React.RefObject<Live>, alive: () => 
         let wave = 0;
         poke = () => {
           if (wave) return;
-          sfx.hello(); strum.stop(); bed.reset().play(); bed.time = 1.25; herMix.update(0); draw();
+          if (!hush) sfx.hello(); hush = false; strum.stop(); bed.reset().play(); bed.time = 1.25; herMix.update(0); draw();
           wave = window.setTimeout(() => { wave = 0; bed.stop(); strum.play(); herMix.update(0); draw(); }, 2000);
         };
         dropHer = () => { clearTimeout(wave); herMix.stopAllAction(); herMix.uncacheRoot(char); for (const m of cats) { m.stopAllAction(); m.uncacheRoot(char); } };
@@ -1416,9 +1417,9 @@ async function mount(el: HTMLElement, live: React.RefObject<Live>, alive: () => 
           if (!queued) return;
           // A click waits for the next place she can react: on the bed, or seated at the desk (232-506, but not mid-sip), at once.
           // ReactDesk is keyed on ToDesk 330; from any other seated moment the crossfade carries her into it and back.
-          if (state === "strum" || (state === "day" && (t < 47 * F || t > 600 * F))) { queued = false; sfx.hello(); encore = EXTRA; go("bed", bed, 0.15); }
+          if (state === "strum" || (state === "day" && (t < 47 * F || t > 600 * F))) { queued = false; if (!hush) sfx.hello(); hush = false; encore = EXTRA; go("bed", bed, 0.15); }
           else if (state === "day" && t >= 232 * F && t <= 506 * F && (t < 396 * F || t > 460 * F)) { // not mid-sip (398-458): the mug's in her hand
-            queued = false; sfx.hello(); resume = t; encore = EXTRA; go("desk", desk, 0.25);
+            queued = false; if (!hush) sfx.hello(); hush = false; resume = t; encore = EXTRA; go("desk", desk, 0.25);
             hold.reset().play(); hold.time = t; hold.paused = true; hold.fadeIn(0.25);
           }
         };
