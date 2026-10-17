@@ -114,6 +114,16 @@ export default function TourCamera({ target, pane, finale, paused }: { target: s
   const now = useRef({ target, pane, finale, paused });
   now.current = { target, pane, finale, paused };
 
+  // The subject, found again if it was remounted (Home's name is keyed per era, so an era change replaces it).
+  const subject = () => {
+    const c = cam.current;
+    if (c.el && !c.el.isConnected) {
+      const pane = document.querySelectorAll<HTMLElement>("[data-pane]")[now.current.pane];
+      c.el = pane ? findTarget(pane, now.current.target) : null;
+    }
+    return c.el;
+  };
+
   const move = useRef((_mode: "cut" | "glide") => {});
   move.current = (mode) => {
     const c = cam.current, { target, pane: pi, finale } = now.current, e = eases();
@@ -251,9 +261,9 @@ export default function TourCamera({ target, pane, finale, paused }: { target: s
     const mo = new MutationObserver(() => {
       clearTimeout(id);
       id = window.setTimeout(() => {
-        const c = cam.current, pane = c.stage?.closest<HTMLElement>("[data-pane]");
-        if (now.current.paused || now.current.finale || vp.dataset.camera || !c.el?.isConnected || !c.stage || !pane) return;
-        if (drifted(c.el, c.stage, pane)) move.current("glide");
+        const c = cam.current, pane = c.stage?.closest<HTMLElement>("[data-pane]"), el = subject();
+        if (now.current.paused || now.current.finale || vp.dataset.camera || !el || !c.stage || !pane) return;
+        if (drifted(el, c.stage, pane)) move.current("glide");
       }, 1500);
     });
     mo.observe(vp, { attributes: true, attributeFilter: ["data-era"] });
@@ -264,8 +274,8 @@ export default function TourCamera({ target, pane, finale, paused }: { target: s
   useEffect(() => {
     let raf = 0;
     const loop = () => {
-      const v = veil.current, el = cam.current.el;
-      if (v && el?.isConnected && v.style.visibility !== "hidden") {
+      const v = veil.current, el = v && v.style.visibility !== "hidden" ? subject() : null;
+      if (v && el) {
         const r = el.getBoundingClientRect();
         const d = holePath({ w: innerWidth, h: innerHeight }, { x: r.left, y: r.top, w: r.width, h: r.height }, 18, PAD);
         v.style.clipPath = `path(${d.replace(", ", ', "')}")`;
