@@ -280,7 +280,7 @@
 @media (max-width: 700px) { .band { height: min(150vw, 680px); } @keyframes open { from { clip-path: inset(5% 6% 5% 6% round 28px); } } }
 @media (prefers-reduced-motion: reduce) { .band { animation: none; } }
 .signoff { display: flex; align-items: baseline; justify-content: space-between; gap: 20px; padding-top: 18px; border-top: 1px dashed var(--line); }
-.sig { font-family: var(--font-hand), cursive; font-size: 40px; line-height: 1.1; color: var(--ink); transform: rotate(-3deg); animation: write linear both; animation-timeline: view(); animation-range: entry 30% cover 30%; }
+.sig { font-family: var(--font-hand), cursive; font-size: 40px; line-height: 1.1; color: var(--ink); transform: rotate(-3deg); animation: write linear both; animation-timeline: view(); animation-range: entry 10% entry 100%; }
 @keyframes write { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0 -10% 0 0); } }
 .toTop { padding: 0; border: 0; background: none; color: var(--steam); font: inherit; font-size: 14px; cursor: pointer; transition: color 0.3s var(--ease); }
 .toTop:hover, .toTop:focus-visible { color: var(--ink); }
