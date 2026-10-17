@@ -99,9 +99,10 @@ export default function TourPlayer({ ref, t, playing, speed, onSeek, onToggle, o
     return () => { d.kill(); gsap.killTweensOf(proxy.current); };
   }, [w]);
 
-  // Year labels that fit, less the ones HEAD's tag is over (mono: 6.2px a character at 10px, 5.4px at 9px).
+  // Year labels that fit, less the ones HEAD's tag is over (mono: 6.2px a character at 10px, 5.4px at 9px; the
+  // arrow isn't in the mono's subsets and its fallback is ~13.7px, so it counts 1.2 characters extra).
   const tag = `HEAD → ${steps[i].title}`;
-  const p = Math.min(1, t / total), tagW = tag.length * 6.2 + 8, tagL = PAD + p * w - p * tagW;
+  const p = Math.min(1, t / total), tagW = (tag.length + 1.2) * 6.2 + 8, tagL = PAD + p * w - p * tagW;
   const labels = fit(YEARS.map((k) => AT[k] * w), GAP).map((on, n) => {
     const k = YEARS[n], lw = (steps[k].year ?? "").length * 5.4, lx = PAD + AT[k] * w - (n === 0 ? 0 : lw / 2);
     return on && (lx + lw < tagL - 3 || lx > tagL + tagW + 3);
