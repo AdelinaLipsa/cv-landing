@@ -19,7 +19,7 @@
 }
 /* Waits its turn after the hero room is live: the first of the three nudges (see SoundToggle, Shell) */
 .nudge { opacity: 0; transition: opacity 0.6s var(--ease); }
-:global(html:has([data-live])) .nudge { opacity: 1; transition-delay: 3s; }
+:global(html:has([data-live]:not([data-drop] *))) .nudge { opacity: 1; transition-delay: 3s; }
 
 /* The guide's cue ("top right"): two soft pulses, the button swelling to 1.12 on the site's drift spring (as linear())
    while a blueprint ring opens off it and fades. */

@@ -126,7 +126,7 @@
 /* The nudges wait their turn: nothing until the hero room is live, then one at a time (theme 3s, sound 6s, games 9s),
    so they never pile onto the room's own cues. Past the first screen they fade out, so they never cover a card. */
 .gameNudge { opacity: 0; transition: opacity 0.6s var(--ease); }
-:global(html:has([data-live])) .gameNudge { opacity: 1; transition-delay: 9s; }
+:global(html:has([data-live]:not([data-drop] *))) .gameNudge { opacity: 1; transition-delay: 9s; }
 :global(html[data-scrolled]) .gameNudge { opacity: 0; transition-delay: 0s; }
 
 /* The rewind (components/Rewind): the build played backwards, fast. Its era changes are the guide's own
