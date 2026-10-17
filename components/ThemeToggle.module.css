@@ -1,7 +1,7 @@
 /* Hand-drawn nudge under the theme button, same style as the sound button's "click me!": text below, arrow curving up to it */
 .wrap { position: relative; display: inline-flex; }
 .nudge { position: absolute; right: calc(50% - 6px); top: calc(100% - 4px); display: flex; align-items: flex-start; pointer-events: none; color: var(--naruto); animation: float 3.4s ease-in-out infinite; }
-.nudgeText { margin: 30px -4px 0 0; font-family: var(--font-display), sans-serif; font-size: 15px; font-weight: 700; font-stretch: 112%; white-space: nowrap; transform: rotate(-6deg); color: var(--ink); text-shadow: 0 2px 0 var(--paper); }
+.nudgeText { margin: 30px -4px 0 0; font-family: var(--font-display), sans-serif; font-size: 15px; font-weight: 700; font-stretch: 90%; white-space: nowrap; transform: rotate(-6deg); color: var(--ink); text-shadow: 0 2px 0 var(--paper); }
 .nudgeArrow { display: block; transform: scaleY(-1) rotate(-8deg); }
 @keyframes float {
   0%, 100% { transform: translate(0, 0) rotate(0deg); }

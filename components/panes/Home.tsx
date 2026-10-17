@@ -150,8 +150,8 @@ export default function Home({ ui }: { ui: UI }) {
             {fine && !touring ? (
               <VariableProximity
                 label={profile.name}
-                fromFontVariationSettings="'wdth' 120, 'wght' 700"
-                toFontVariationSettings="'wdth' 150, 'wght' 800"
+                fromFontVariationSettings="'wdth' 82, 'wght' 600"
+                toFontVariationSettings="'wdth' 100, 'wght' 700"
                 containerRef={heroRef as RefObject<HTMLElement>}
                 radius={140}
                 falloff="gaussian"

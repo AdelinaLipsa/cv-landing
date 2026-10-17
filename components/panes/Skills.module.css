@@ -1,7 +1,7 @@
 .head { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 8px 28px; margin-top: 36px; }
 .nudge { display: flex; align-items: flex-end; gap: 4px; margin-bottom: -18px; color: var(--naruto); animation: nudge 3.2s ease-in-out infinite; pointer-events: none; }
 .nudge svg { flex-shrink: 0; transform: translateY(14px); }
-.nudgeText { margin-bottom: 22px; font-family: var(--font-display), sans-serif; font-size: 15px; font-weight: 700; font-stretch: 112%; color: var(--ink); transform: rotate(-4deg); }
+.nudgeText { margin-bottom: 22px; font-family: var(--font-display), sans-serif; font-size: 15px; font-weight: 700; font-stretch: 90%; color: var(--ink); transform: rotate(-4deg); }
 @keyframes nudge { 0%, 100% { transform: translate(0, 0); } 50% { transform: translate(4px, -5px); } }
 @media (prefers-reduced-motion: reduce) { .nudge { animation: none; } }
 
@@ -45,7 +45,7 @@
 }
 .slab:global(.card-spotlight) > * { position: relative; z-index: 1; }
 .dark:global(.card-spotlight) { background: var(--night); border-color: var(--night); box-shadow: 0 5px 0 #0b0a22; }
-.layerName { font-family: var(--font-display); font-weight: 700; font-stretch: 125%; font-size: 15px; letter-spacing: -0.02em; }
+.layerName { font-family: var(--font-display); font-weight: 700; font-stretch: 90%; font-size: 15px; letter-spacing: -0.02em; }
 .dark .layerName { color: var(--broth); }
 .chip { padding: 5px 10px; border-radius: 10px; font-size: 13px; font-weight: 600; cursor: default; }
 

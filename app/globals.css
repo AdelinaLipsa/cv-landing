@@ -63,7 +63,7 @@ h1, h2, h3 {
   margin: 0;
   font-family: var(--font-display), sans-serif;
   font-weight: 700;
-  font-stretch: 125%;
+  font-stretch: 85%;
   letter-spacing: -0.03em;
   line-height: 1;
 }

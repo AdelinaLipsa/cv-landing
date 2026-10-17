@@ -13,7 +13,7 @@
 .arrows path { fill: none; stroke: #ff9ec0; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; filter: drop-shadow(0 0 1.5px #2a1f4d) drop-shadow(0 0 4px rgba(42, 31, 77, 0.6)); opacity: 0; transition: opacity 0.4s var(--ease), stroke-width 0.3s var(--ease); }
 .note { position: absolute; left: 0; top: 0; z-index: 2; pointer-events: none; opacity: 0; transition: opacity 0.4s var(--ease), scale 0.3s var(--ease), filter 0.3s var(--ease); }
 .note > span {
-  display: block; font-family: var(--font-display), sans-serif; font-size: 16px; font-weight: 700; font-stretch: 112%; white-space: nowrap;
+  display: block; font-family: var(--font-display), sans-serif; font-size: 16px; font-weight: 700; font-stretch: 90%; white-space: nowrap;
   color: #fff4e6; transform: rotate(-6deg);
   text-shadow: 0 0 1px #2a1f4d, 0 0 2px #2a1f4d, 0 1px 3px #2a1f4d, 0 0 6px rgba(42, 31, 77, 0.7), 0 0 16px rgba(255, 178, 94, 0.55);
   animation: float 3.4s ease-in-out infinite;
@@ -27,7 +27,7 @@
 .host[data-any] .note[data-show]:not([data-hot]), .host[data-any] .arrows path[data-show]:not([data-hot]) { opacity: 0.5; }
 /* Zoom: a hint on the first hover, and a way back out while zoomed, both in the notes' hand */
 .hint, .reset { position: absolute; z-index: 2; left: 50%; bottom: 4%; translate: -50% 0; opacity: 0; pointer-events: none; transition: opacity 0.4s var(--ease); }
-.hint > span, .reset > span { display: block; font-family: var(--font-display), sans-serif; font-size: 14px; font-weight: 700; font-stretch: 112%; white-space: nowrap; color: #fff4e6; text-shadow: 0 0 1px #2a1f4d, 0 0 2px #2a1f4d, 0 1px 3px #2a1f4d, 0 0 6px rgba(42, 31, 77, 0.7), 0 0 16px rgba(255, 178, 94, 0.55); }
+.hint > span, .reset > span { display: block; font-family: var(--font-display), sans-serif; font-size: 14px; font-weight: 700; font-stretch: 90%; white-space: nowrap; color: #fff4e6; text-shadow: 0 0 1px #2a1f4d, 0 0 2px #2a1f4d, 0 1px 3px #2a1f4d, 0 0 6px rgba(42, 31, 77, 0.7), 0 0 16px rgba(255, 178, 94, 0.55); }
 .hint[data-on] { opacity: 1; }
 .host[data-zoomed] .hint { opacity: 0; }
 .reset { top: 4%; right: 4%; bottom: auto; left: auto; translate: none; padding: 6px 4px; border: 0; background: none; cursor: pointer; visibility: hidden; transition: opacity 0.4s var(--ease), visibility 0.4s; } /* hidden, it leaves the tab order */
@@ -55,7 +55,7 @@
 .spot:focus-visible .dot { box-shadow: 0 0 0 1px rgba(42, 31, 77, 0.5), 0 0 0 7px rgba(42, 31, 77, 0.35), 0 0 0 8.5px #fff4e6; }
 .spotLabel { position: absolute; left: 50%; bottom: calc(100% + 6px); translate: -50% 4px; opacity: 0; pointer-events: none; transition: opacity 0.2s var(--ease), translate 0.25s var(--ease); }
 .spotLabel > span {
-  display: block; white-space: nowrap; font-family: var(--font-display), sans-serif; font-size: 16px; font-weight: 700; font-stretch: 112%; color: #fff4e6; transform: rotate(-4deg);
+  display: block; white-space: nowrap; font-family: var(--font-display), sans-serif; font-size: 16px; font-weight: 700; font-stretch: 90%; color: #fff4e6; transform: rotate(-4deg);
   text-shadow: 0 0 1px #2a1f4d, 0 0 2px #2a1f4d, 0 1px 3px #2a1f4d, 0 0 6px rgba(42, 31, 77, 0.7), 0 0 16px rgba(255, 178, 94, 0.55);
 }
 .spot:hover .spotLabel, .spot:focus-visible .spotLabel, .spot[data-hover] .spotLabel { opacity: 1; translate: -50% 0; }
@@ -71,7 +71,7 @@
 .ripple { position: absolute; left: 0; top: 0; width: 44px; height: 44px; border-radius: 50%; border: 2.5px solid #ff9ec0; box-shadow: 0 0 14px rgba(255, 158, 192, 0.8); opacity: 0; transform: translate(-50%, -50%); }
 .caption {
   position: absolute; left: 30px; top: 34px; white-space: nowrap; padding: 3px 0;
-  font-family: var(--font-display), sans-serif; font-size: 18px; font-weight: 700; font-stretch: 112%; color: #fff4e6; transform: rotate(-3deg);
+  font-family: var(--font-display), sans-serif; font-size: 18px; font-weight: 700; font-stretch: 90%; color: #fff4e6; transform: rotate(-3deg);
   text-shadow: 0 0 1px #2a1f4d, 0 0 2px #2a1f4d, 0 1px 3px #2a1f4d, 0 0 6px rgba(42, 31, 77, 0.7), 0 0 16px rgba(255, 178, 94, 0.55);
 }
 .ghost[data-left] .caption { left: auto; right: 26px; top: 6px; transform: rotate(3deg); }

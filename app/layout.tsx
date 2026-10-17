@@ -1,14 +1,15 @@
 import type { Metadata, Viewport } from "next";
-import { Anybody, Caveat, Figtree, JetBrains_Mono, Tinos } from "next/font/google";
+import { Caveat, Instrument_Sans, Instrument_Serif, JetBrains_Mono, Tinos } from "next/font/google";
 import "./globals.css";
 import { certifications, education, jobs, languages, profile } from "@/content/cv";
 import { siteUrl } from "@/lib/site";
 
-const anybody = Anybody({ subsets: ["latin"], axes: ["wdth"], variable: "--font-display" });
-const figtree = Figtree({ subsets: ["latin"], weight: ["400", "600"], variable: "--font-body" });
-const mono = JetBrains_Mono({ subsets: ["latin"], variable: "--font-mono", preload: false });
+const sans = Instrument_Sans({ subsets: ["latin", "latin-ext"], axes: ["wdth"], style: ["normal", "italic"], variable: "--font-display" });
+const sansBody = Instrument_Sans({ subsets: ["latin", "latin-ext"], axes: ["wdth"], style: ["normal", "italic"], variable: "--font-body" });
+const serif = Instrument_Serif({ subsets: ["latin", "latin-ext"], weight: "400", style: ["normal", "italic"], variable: "--font-serif", preload: false }); // asides only
+const mono = JetBrains_Mono({ subsets: ["latin", "latin-ext"], variable: "--font-mono", preload: false });
 const tinos = Tinos({ subsets: ["latin", "latin-ext"], weight: ["400", "700"], variable: "--font-2003", preload: false });
-const caveat = Caveat({ subsets: ["latin"], variable: "--font-hand", preload: false }); // the sticky note on the boot screen
+const caveat = Caveat({ subsets: ["latin", "latin-ext"], variable: "--font-hand", preload: false }); // the sticky note on the boot screen
 
 // Skip the intro if it was seen in the last day (cv-built holds when), on a deep link to a page, or on an arcade challenge.
 const GATE = `try{var m=localStorage.getItem("cv-theme-v2");var h=new Date().getHours();document.documentElement.dataset.theme=m||(h<5?"dark":"light")}catch(e){}try{var t=+localStorage.getItem("cv-built");if(Date.now()-t<864e5||/^#(home|work|career|skills|contact)$/.test(location.hash)||/[?&]challenge=/.test(location.search))document.documentElement.dataset.built="1"}catch(e){}`;
@@ -47,7 +48,7 @@ export const viewport: Viewport = { themeColor: [{ media: "(prefers-color-scheme
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${anybody.variable} ${figtree.variable} ${mono.variable} ${tinos.variable} ${caveat.variable}`} suppressHydrationWarning>
+    <html lang="en" className={`${sans.variable} ${sansBody.variable} ${serif.variable} ${mono.variable} ${tinos.variable} ${caveat.variable}`} suppressHydrationWarning>
       <head>
         {/* Decide built or unbuilt before first paint: no flash of the 2003 page for return visits. */}
         <script dangerouslySetInnerHTML={{ __html: GATE }} />

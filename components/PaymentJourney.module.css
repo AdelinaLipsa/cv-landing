@@ -4,7 +4,7 @@
 .head { display: flex; justify-content: space-between; align-items: center; font-size: 12px; }
 .kicker { font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--steam); }
 .order { font-family: var(--font-mono), monospace; color: var(--steam); }
-.amount { font-family: var(--font-display), sans-serif; font-size: 40px; line-height: 1; font-stretch: 115%; letter-spacing: -0.02em; }
+.amount { font-family: var(--font-display), sans-serif; font-size: 40px; line-height: 1; font-stretch: 88%; letter-spacing: -0.02em; }
 
 .methods { display: flex; flex-wrap: wrap; gap: 6px; }
 .method { position: relative; height: 34px; padding: 0 12px; border: 1px solid var(--line); border-radius: 999px; background: var(--surface); font-size: 12.5px; font-weight: 600; color: var(--ink); cursor: pointer; }
@@ -23,7 +23,7 @@
 .steps { position: relative; list-style: none; margin: 4px 0 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
 .steps::before { content: ""; position: absolute; left: 10px; top: 12px; bottom: 12px; width: 2px; background: var(--line); }
 .steps li { position: relative; display: flex; gap: 12px; align-items: flex-start; }
-.dot { flex-shrink: 0; width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; background: var(--surface); border: 2px solid var(--line); font-size: 11px; font-weight: 800; color: #fff; transition: background-color 0.4s var(--ease), border-color 0.4s var(--ease); }
+.dot { flex-shrink: 0; width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; background: var(--surface); border: 2px solid var(--line); font-size: 11px; font-weight: 700; color: #fff; transition: background-color 0.4s var(--ease), border-color 0.4s var(--ease); }
 li[data-state="now"] .dot { border-color: var(--blueprint); box-shadow: 0 0 0 5px rgba(51, 85, 255, 0.15); animation: pulse 0.9s ease-in-out infinite; }
 li:is([data-state="done"], [data-state="recovered"]) .dot { background: var(--blueprint); border-color: var(--blueprint); }
 li[data-state="failed"] .dot { background: #e5484d; border-color: #e5484d; animation: shake 0.4s var(--ease); }

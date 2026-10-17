@@ -14,8 +14,8 @@ export default async function Image() {
   const role = "Technical Product Owner. Also a full-stack developer, still shipping code.";
   const photo = `data:image/jpeg;base64,${readFileSync(join(process.cwd(), "public/adelina.jpg")).toString("base64")}`;
   const [display, body] = await Promise.all([
-    font("Anybody", "wdth,wght@125,700", name + line),
-    font("Figtree", "wght@600", role),
+    font("Instrument+Sans", "wdth,wght@85,700", name + line),
+    font("Instrument+Sans", "wdth,wght@100,500", role),
   ]);
 
   return new ImageResponse(
@@ -24,23 +24,23 @@ export default async function Image() {
         <div style={{ display: "flex", alignItems: "center", gap: 28 }}>
           <img src={photo} width={132} height={132} style={{ borderRadius: 36 }} alt="" />
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-            <div style={{ fontFamily: "Anybody", fontSize: 72, letterSpacing: "-0.03em" }}>{name}</div>
-            <div style={{ fontFamily: "Figtree", fontSize: 28, color: "#6B6990" }}>{role}</div>
+            <div style={{ fontFamily: "Instrument Sans", fontWeight: 700, fontSize: 72, letterSpacing: "-0.03em" }}>{name}</div>
+            <div style={{ fontFamily: "Instrument Sans", fontWeight: 500, fontSize: 28, color: "#6B6990" }}>{role}</div>
           </div>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 22 }}>
           <div style={{ width: 64, height: 64, borderRadius: 32, background: "#17153A", display: "flex", alignItems: "center", justifyContent: "center" }}>
             <div style={{ width: 30, height: 30, borderRadius: 15, background: "#F5B53F" }} />
           </div>
-          <div style={{ fontFamily: "Anybody", fontSize: 56, letterSpacing: "-0.03em" }}>{line}</div>
+          <div style={{ fontFamily: "Instrument Sans", fontWeight: 700, fontSize: 56, letterSpacing: "-0.03em" }}>{line}</div>
         </div>
       </div>
     ),
     {
       ...size,
       fonts: [
-        ...(display ? [{ name: "Anybody", data: display, weight: 700 as const }] : []),
-        ...(body ? [{ name: "Figtree", data: body, weight: 600 as const }] : []),
+        ...(display ? [{ name: "Instrument Sans", data: display, weight: 700 as const }] : []),
+        ...(body ? [{ name: "Instrument Sans", data: body, weight: 500 as const }] : []),
       ],
     }
   );

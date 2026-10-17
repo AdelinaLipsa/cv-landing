@@ -17,7 +17,7 @@
   font-family: var(--font-display), sans-serif;
   font-size: 16px;
   font-weight: 700;
-  font-stretch: 112%;
+  font-stretch: 90%;
   white-space: nowrap;
   color: var(--ink);
   transform: rotate(-6deg);

@@ -28,7 +28,7 @@
 /* "click me!" nudge: floats in a slow loop above the button, its arrow curving down to it */
 .wrap { position: relative; display: inline-flex; }
 .nudge { position: absolute; left: calc(50% - 30px); bottom: calc(100% - 2px); display: flex; align-items: flex-end; pointer-events: none; color: var(--naruto); animation: float 3.2s ease-in-out infinite; }
-.nudgeText { margin: 0 -6px 30px -54px; font-family: var(--font-display), sans-serif; font-size: 15px; font-weight: 700; font-stretch: 112%; white-space: nowrap; transform: rotate(-10deg); color: var(--ink); text-shadow: 0 2px 0 var(--paper); }
+.nudgeText { margin: 0 -6px 30px -54px; font-family: var(--font-display), sans-serif; font-size: 15px; font-weight: 700; font-stretch: 90%; white-space: nowrap; transform: rotate(-10deg); color: var(--ink); text-shadow: 0 2px 0 var(--paper); }
 .nudgeArrow { display: block; transform: translate(-14px, 4px) rotate(18deg); }
 @keyframes float {
   0%, 100% { transform: translate(0, 0) rotate(0deg); }

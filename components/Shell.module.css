@@ -116,7 +116,7 @@
 .gameWrap { position: relative; display: inline-flex; }
 .gameNudge { position: absolute; left: calc(50% - 8px); bottom: calc(100% - 4px); display: flex; align-items: flex-end; pointer-events: none; color: var(--naruto); animation: gameFloat 3.6s ease-in-out infinite; }
 .gameNudge svg { display: block; flex-shrink: 0; transform: scaleX(-1) rotate(10deg); } /* the tip sits over the gamepad's centre */
-.gameNudge span { margin: 0 0 30px -6px; font-family: var(--font-display), sans-serif; font-size: 15px; font-weight: 700; font-stretch: 112%; white-space: nowrap; transform: rotate(10deg); color: var(--ink); text-shadow: 0 2px 0 var(--paper); }
+.gameNudge span { margin: 0 0 30px -6px; font-family: var(--font-display), sans-serif; font-size: 15px; font-weight: 700; font-stretch: 90%; white-space: nowrap; transform: rotate(10deg); color: var(--ink); text-shadow: 0 2px 0 var(--paper); }
 @keyframes gameFloat { 0%, 100% { transform: translate(0, 0); } 33% { transform: translate(-5px, -7px) rotate(-3deg); } 66% { transform: translate(4px, -4px) rotate(2deg); } }
 @media (prefers-reduced-motion: reduce) { .gameNudge { animation: none; } }
 /* Phones: the gamepad sits near the screen edge, so the text stacks above the arrow and stays on screen */

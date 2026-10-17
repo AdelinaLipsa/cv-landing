@@ -2,7 +2,7 @@
 
 .top { display: flex; align-items: center; justify-content: space-between; }
 .mark { display: flex; align-items: center; gap: 10px; font-size: 15px; font-weight: 600; }
-.monogram { font-family: var(--font-display); font-weight: 800; font-stretch: 125%; font-size: 15px; }
+.monogram { font-family: var(--font-display); font-weight: 700; font-stretch: 85%; font-size: 15px; }
 .markName { display: none; }
 .icons { display: flex; align-items: center; gap: 4px; }
 .icon, .pdf {
@@ -30,9 +30,10 @@
 .pdf[data-lit], .messageBtn[data-lit] { border-color: var(--broth); box-shadow: 0 0 0 3px rgba(245, 181, 63, 0.35); transform: translateY(-1px); }
 
 /* "Message me": a real secondary button next to the primary, not a text link */
-.messageBtn { display: inline-flex; align-items: center; gap: 8px; height: 46px; padding: 0 18px 0 14px; border: 1.5px solid var(--ink); border-radius: 999px; background: transparent; color: var(--ink); font-size: 15px; font-weight: 600; cursor: pointer; transition: background-color 0.3s var(--ease), color 0.3s var(--ease), transform 0.3s var(--ease); }
+.messageBtn { display: inline-flex; align-items: center; gap: 8px; height: 46px; white-space: nowrap; padding: 0 14px 0 12px; border: 1.5px solid var(--ink); border-radius: 999px; background: transparent; color: var(--ink); font-size: 15px; font-weight: 600; cursor: pointer; transition: background-color 0.3s var(--ease), color 0.3s var(--ease), transform 0.3s var(--ease); }
 .messageBtn:hover, .messageBtn:focus-visible { transform: translateY(-1px); }
 .messageBtn svg { flex-shrink: 0; }
+.messageBtn > span { white-space: nowrap !important; } /* DecryptedText sets pre-wrap inline */
 
 .grid { display: grid; gap: 40px; margin-top: 44px; }
 .hero { display: flex; flex-direction: column; align-items: flex-start; gap: 18px; }
@@ -58,7 +59,7 @@
 .role b { font-weight: 600; display: block; }
 .role span { color: var(--steam); }
 .about { max-width: 520px; font-size: 16px; line-height: 1.55; color: var(--body-2); }
-.actions { display: flex; align-items: center; gap: 12px; margin-top: 2px; white-space: nowrap; } /* phones: both buttons on one line, each label unbroken */
+.actions { display: flex; align-items: center; gap: 10px; margin-top: 2px; white-space: nowrap; } /* phones: both buttons on one line, each label unbroken */
 
 .dock { display: none; }
 .cards { margin-top: 8px; }
@@ -143,7 +144,7 @@
 .tags li:hover { transform: translateY(-3px) rotate(-2deg); background: var(--night); color: var(--on-night); }
 .beliefs { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
 .beliefs li { position: relative; padding-left: 18px; font-size: 16px; font-weight: 600; color: var(--ink); cursor: default; }
-.beliefs li::before { content: "✓"; position: absolute; left: 0; color: var(--blueprint); font-weight: 800; }
+.beliefs li::before { content: "✓"; position: absolute; left: 0; color: var(--blueprint); font-weight: 700; }
 
 @media (min-width: 1000px) {
   .markName { display: inline; }
@@ -168,7 +169,7 @@
   .portraitLabel { font-size: 12px; left: calc(100% + 24px); }
   .mobileOnly { display: none; }
   .desktopOnly { display: inline; }
-  .name { font-size: min(80px, 5.4vw); font-stretch: 120%; letter-spacing: -0.04em; margin: 18px 0 0 -4px; white-space: nowrap; } /* the hover widens the letters: stay on one line, sized to fit beside the room */
+  .name { font-size: min(80px, 5.4vw); font-stretch: 82%; letter-spacing: -0.03em; margin: 18px 0 0 -4px; white-space: nowrap; } /* the hover widens the letters: stay on one line, sized to fit beside the room */
   .role { font-size: 23px; line-height: 1.4; }
   .role b { display: inline; }
   .about { font-size: 18px; line-height: 1.6; }
