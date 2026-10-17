@@ -34,7 +34,7 @@ r_body = rs[int(len(rs) * 0.6)]
 hv = [v.co for v in j.data.vertices if v.co.z < H0 and math.hypot(v.co.x, v.co.y) > r_body * 1.3]
 h_ang = math.atan2(sum(v.y for v in hv), sum(v.x for v in hv))
 j.rotation_mode = "XYZ"
-j.scale = (S, S, S); j.rotation_euler = (0, 0, -h_ang + math.radians(globals().get("COCOA_TURN", 40)))   # handle to her right, turned 40° away: her fingers angle in through it and her right forearm comes from the right
+j.scale = (S, S, S); j.rotation_euler = (0, 0, -h_ang + math.radians(globals().get("COCOA_TURN", 90)))   # handle straight away from her: both hands cup the body (grip.py), the handle between her fingertips
 j.location = (C.x, C.y, C.z - 0.06)
 # the old navy mug and its bits stay in the file, out of the render
 for o in D.objects:

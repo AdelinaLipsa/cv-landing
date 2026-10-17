@@ -126,7 +126,9 @@ the tin sill. Built and baked in Blender from `art/window_source.blend` (local o
 
 1. `build_view.py` (her window, sills, the street, lampposts, cables) → `build_city.py` (houses across, the bloc up
    the street, trees) → `dacia.py`, `lamppost.py`, `kit_props.py` (downloaded assets placed) → `pov.py` (camera = her
-   eyes, the mug, her arms) → `hands.py` (the rigged hands round the mug) → `pigeon_rig.py` (bones for the site).
+   eyes, the mug, her arms) → `hands.py` (the rigged hands round the mug) → `grip.py` (posed by hand: explicit joint angles about the
+   download fist's axes, the right hand mirrors the left, Preserve Volume; the mug's handle points away from her,
+   `COCOA_TURN` 90 in `cocoa.py`) → `pigeon_rig.py` (bones for the site).
 2. `lighting.py` (DAY / NIGHT) → `bake.py` with `STEP="prep"` (saves `art/window.blend`) then `STEP="bake"` →
    `export.py` → `art/scripts/window/ship.sh` (view.glb + night atlases) and `export_actors.py` (pigeon, Dacia,
    hands) then `gltf-transform` resize/webp/optimize as in ship.sh.
