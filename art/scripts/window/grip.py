@@ -44,14 +44,23 @@ def finger(a, f, mcp, pip, dip, spread=0.0):
         pb_(a, f"{f}_{s}").rotation_mode = "QUATERNION"; pb_(a, f"{f}_{s}").rotation_quaternion = q
         pb_(a, f"{f}_{s}").location = (0, 0, 0); pb_(a, f"{f}_{s}").scale = (1, 1, 1)
     upd()
-def thumb(a, opp, abd, mp, ip):
-    """The thumb: opposition at its base (about its fist axis), abduction (across it), then its two joints' flexion."""
-    fx = FLEX[a.name]; ax0 = Vector(fx["THUMB_BASE"]).normalized()
-    ab = ax0.cross(_dir(a, "THUMB_BASE", "THUMB_MID")).normalized()
-    for s, q in (("BASE", Quaternion(ax0, math.radians(opp)) @ Quaternion(ab, math.radians(abd))),
-                 ("MID", Quaternion(Vector(fx["THUMB_MID"]).normalized(), math.radians(mp))),
-                 ("TOP", Quaternion(Vector(fx["THUMB_TOP"]).normalized(), math.radians(ip)))):
-        p = pb_(a, f"THUMB_{s}"); p.rotation_mode = "QUATERNION"; p.rotation_quaternion = q; p.location = (0, 0, 0); p.scale = (1, 1, 1)
+def thumb(a, abd, rad, twist, mcp, ip):
+    """The thumb, in the hand's own terms: its metacarpal leaves the palm plane by abd degrees (palmar abduction, out
+    in front of the palm), turned rad degrees from the fingers' way toward the index side, rolled twist degrees about
+    itself (its pad toward the mug); then its MCP and IP joints flex mcp and ip degrees."""
+    fx = FLEX[a.name]; tb = pb_(a, "THUMB_BASE")
+    for s in ("BASE", "MID", "TOP"):
+        p = pb_(a, f"THUMB_{s}"); p.rotation_mode = "QUATERNION"; p.rotation_quaternion = (1, 0, 0, 0); p.location = (0, 0, 0); p.scale = (1, 1, 1)
+    upd()
+    _, F, A, N = frame(a); N = N * palm_normal_sign(a)
+    h = wp(a, "THUMB_BASE"); d0 = (wp(a, "THUMB_MID") - h).normalized()
+    ab, rd = math.radians(abd), math.radians(rad)
+    d = (F * math.cos(rd) + A * math.sin(rd)) * math.cos(ab) + N * math.sin(ab)
+    Rw = Quaternion(d, math.radians(twist)) @ d0.rotation_difference(d)
+    M0t = a.matrix_world @ tb.matrix
+    tb.matrix = a.matrix_world.inverted() @ (Matrix.Translation(h) @ Rw.to_matrix().to_4x4() @ Matrix.Translation(-h) @ M0t)
+    pb_(a, "THUMB_MID").rotation_quaternion = Quaternion(Vector(fx["THUMB_MID"]).normalized(), math.radians(mcp))
+    pb_(a, "THUMB_TOP").rotation_quaternion = Quaternion(Vector(fx["THUMB_TOP"]).normalized(), math.radians(ip))
     upd()
 def rest_wrist(a):   # palm and forearm bones straight: the grip is all in the fingers and the hand's place
     for k in ("_rootJoint", "Root", "HANDPALM"):
@@ -76,8 +85,12 @@ def frame(a):
     W = wp(a, "HANDPALM"); M = wp(a, "MIDDLE_F_BASE"); I = wp(a, "INDEX_BASE"); K = wp(a, "PINK_BASE")
     F = (M - W).normalized(); A = I - K; A = (A - F * A.dot(F)).normalized()
     return W.lerp(M, 0.55), F, A, F.cross(A)
+_SIGN = {}
 def palm_normal_sign(a):
     """+1 if F x A points out of the palm (the way the fingers curl), else -1: flex the middle finger and see."""
+    if a.name not in _SIGN: _SIGN[a.name] = _palm_normal_sign(a)
+    return _SIGN[a.name]
+def _palm_normal_sign(a):
     keep = [(pb_(a, f"MIDDLE_F_{s}").rotation_mode, pb_(a, f"MIDDLE_F_{s}").rotation_quaternion.copy(), pb_(a, f"MIDDLE_F_{s}").rotation_euler.copy()) for s in ("BASE", "MID", "TOP")]
     _, F, A, N = frame(a); M = wp(a, "MIDDLE_F_BASE")
     finger(a, "MIDDLE_F", 0, 0, 0); t0 = wp(a, "MIDDLE_F_UP_TOP"); finger(a, "MIDDLE_F", 60, 60, 30); t1 = wp(a, "MIDDLE_F_UP_TOP")
@@ -129,13 +142,14 @@ def preserve_volume():
             if m.type == "ARMATURE": m.use_deform_preserve_volume = True
 # ---------------------------------------------------------------- her grip
 # her left hand where it always sat, a little forward so its fingertips stop short of the handle (turned away from her,
-# cocoa.py); her right hand its mirror (place: 180 - deg, lean flipped; same joint angles); her thumbs lie on the
-# mug's front corners; every pad within 0-3 mm of the ceramic, nothing inside it
+# cocoa.py); her right hand its mirror (place: 180 - deg, lean flipped; same joint angles); her thumbs on the mug's
+# near side, abducted off the palm, pointing up and in toward each other; every pad within 0-3 mm of the ceramic, nothing
+# inside it (the palms sit a few mm off so the thenar doesn't sink)
 POSE = globals().get("GRIP_POSE") or {
-    "HandL": {"PLACE": {"deg": -142, "z": 1.171, "wrap": -1, "off": 0.023, "yaw": 16, "lean": -5, "forearm_to": (-0.40, -0.5, 0.9)},
-              "INDEX": (15, 30, 10, 0), "MIDDLE_F": (20, 30, 5, 0), "RING": (15, 25, 10, 0), "PINK": (10, 15, 0, 0), "THUMB": (75, 65, -40, -20)},
-    "HandR": {"PLACE": {"deg": -38, "z": 1.171, "wrap": 1, "off": 0.025, "yaw": 16, "lean": 5, "forearm_to": (0.26, -0.5, 0.9)},
-              "INDEX": (15, 30, 10, 0), "MIDDLE_F": (20, 30, 5, 0), "RING": (15, 25, 10, 0), "PINK": (10, 15, 0, 0), "THUMB": (75, 68, -40, -40)},
+    "HandL": {"PLACE": {"deg": -142, "z": 1.171, "wrap": -1, "off": 0.029, "yaw": 16, "lean": -5, "forearm_to": (-0.40, -0.5, 0.9)},
+              "INDEX": (15, 30, 10, 0), "MIDDLE_F": (20, 30, 0, 0), "RING": (20, 20, 0, 0), "PINK": (10, 20, 0, 0), "THUMB": (39, 134, 55, 25, 20)},
+    "HandR": {"PLACE": {"deg": -38, "z": 1.171, "wrap": 1, "off": 0.031, "yaw": 16, "lean": 5, "forearm_to": (0.26, -0.5, 0.9)},
+              "INDEX": (15, 30, 10, 0), "MIDDLE_F": (20, 30, 0, 0), "RING": (20, 20, 0, 0), "PINK": (10, 20, 0, 0), "THUMB": (39, 134, -50, 25, 20)},
 }
 if not globals().get("GRIP_TOOLS"):
     preserve_volume()
