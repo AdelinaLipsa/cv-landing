@@ -93,12 +93,14 @@
 
 /* Arriving on a page: its blocks slide in one after another. Replays on every visit (the selector stops
    matching when the page is left). "backwards" only, so it never fights transforms the blocks set themselves.
-   Not during the build tour, which stages the page itself. */
-.viewport:not([data-touring]) .pane[data-active] > * > * > * { animation: paneIn 0.7s cubic-bezier(0.22, 1, 0.36, 1) backwards; }
-.viewport:not([data-touring]) .pane[data-active] > * > * > :nth-child(2) { animation-delay: 0.07s; }
-.viewport:not([data-touring]) .pane[data-active] > * > * > :nth-child(3) { animation-delay: 0.14s; }
-.viewport:not([data-touring]) .pane[data-active] > * > * > :nth-child(4) { animation-delay: 0.21s; }
-.viewport:not([data-touring]) .pane[data-active] > * > * > :nth-child(n + 5) { animation-delay: 0.28s; }
+   The build tour stages the page itself: there the entrance takes 0s rather than being switched off, so closing the
+   guide only restores the duration of an animation long since over, and never starts it again. */
+.pane[data-active] > * > * > * { animation: paneIn 0.7s cubic-bezier(0.22, 1, 0.36, 1) backwards; }
+.pane[data-active] > * > * > :nth-child(2) { animation-delay: 0.07s; }
+.pane[data-active] > * > * > :nth-child(3) { animation-delay: 0.14s; }
+.pane[data-active] > * > * > :nth-child(4) { animation-delay: 0.21s; }
+.pane[data-active] > * > * > :nth-child(n + 5) { animation-delay: 0.28s; }
+.viewport[data-touring] .pane[data-active] > * > * > * { animation-duration: 0s; animation-delay: 0s; }
 @keyframes paneIn { from { opacity: 0; transform: translateX(var(--from, 36px)); } to { opacity: 1; transform: none; } }
 
 /* Gamepad: same glass circle as the sound button */

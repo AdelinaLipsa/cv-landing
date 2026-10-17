@@ -50,6 +50,7 @@ export type UI = {
   job: string | null; // the career job on screen during the guide
   cue: Cue["hot"] | null; // the thing the guide's words are lighting up
   finale: boolean; // the guide's last step
+  ended: boolean; // the guide played to its end and closed (the room's lamp warms); a replay clears it
 };
 
 // The light in the room: cooler on Work, branch colours on Career, warm lamp light once Off duty is on screen.
@@ -71,6 +72,7 @@ export default function Shell({ character }: { character: boolean }) {
   const [step, setStep] = useState(0);
   const [holdMs, setHoldMs] = useState(0); // the tour waits this long (the boot pull-back) before its clock starts
   const [cue, setCue] = useState<Cue["hot"] | null>(null);
+  const [ended, setEnded] = useState(false); // the guide played to its end (Tour's onFinish)
   // The rewind before a replay from the page: the era and step it shows (null: not rewinding). `tape` outlives it by
   // the last era change, which runs fast while it is set (Shell.module.css).
   const [rew, setRew] = useState<{ era: number; upto: number } | null>(null);
@@ -195,6 +197,7 @@ export default function Shell({ character }: { character: boolean }) {
   // the tape rewinds it to 2003 first. Calm: the chapters in a sheet, once Boot has faded.
   const startTour = (from: "boot" | "page", hold = 0) => {
     showBuilt();
+    setEnded(false);
     if (matchMedia("(prefers-reduced-motion: reduce)").matches) {
       setTimeout(() => setSheet({ label: "The build, chapter by chapter", body: <Stepper /> }), hold);
       return;
@@ -223,6 +226,8 @@ export default function Shell({ character }: { character: boolean }) {
     setStep(i);
     goRef.current(steps[i].pane);
   }, []);
+
+  const finish = useCallback(() => setEnded(true), []);
 
   const endTour = useCallback(() => {
     setRew(null);
@@ -256,6 +261,7 @@ export default function Shell({ character }: { character: boolean }) {
     job: touring ? jobOf(steps[step]) : null,
     cue: touring ? cue : null,
     finale: touring && step === steps.length - 1,
+    ended: ended && !guide,
   };
 
   const panes = [Home, Work, Career, Skills];
@@ -341,7 +347,7 @@ export default function Shell({ character }: { character: boolean }) {
       </motion.main>
 
       {rew && <Rewind onFrame={onRewind} onDone={rewound} />}
-      {touring && <Tour holdMs={holdMs} onStep={onStep} onCue={setCue} onClose={endTour} />}
+      {touring && <Tour holdMs={holdMs} onStep={onStep} onCue={setCue} onFinish={finish} onClose={endTour} />}
       <EasterEggs contact={ui.contact} terminal={ui.terminal} arcade={() => setArcade(true)} />
       {arcade && <Arcade onClose={() => { setArcade(false); setChallenge(null); }} contact={() => { setArcade(false); ui.contact(); }} challenge={challenge} />}
       <Toasts />

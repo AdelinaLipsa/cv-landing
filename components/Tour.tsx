@@ -12,10 +12,11 @@ import TourPlayer from "./TourPlayer";
 const SPEEDS = [0.5, 1, 1.5, 2];
 
 // holdMs: the clock stays at 0 and the chrome stays hidden while the boot screen pulls back.
-export default function Tour({ holdMs, onStep, onCue, onClose }: {
+export default function Tour({ holdMs, onStep, onCue, onFinish, onClose }: {
   holdMs: number;
   onStep: (i: number) => void;
   onCue: (c: Cue["hot"] | null) => void;
+  onFinish: () => void; // played to the end (not stopped): the room's lamp warms when it closes
   onClose: () => void;
 }) {
   const [t, setT] = useState(0);
@@ -87,11 +88,12 @@ export default function Tour({ holdMs, onStep, onCue, onClose }: {
     const landed = () => {
       if (document.querySelector("[data-camera]")) { raf = requestAnimationFrame(landed); return; }
       setDone(true);
+      onFinish();
       id = window.setTimeout(onClose, 3200);
     };
     landed();
     return () => { cancelAnimationFrame(raf); clearTimeout(id); };
-  }, [finished, onClose]);
+  }, [finished, onFinish, onClose]);
 
   // Keys: space pauses, arrows go a step back or on, Esc closes. During the start hold only Esc works.
   // Space on a focused button presses that button. Any manual scroll pauses.
