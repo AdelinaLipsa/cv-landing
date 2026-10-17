@@ -9,6 +9,7 @@ import type { UI } from "../Shell";
 import { about, beliefs, origin, profile, ventures } from "@/content/cv";
 import { tiles } from "@/content/wall";
 import { Card, TileLinks } from "./Work";
+import { useBlueprint } from "../BlueprintBuild";
 // import RetroComputer from "../RetroComputer"; // Off duty's computer: the room in the hero has her PC now
 import Win95 from "../Win95";
 import { LinkedInIcon, WhatsAppIcon } from "../Contact";
@@ -112,6 +113,9 @@ export default function Home({ ui }: { ui: UI }) {
   const lights = (p: Prop) => ({ onPointerEnter: () => setHot(p), onPointerLeave: () => setHot(null), onFocus: () => setHot(p), onBlur: () => setHot(null), "data-lit": hot === p || undefined });
   const pdfRef = useRef<HTMLAnchorElement>(null), liRef = useRef<HTMLAnchorElement>(null);
   const pick = (p: Prop) => (p === "phone" ? ui.contact() : (p === "printer" ? pdfRef : liRef).current?.click()); // what the button itself does
+  // The guide: the preview tiles draw and fill when home.preview builds, once the camera is back on them.
+  const tilesRef = useRef<HTMLDivElement>(null);
+  useBlueprint(tilesRef, ui.built("home.preview"), { touring, era, sel: "[data-bp]" });
   const buildLabel = touring ? "Stop the build" : ui.returning ? "Replay the build" : "Watch me build it";
 
   return (
@@ -211,15 +215,18 @@ export default function Home({ ui }: { ui: UI }) {
           <h2 className={s.h2} data-skin="title"><ShuffleHeading text="Things that didn’t exist" /></h2>
           <button type="button" className={s.seeAll} onClick={() => ui.go(1)}><DecryptedText text="See all" animateOn="hover" speed={40} maxIterations={8} /></button>
         </div>
-        <div className={s.tiles} data-tour="preview">
-          {preview.map((t, i) => (
-            <Land key={t.id} className={s.tileWrap} delay={i * 0.09}>
-              <button type="button" className={s.tile} onClick={() => ui.go(1)} aria-label={`${t.title}: see it on the Work tab`}>
-                <span className={`${s.media} ${s.teaser}`}><Card tile={t} h={260} /></span>
-              </button>
-              <TileLinks tile={t} />
-            </Land>
-          ))}
+        <div ref={tilesRef} className={s.tiles} data-tour="preview">
+          {preview.map((t, i) => {
+            const body = (
+              <>
+                <button type="button" className={s.tile} onClick={() => ui.go(1)} aria-label={`${t.title}: see it on the Work tab`}>
+                  <span className={`${s.media} ${s.teaser}`}><Card tile={t} h={260} /></span>
+                </button>
+                <TileLinks tile={t} />
+              </>
+            );
+            return touring ? <div key={t.id} className={s.tileWrap} data-bp>{body}</div> : <Land key={t.id} className={s.tileWrap} delay={i * 0.09}>{body}</Land>;
+          })}
         </div>
       </section>
 

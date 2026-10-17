@@ -4,6 +4,8 @@ import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import type { UI } from "../Shell";
 import { sections, tiles, type Tile } from "@/content/wall";
+import type { BuildKey } from "@/content/tour";
+import { useBlueprint } from "../BlueprintBuild";
 import { useMedia } from "@/lib/useMedia";
 import Media from "../wall/Media";
 import { Play } from "../wall/play";
@@ -60,7 +62,7 @@ export function Card({ tile, h }: { tile: Tile; h: number }) {
     <Play.Provider value={hover || touch}>
       <Tilt max={5} scale={1.02}>
         <div className={s.card} onPointerEnter={() => setHover(true)} onPointerLeave={() => setHover(false)}>
-          <SpotlightCard className={s.spot} data-skin="card" spotlightColor="rgba(51, 85, 255, 0.18)">
+          <SpotlightCard className={s.spot} data-skin="card" data-bp-frame spotlightColor="rgba(51, 85, 255, 0.18)">
             <div className={`${s.media} ${tile.form ? s.bare : ""}`} style={{ height: h }}><Frame tile={tile}><Media tile={tile} /></Frame></div>
           </SpotlightCard>
           <div className={s.caption}><b className={s.ctitle}>{tile.title}</b><span className={s.blurb}>{tile.blurb}</span>{tile.outcome && <span className={s.outcome}>{tile.outcome}</span>}</div>
@@ -154,7 +156,36 @@ function Viewer({ list, at, onMove, onClose }: { list: Tile[]; at: number; onMov
   );
 }
 
-export default function Work(_: { ui: UI }) {
+// One section of the wall. With the guide on, it builds on its own step: the head shows, the tiles draw and fill
+// (BlueprintBuild). Its tiles skip Land then, which would play its own landing on top.
+function Section({ sec, ui, list, desktop, onOpen }: { sec: (typeof sections)[number]; ui: UI; list: Tile[]; desktop: boolean; onOpen: (i: number) => void }) {
+  const ref = useRef<HTMLElement>(null);
+  const { touring, era } = ui;
+  useBlueprint(ref, ui.built(`work.${sec.id}` as BuildKey), { touring, era, sel: "[data-bp]", bare: "[data-bp-bare]" });
+  return (
+    <section ref={ref} className={s.section}>
+      <div className={s.sectionHead} data-bp-bare>
+        <h2 className={s.sectionTitle} data-skin="title"><ShuffleHeading text={sec.title} /></h2>
+        <p className={s.sectionLede}>{sec.lede}</p>
+      </div>
+      <div className={s.grid}>
+        {tiles.filter((t) => t.section === sec.id).map((t, k) => {
+          const body = (
+            <>
+              <button type="button" data-key={t.id} className={s.tileBtn} onClick={() => onOpen(list.indexOf(t))} aria-label={`${t.title}: open details`}>
+                <Card tile={t} h={desktop ? 300 : 260} />
+              </button>
+              <TileLinks tile={t} />
+            </>
+          );
+          return touring ? <div key={t.id} className={s.tileWrap} data-bp>{body}</div> : <Land key={t.id} className={s.tileWrap} delay={(k % 3) * 0.09}>{body}</Land>;
+        })}
+      </div>
+    </section>
+  );
+}
+
+export default function Work({ ui }: { ui: UI }) {
   const [open, setOpen] = useState<number | null>(null);
   const desktop = useMedia(DESKTOP, ONE, 0) === 1;
   const list = sections.flatMap((sec) => tiles.filter((t) => t.section === sec.id)); // the viewer walks them in page order
@@ -165,24 +196,7 @@ export default function Work(_: { ui: UI }) {
         <h1 className={p.title} data-skin="title"><ShuffleHeading text="What I built, and what I own" /></h1>
       </div>
 
-      {sections.map((sec) => (
-        <section key={sec.id} className={s.section}>
-          <div className={s.sectionHead}>
-            <h2 className={s.sectionTitle} data-skin="title"><ShuffleHeading text={sec.title} /></h2>
-            <p className={s.sectionLede}>{sec.lede}</p>
-          </div>
-          <div className={s.grid}>
-            {tiles.filter((t) => t.section === sec.id).map((t, k) => (
-              <Land key={t.id} className={s.tileWrap} delay={(k % 3) * 0.09}>
-                <button type="button" data-key={t.id} className={s.tileBtn} onClick={() => setOpen(list.indexOf(t))} aria-label={`${t.title}: open details`}>
-                  <Card tile={t} h={desktop ? 300 : 260} />
-                </button>
-                <TileLinks tile={t} />
-              </Land>
-            ))}
-          </div>
-        </section>
-      ))}
+      {sections.map((sec) => <Section key={sec.id} sec={sec} ui={ui} list={list} desktop={desktop} onOpen={setOpen} />)}
 
       <AnimatePresence>{open !== null && <Viewer key="viewer" list={list} at={open} onMove={setOpen} onClose={() => setOpen(null)} />}</AnimatePresence>
     </div>
