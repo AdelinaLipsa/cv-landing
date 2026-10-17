@@ -283,6 +283,12 @@ const polaroid = (shot: Shot, caption = "", font = "cursive", k = 1, wide = fals
   return c;
 };
 
+// The room's ghost demo plays once, on a visitor's first visit; storage blocked: once a session, or once a page load.
+const DEMO = "cv-room-demo";
+let demoShown = false;
+const demoSeen = () => { try { return localStorage.getItem(DEMO) === "1"; } catch { try { return sessionStorage.getItem(DEMO) === "1"; } catch { return demoShown; } } };
+const sawDemo = () => { demoShown = true; try { localStorage.setItem(DEMO, "1"); } catch { try { sessionStorage.setItem(DEMO, "1"); } catch {} } };
+
 const mark = (n: string) => performance.mark(`room:${n}`);
 const report = () => {
   if (process.env.NODE_ENV === "production") return;
@@ -557,20 +563,21 @@ async function mount(el: HTMLElement, live: React.RefObject<Live>, alive: () => 
     }
   };
 
-  // The demo, once a visit: about 1.2 s after the room is live, a ghost cursor glides in from the edge to her and
-  // clicks (she reacts for real), glides on to the computer (it wakes), and goes; ~4 s. Any input in the room ends it.
+  // The demo, on a first visit only (demoSeen): about 1.2 s after the room is live, a ghost cursor glides in from the
+  // edge to her and clicks (she reacts for real, silently), glides on to the computer (it wakes), and goes; ~4 s. Any
+  // input in the room ends it.
   const ghost = el.querySelector<HTMLElement>("[data-ghost]")!, caption = el.querySelector<HTMLElement>("[data-caption]")!;
   const ripple = el.querySelector<HTMLElement>("[data-ripple]")!, cursors = [...el.querySelectorAll<SVGElement>("[data-ghost] svg")];
   const SAY = touch ? "tap anything in my room" : "click anything in my room";
   el.toggleAttribute("data-touch", touch);
-  let demo: "wait" | "run" | "done" = (() => { try { return sessionStorage.getItem("room-demo") === "1" ? "done" : "wait"; } catch { return "wait"; } })();
+  let demo: "wait" | "run" | "done" = demoSeen() ? "done" : "wait";
   let demoT = 0, liveAt = -1, typed = -1, herStill = () => false, herChest: T.Object3D | null = null; // the cursor clicks her chest
   const gp = new THREE.Vector2(), ga = new THREE.Vector2(), gb = new THREE.Vector2(), g0 = new THREE.Vector2();
   const finishDemo = () => {
     if (demo === "run") { ghost.removeAttribute("data-on"); pointPc(false); }
     demo = "done";
     el.toggleAttribute("data-spots", true);
-    try { sessionStorage.setItem("room-demo", "1"); } catch {}
+    sawDemo();
   };
   if (demo === "done") el.toggleAttribute("data-spots", true);
   const screenOf = (o: T.Object3D, out: T.Vector2) => { const v = o.getWorldPosition(sv).project(camera); return out.set(((v.x + 1) / 2) * el.clientWidth, ((1 - v.y) / 2) * el.clientHeight); };
