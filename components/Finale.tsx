@@ -1,11 +1,11 @@
 "use client";
 import { useEffect, useRef } from "react";
-import { preload } from "react-dom";
 import type * as T from "three";
 import type { Toy } from "@/lib/toyStage";
 import { profile } from "@/content/cv";
 import { sfx } from "@/lib/sfx";
 import { unlock } from "@/lib/achievements";
+import { hold } from "@/lib/stagger";
 import s from "./Finale.module.css";
 
 export type Prop = "phone" | "printer" | "rolodex";
@@ -35,10 +35,8 @@ type Bufs = { room: Promise<ArrayBuffer | null>; her: Promise<ArrayBuffer | null
 const grab = (url: string) => fetch(url).then((r) => (r.ok ? r.arrayBuffer() : null)).catch(() => null);
 
 export default function Finale({ className, hot, warm, onHot, onPick, onScreen }: Props) {
-  // The hero: the preview and both models start downloading with the page, not after it.
-  preload("/models/room-preview.webp", { as: "image", fetchPriority: "high" });
-  preload("/models/room.glb", { as: "fetch", crossOrigin: "anonymous" });
-  preload("/models/character.glb", { as: "fetch", crossOrigin: "anonymous" });
+  // The preview and both models are preloaded by the layout's head script for a return visit; a first visit fetches
+  // them behind the boot screen's C64 (Shell).
   const host = useRef<HTMLDivElement>(null);
   const live = useRef<Live>({ hot, warm, onHot, onPick, onScreen });
   live.current = { hot, warm, onHot, onPick, onScreen };
@@ -47,16 +45,18 @@ export default function Finale({ className, hot, warm, onHot, onPick, onScreen }
     const el = host.current!;
     mark("effect");
     let cleanup = () => {}, started = false, dead = false;
+    const release = hold(); // the page's other heavy starts wait for the room (lib/stagger); it isn't on screen: they don't
     const io = new IntersectionObserver(async ([e]) => {
-      if (!e.isIntersecting || started) return;
+      if (!e.isIntersecting) { if (!started) release(); return; }
+      if (started) return;
       started = true;
       mark("visible");
       // Both files at once (the preloads already have them in flight); the preview covers the wait.
-      const c = await mount(el, live, () => !dead, { room: grab("/models/room.glb"), her: grab("/models/character.glb") });
+      const c = await mount(el, live, () => !dead, { room: grab("/models/room.glb"), her: grab("/models/character.glb") }, release).catch(() => { release(); return () => {}; });
       if (dead) c(); else cleanup = c; // unmounted while it loaded: tidy up straight away
     }, { rootMargin: "300px" });
     io.observe(el);
-    return () => { dead = true; io.disconnect(); cleanup(); };
+    return () => { dead = true; release(); io.disconnect(); cleanup(); };
   }, []);
 
   return (
@@ -296,7 +296,7 @@ const report = () => {
   console.table(Object.fromEntries(performance.getEntriesByType("mark").filter((m) => m.name.startsWith("room:")).map((m) => [m.name.slice(5), Math.round(m.startTime - t0)])));
 };
 
-async function mount(el: HTMLElement, live: React.RefObject<Live>, alive: () => boolean, bufs: Bufs) {
+async function mount(el: HTMLElement, live: React.RefObject<Live>, alive: () => boolean, bufs: Bufs, ready: () => void) {
   const addons = Promise.all([ // fetched alongside the stage, not after it
     import("three/examples/jsm/loaders/GLTFLoader.js"),
     import("three/examples/jsm/libs/meshopt_decoder.module.js"),
@@ -304,7 +304,7 @@ async function mount(el: HTMLElement, live: React.RefObject<Live>, alive: () => 
     import("three/examples/jsm/postprocessing/Pass.js"),
   ]);
   const { toyStage } = await import("@/lib/toyStage");
-  const toy: Toy = await toyStage(el);
+  const toy: Toy = await toyStage(el, true); // her reflections come with her: the bake has its light in it
   mark("stage");
   if (!alive()) { toy.dispose(); return () => {}; } // gone before the stage was ready: build nothing
   const { THREE, renderer, scene, camera, reduce, touch } = toy;
@@ -316,7 +316,7 @@ async function mount(el: HTMLElement, live: React.RefObject<Live>, alive: () => 
   const herP = bufs.her.then(parse); // her too, alongside the room
   const g = await bufs.room.then(parse);
   mark("room-parsed");
-  if (!g) { toy.dispose(); return () => {}; } // offline or blocked: the preview render stays
+  if (!g) { toy.dispose(); ready(); return () => {}; } // offline or blocked: the preview render stays
   const room = g.scene;
   scene.add(room); // in the scene first, so dispose frees it even if we leave now
   if (!alive()) { toy.dispose(); return () => {}; }
@@ -819,25 +819,48 @@ async function mount(el: HTMLElement, live: React.RefObject<Live>, alive: () => 
   const keep = new Map<T.Mesh, T.Material | T.Material[]>(), clear = new THREE.Color(), screens = [...phoneLit, screenLit, winLit];
   const smear = new THREE.Group(); // her wave's afterimages (filled in once she loads): never in the bloom pass
   scene.add(smear);
-  const draw = () => {
+  const toGlow = () => { // the bloom pass's look: only the glowing meshes, the rest black
     for (const m of meshes) {
       const glows = m.layers.isEnabled(BLOOM) || (m === screenMesh && m.material !== screenDark) || (m === phoneMesh && m.material !== phoneDark) || (m === ledMesh && m.material === ledLit);
       if (!glows) { keep.set(m, m.material); m.material = black; }
     }
     shaft.visible = dust.visible = smear.visible = false;
     for (const m of screens) m.color.setScalar(0.1); // a lit screen only haloes; full strength it bleaches to white
+  };
+  const fromGlow = () => {
+    for (const [m, mt] of keep) m.material = mt;
+    keep.clear();
+    shaft.visible = dust.visible = smear.visible = true;
+    for (const m of screens) m.color.setScalar(1);
+  };
+  const draw = () => {
+    toGlow();
     renderer.getClearColor(clear); const alpha = renderer.getClearAlpha();
     renderer.setClearColor(0x000000, 0);
     renderer.shadowMap.needsUpdate = true; // once a frame, not once per pass
     renderer.setRenderTarget(glowRT); renderer.clear(); renderer.render(scene, camera);
     bloom.render(renderer, null as unknown as T.WebGLRenderTarget, glowRT, 0, false);
     renderer.setRenderTarget(null); renderer.setClearColor(clear, alpha);
-    for (const [m, mt] of keep) m.material = mt;
-    keep.clear();
-    shaft.visible = dust.visible = smear.visible = true;
-    for (const m of screens) m.color.setScalar(1);
+    fromGlow();
     renderer.render(scene, camera);
     renderer.autoClear = false; add.render(renderer); renderer.autoClear = true;
+  };
+  // Every shader a frame of `root` needs, compiled in parallel off the main thread (KHR_parallel_shader_compile)
+  // before that frame: the bloom pass's (into glowRT, the black stand-ins too) and the screen's, once per `variant`
+  // (each sets materials up the way a later frame draws them). Compiling them on first draw froze the page for seconds.
+  const quad = new THREE.PlaneGeometry(2, 2).deleteAttribute("normal"), fx = new THREE.Scene(); // the bloom's own passes and the add, as quads like theirs (no normals: that's a different shader)
+  for (const mt of [bloom.materialHighPassFilter, ...bloom.separableBlurMaterials, bloom.compositeMaterial, bloom.blendMaterial]) fx.add(new THREE.Mesh(quad, mt));
+  const fxOut = new THREE.Mesh(quad, add.material);
+  let fxDone = false;
+  const warm = (root: T.Object3D, variants: (() => void)[] = [() => {}]) => {
+    const jobs: Promise<unknown>[] = [];
+    renderer.setRenderTarget(glowRT);
+    if (!fxDone) { fxDone = true; jobs.push(renderer.compileAsync(fx, camera)); }
+    for (const v of variants) { v(); toGlow(); jobs.push(renderer.compileAsync(root, camera, scene)); fromGlow(); }
+    renderer.setRenderTarget(null);
+    if (jobs.length > variants.length) jobs.push(renderer.compileAsync(fxOut, camera));
+    for (const v of variants) { v(); jobs.push(renderer.compileAsync(root, camera, scene)); }
+    return Promise.all(jobs).catch(() => {});
   };
 
   // Petting a cat: a purr, the achievement (it unlocks once), and a few hearts floating up off it.
@@ -1057,9 +1080,19 @@ async function mount(el: HTMLElement, live: React.RefObject<Live>, alive: () => 
     glowRT.setSize(px.x, px.y); bloom.setSize(px.x, px.y);
     draw(); placeNotes();
   };
-  // Warm the GPU before the first frame (shaders in parallel, textures uploaded), so it doesn't stall.
-  await renderer.compileAsync(scene, camera).catch(() => {});
-  for (const m of meshes) { const map = (m.material as T.MeshBasicMaterial).map; if (map) renderer.initTexture(map); }
+  // Warm the GPU before the first frame (shaders in parallel, textures uploaded one per task), so it doesn't stall.
+  const lit0 = [phoneMesh.material, screenMesh.material, ledMesh.material] as const;
+  const asDrawn = () => { [phoneMesh.material, screenMesh.material, ledMesh.material] = lit0; };
+  await warm(scene, [ // as drawn, then with each lit screen in
+    asDrawn,
+    () => { phoneMesh.material = phoneLit[0]; screenMesh.material = screenLit; ledMesh.material = ledLit; },
+    () => { phoneMesh.material = phoneLit[1]; screenMesh.material = winLit; },
+  ]);
+  asDrawn();
+  for (const map of new Set([...meshes.map((m) => (m.material as T.MeshBasicMaterial).map), ...screens.map((m) => m.map)].filter((t) => t))) {
+    renderer.initTexture(map!);
+    await new Promise((r) => setTimeout(r));
+  }
   mark("warm");
   const ro = new ResizeObserver(resize);
   ro.observe(el);
@@ -1068,6 +1101,7 @@ async function mount(el: HTMLElement, live: React.RefObject<Live>, alive: () => 
   // without her; then she fades in on her own.
   let herIn = () => {};
   void Promise.race([new Promise<void>((r) => (herIn = r)), new Promise((r) => setTimeout(r, 1200))]).then(() => {
+    ready(); // the room is on screen: the page's other heavy starts may go (lib/stagger)
     if (!alive()) return;
     el.dataset.live = "";
     mark("live");
@@ -1162,8 +1196,11 @@ async function mount(el: HTMLElement, live: React.RefObject<Live>, alive: () => 
       const disc = o.getObjectByName("Object_18"); // the record ("Until I Found You") turns at 33⅓ rpm
       if (disc) { const c = new THREE.Box3().setFromObject(disc).getCenter(new THREE.Vector3()); spin = new THREE.Group(); spin.position.copy(o.worldToLocal(c)); o.add(spin); spin.attach(disc); }
       o.traverse((m) => { if ((m as T.Mesh).isMesh) { m.castShadow = true; meshes.push(m as T.Mesh); } }); // the bloom pass blacks them out too
-      scene.add(o);
-      if (reduce) draw();
+      void warm(o).then(() => {
+        if (!alive()) return free(o);
+        scene.add(o);
+        if (reduce) draw();
+      });
     });
     // Her records, spread on the floor in front of the player as if she'd been flipping through them, short of the rug
     // and her way to the desk. [sheet tile (sleeve 0-6, disc 7-8), x, z, yaw, the disc slid half out of it (tile)]
@@ -1208,8 +1245,12 @@ async function mount(el: HTMLElement, live: React.RefObject<Live>, alive: () => 
     });
     let fade = 0;
     const setFade = (f: number) => { for (const [mt, [, op]] of mats) mt.opacity = op * f; for (const m of catchers) (m.material as T.ShadowMaterial).opacity = 0.4 * f; };
-    // Warm the opaque shaders first, so ending the fade doesn't hitch; the faded ones compile while she's invisible.
-    void renderer.compileAsync(char, camera, scene).catch(() => {}).then(() => {
+    // Her shaders, opaque and faded, and the room's again (her shadows change them all), both passes, compiled
+    // before she is drawn (warm()): compiled on her first frame they froze the page.
+    const faded = () => { for (const mt of mats.keys()) mt.transparent = true; };
+    const asMade = () => { for (const [mt, [tr]] of mats) mt.transparent = tr; };
+    void Promise.all([warm(char, [asMade, faded]), warm(scene)]).then(() => {
+      asMade();
       if (!alive()) { free(char); key.shadow.dispose(); lamp.dispose(); return; }
       fade = reduce || !("live" in el.dataset) ? 1 : 0; // not live yet: the canvas's own fade-in brings her in
       if (fade < 1) for (const mt of mats.keys()) { mt.transparent = true; mt.needsUpdate = true; }
@@ -1436,10 +1477,12 @@ async function mount(el: HTMLElement, live: React.RefObject<Live>, alive: () => 
       dropHer = () => { drop(); scene.remove(char); free(char); key.shadow.dispose(); lamp.dispose(); };
     });
   };
-  void herP.then((c) => {
+  void herP.then(async (c) => {
     if (!c) { finishDemo(); return herIn(); } // the room stands on its own without her: no demo, just the hotspots
     mark("her-parsed");
     if (!alive()) return free(c.scene); // unmounted while she loaded
+    await toy.env(); // her reflections, made now the room is up
+    if (!alive()) return free(c.scene);
     addHer(c);
   });
 
@@ -1465,7 +1508,7 @@ async function mount(el: HTMLElement, live: React.RefObject<Live>, alive: () => 
     phoneMesh.material = phoneDark; screenMesh.material = screenDark; ledMesh.material = ledDark; // so the stage's dispose finds the baked ones
     for (const m of [...phoneLit, screenLit, winLit, ledLit, black]) { m.map?.dispose(); m.dispose(); }
     (dust.material as T.Material).dispose(); dustGeo.dispose();
-    glowRT.dispose(); bloom.dispose(); add.material.dispose(); add.dispose();
+    glowRT.dispose(); bloom.dispose(); add.material.dispose(); add.dispose(); quad.dispose();
     toy.dispose();
   };
 }

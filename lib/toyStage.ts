@@ -3,7 +3,8 @@ import type * as T from "three";
 // The room every 3D scene on the site lives in: one studio light, one environment, one 90s plastic.
 // Off duty's computer was built here first; the ending and the Skills cabinet reuse it so they look like
 // they came out of the same room.
-export async function toyStage(el: HTMLElement) {
+// lateEnv: the reflections are made when env() is called, not here (the room's bake doesn't use them; she does).
+export async function toyStage(el: HTMLElement, lateEnv = false) {
   const [THREE, { RoomEnvironment }] = await Promise.all([import("three"), import("three/examples/jsm/environments/RoomEnvironment.js")]);
   const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
   // Phones: fewer pixels and no antialias; 3x screens make WebGL the heaviest thing on the page.
@@ -18,11 +19,22 @@ export async function toyStage(el: HTMLElement) {
   const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(30, 1, 0.1, 100);
 
-  // Reflections: a soft studio environment for the plastic and glass to catch.
+  // Reflections: a soft studio environment for the plastic and glass to catch. Its room's shaders compile in
+  // parallel first (KHR_parallel_shader_compile), so baking it blocks the page for less.
   const pmrem = new THREE.PMREMGenerator(renderer);
-  const env = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
-  scene.environment = env;
+  let env: T.Texture | null = null, envP: Promise<void> | null = null, disposed = false;
+  const makeEnv = () => envP ??= (async () => {
+    const room = new RoomEnvironment(), rt = new THREE.WebGLRenderTarget(1, 1), tm = renderer.toneMapping, was = renderer.getRenderTarget();
+    renderer.setRenderTarget(rt); renderer.toneMapping = THREE.NoToneMapping; // as PMREM renders it
+    const ready = renderer.compileAsync(room, camera).catch(() => {});
+    renderer.setRenderTarget(was); renderer.toneMapping = tm;
+    await ready; rt.dispose();
+    if (disposed) return;
+    env = pmrem.fromScene(room, 0.04).texture;
+    scene.environment = env;
+  })();
   scene.environmentIntensity = 0.45;
+  if (!lateEnv) await makeEnv();
   scene.add(new THREE.HemisphereLight(0xffffff, 0xb8b6d9, 0.5));
   const key = new THREE.DirectionalLight(0xfff4e0, 1.8);
   key.position.set(4, 6, 5);
@@ -91,10 +103,12 @@ export async function toyStage(el: HTMLElement) {
 
   // The loop only runs while the scene is on screen and the tab is visible. Panes slide by transform,
   // so a scene on another tab reads as off screen and stops too.
+  // At most 60 frames a second: a 120 Hz screen would otherwise draw every scene twice as often for no visible gain.
   let raf = 0, visible = false, last = 0, frame: ((t: number, dt: number) => boolean | void) | null = null;
   const tick = (now: number) => {
     raf = 0;
     if (!visible || document.hidden || !frame) { last = 0; return; }
+    if (last && now - last < 1000 / 60 - 4) { raf = requestAnimationFrame(tick); return; }
     const dt = last ? Math.min((now - last) / 1000, 0.1) : 0;
     last = now;
     if (frame(now / 1000, dt) !== false) renderer.render(scene, camera);
@@ -112,6 +126,7 @@ export async function toyStage(el: HTMLElement) {
   };
 
   const dispose = () => {
+    disposed = true;
     cancelAnimationFrame(raf);
     io.disconnect();
     ro.disconnect();
@@ -119,10 +134,10 @@ export async function toyStage(el: HTMLElement) {
     scene.traverse((o) => {
       if (o instanceof THREE.Mesh) { o.geometry.dispose(); (Array.isArray(o.material) ? o.material : [o.material]).forEach((mt) => { (mt as T.MeshStandardMaterial).map?.dispose(); mt.dispose(); }); }
     });
-    grain.dispose(); shadowTex.dispose(); env.dispose(); pmrem.dispose(); renderer.dispose();
+    grain.dispose(); shadowTex.dispose(); env?.dispose(); pmrem.dispose(); renderer.dispose();
     renderer.domElement.remove();
   };
 
-  return { THREE, renderer, scene, camera, reduce, touch, plastic, box, blob, fit, run, dispose };
+  return { THREE, renderer, scene, camera, reduce, touch, plastic, box, blob, fit, run, dispose, env: makeEnv };
 }
 export type Toy = Awaited<ReturnType<typeof toyStage>>;
