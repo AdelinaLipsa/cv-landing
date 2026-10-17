@@ -29,7 +29,7 @@ export default function Skills(_: { ui: UI }) {
   return (
     <div className={p.column}>
       <div className={s.head}>
-        <h1 className={p.title}><ShuffleHeading text="The whole stack" /></h1>
+        <h1 className={p.title} data-skin="title"><ShuffleHeading text="The whole stack" /></h1>
         {/* A hand-drawn nudge, like the music button's, until a role is picked */}
         {all && (
           <span className={s.nudge} aria-hidden="true">
@@ -44,7 +44,7 @@ export default function Skills(_: { ui: UI }) {
 
       <div className={s.picker} role="radiogroup" aria-label="Pick a role or a project">
         {things.map((t) => (
-          <button key={t.id} type="button" role="radio" aria-checked={t.id === id} data-lit={lit(t) || undefined} className={s.pick} onClick={() => setId(t.id)}>
+          <button key={t.id} type="button" role="radio" aria-checked={t.id === id} data-lit={lit(t) || undefined} className={s.pick} data-skin="button" onClick={() => setId(t.id)}>
             {t.id === id && <motion.span layoutId="skills-pick" className={s.pickBg} transition={drift} />}
             <span className={s.pickText}>{t.label}</span>
           </button>
@@ -62,14 +62,14 @@ export default function Skills(_: { ui: UI }) {
               animate={{ opacity: touched ? 1 : 0.42, x: touched ? 0 : 10, scale: touched ? 1 : 0.985 }}
               transition={slow}
             >
-              <SpotlightCard className={`${s.slab} ${dark ? s.dark : ""}`} spotlightColor={dark ? "rgba(245, 181, 63, 0.16)" : "rgba(51, 85, 255, 0.1)"}>
+              <SpotlightCard className={`${s.slab} ${dark ? s.dark : ""}`} data-skin={dark ? "card dark" : "card"} spotlightColor={dark ? "rgba(245, 181, 63, 0.16)" : "rgba(51, 85, 255, 0.1)"}>
               <span className={s.layerName}>{l.name}</span>
               <div className={p.chips}>
                 {l.chips.map((c) => {
                   const state = used(c) ? "used" : all ? (dark ? "onDark" : "on") : dark ? "offDark" : "off";
                   const how = state === "used" ? ", used there" : "";
                   return (
-                    <motion.span key={c} className={s.chip} initial={false} animate={CHIP[state]} transition={drift} aria-label={c + how} whileHover={{ y: -3, scale: 1.08 }} onHoverStart={() => setHov(c)} onHoverEnd={() => setHov(null)}>
+                    <motion.span key={c} className={s.chip} data-skin="chip" initial={false} animate={CHIP[state]} transition={drift} aria-label={c + how} whileHover={{ y: -3, scale: 1.08 }} onHoverStart={() => setHov(c)} onHoverEnd={() => setHov(null)}>
                       {c}
                     </motion.span>
                   );

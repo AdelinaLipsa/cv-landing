@@ -70,7 +70,7 @@ function Commit({ title, meta, lines, stack }: { title: string; meta: string; li
       <h2 className={p.sheetTitle}>{title}</h2>
       <p className={p.sheetMeta}>{meta}</p>
       <ul className={p.sheetList}>{lines.map((l) => <li key={l}><Rich text={l} /></li>)}</ul>
-      {stack.length > 0 && <div className={p.chips}>{stack.map((c) => <span key={c} className={p.chip}>{c}</span>)}</div>}
+      {stack.length > 0 && <div className={p.chips}>{stack.map((c) => <span key={c} className={p.chip} data-skin="chip">{c}</span>)}</div>}
     </>
   );
 }
@@ -92,14 +92,14 @@ export default function Career({ ui }: { ui: UI }) {
   return (
     <div className={p.column}>
       <div className={s.head}>
-        <h1 className={p.title}><ShuffleHeading text="Career" /></h1>
+        <h1 className={p.title} data-skin="title"><ShuffleHeading text="Career" /></h1>
         <div className={s.legend}>
           <span><i style={{ background: COLOR.dev }} />dev</span>
           <span><i style={{ background: COLOR.product }} />product</span>
         </div>
         <dl className={s.stats}>
           {STATS.map((st) => (
-            <GlareHover key={st.label} {...GLARE} borderRadius="16px" className={s.stat}><dt><CountUp to={st.n} duration={1.4} startWhen={visible} /></dt><dd>{st.label}</dd></GlareHover>
+            <GlareHover key={st.label} {...GLARE} borderRadius="16px" className={s.stat} data-skin="card tile"><dt><CountUp to={st.n} duration={1.4} startWhen={visible} /></dt><dd>{st.label}</dd></GlareHover>
           ))}
         </dl>
       </div>
@@ -148,8 +148,8 @@ export default function Career({ ui }: { ui: UI }) {
                 {r.kind === "fork" ? (
                   <div className={s.fork}><b>product branches off</b><span>2025. The dev branch stays.</span></div>
                 ) : (
-                  <button type="button" className={s.row} data-on={(desktop && i === sel) || undefined} aria-pressed={desktop ? i === sel : undefined} onClick={() => pick(i)}>
-                    <b>{r.kind === "merge" ? stillShipping.title : r.job.company}{i === NOW && <em className={s.now}>now</em>}</b>
+                  <button type="button" className={s.row} data-skin="row" data-on={(desktop && i === sel) || undefined} aria-pressed={desktop ? i === sel : undefined} onClick={() => pick(i)}>
+                    <b>{r.kind === "merge" ? stillShipping.title : r.job.company}{i === NOW && <em className={s.now} data-skin="chip">now</em>}</b>
                     <span>{r.kind === "merge" ? SHIPPING : `${r.job.short}, ${r.job.dates}`}</span>
                     <i className={s.open} aria-hidden="true">→</i>
                   </button>
@@ -161,11 +161,11 @@ export default function Career({ ui }: { ui: UI }) {
 
         {/* Desktop: the selected commit, in full */}
         <aside className={s.panel} aria-live="polite">
-          <SpotlightCard className={s.panelCard} spotlightColor="rgba(51, 85, 255, 0.12)">
+          <SpotlightCard className={s.panelCard} data-skin="card" spotlightColor="rgba(51, 85, 255, 0.12)">
             <AnimatePresence mode="wait" initial={false}>
               {cur && (
                 <motion.div key={sel} initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.35, ease }}>
-                  <span className={s.branch} data-branch={cur.branch}>{cur.branch === "both" ? "dev + product" : cur.branch}</span>
+                  <span className={s.branch} data-branch={cur.branch} data-skin="chip">{cur.branch === "both" ? "dev + product" : cur.branch}</span>
                   <Commit {...cur} />
                 </motion.div>
               )}
@@ -175,10 +175,10 @@ export default function Career({ ui }: { ui: UI }) {
       </div>
 
       <div className={s.also}>
-        <Land as="section" delay={0 * 0.09}><GlareHover {...GLARE} borderRadius="22px" className={s.alsoCard}><h3>Also running</h3><ul>{ventures.map((v) => <li key={v.name}><b>{v.name}</b>, {v.role.toLowerCase()}. {v.note}</li>)}</ul></GlareHover></Land>
-        <Land as="section" delay={1 * 0.09}><GlareHover {...GLARE} borderRadius="22px" className={s.alsoCard}><h3>Certifications</h3><ul>{certifications.map((c) => <li key={c} className={s.cert}><i aria-hidden="true">✓</i>{c}</li>)}</ul></GlareHover></Land>
-        <Land as="section" delay={2 * 0.09}><GlareHover {...GLARE} borderRadius="22px" className={s.alsoCard}><h3>Education</h3><ul>{education.map((e) => <li key={e.what} data-tour={e.what === "Psychology" ? "edu-psychology" : "edu-web"}>{e.what}, {e.where}, {e.when}</li>)}</ul></GlareHover></Land>
-        <Land as="section" delay={3 * 0.09}><GlareHover {...GLARE} borderRadius="22px" className={s.alsoCard}><h3>Languages</h3><ul>{languages.map((l) => {
+        <Land as="section" delay={0 * 0.09}><GlareHover {...GLARE} borderRadius="22px" className={s.alsoCard} data-skin="card"><h3>Also running</h3><ul>{ventures.map((v) => <li key={v.name}><b>{v.name}</b>, {v.role.toLowerCase()}. {v.note}</li>)}</ul></GlareHover></Land>
+        <Land as="section" delay={1 * 0.09}><GlareHover {...GLARE} borderRadius="22px" className={s.alsoCard} data-skin="card"><h3>Certifications</h3><ul>{certifications.map((c) => <li key={c} className={s.cert}><i aria-hidden="true">✓</i>{c}</li>)}</ul></GlareHover></Land>
+        <Land as="section" delay={2 * 0.09}><GlareHover {...GLARE} borderRadius="22px" className={s.alsoCard} data-skin="card"><h3>Education</h3><ul>{education.map((e) => <li key={e.what} data-tour={e.what === "Psychology" ? "edu-psychology" : "edu-web"}>{e.what}, {e.where}, {e.when}</li>)}</ul></GlareHover></Land>
+        <Land as="section" delay={3 * 0.09}><GlareHover {...GLARE} borderRadius="22px" className={s.alsoCard} data-skin="card"><h3>Languages</h3><ul>{languages.map((l) => {
           const [name, level] = l.split(", ");
           return <li key={l} className={s.lang}><span>{name}<small>{level}</small></span><span className={s.level} aria-label={`${level}, ${LEVEL[level] ?? 1} of 5`}>{[1, 2, 3, 4, 5].map((n) => <i key={n} data-on={n <= (LEVEL[level] ?? 1) || undefined} />)}</span></li>;
         })}</ul></GlareHover></Land>

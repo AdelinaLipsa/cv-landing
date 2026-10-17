@@ -16,7 +16,8 @@ interface SpotlightCardProps extends React.PropsWithChildren {
 const SpotlightCard: React.FC<SpotlightCardProps> = ({
   children,
   className = '',
-  spotlightColor = 'rgba(255, 255, 255, 0.25)'
+  spotlightColor = 'rgba(255, 255, 255, 0.25)',
+  ...rest // adapted: data-* (the guide's data-skin) reach the card
 }) => {
   const divRef = useRef<HTMLDivElement>(null);
 
@@ -33,7 +34,7 @@ const SpotlightCard: React.FC<SpotlightCardProps> = ({
   };
 
   return (
-    <div ref={divRef} onMouseMove={handleMouseMove} className={`card-spotlight ${className}`}>
+    <div {...rest} ref={divRef} onMouseMove={handleMouseMove} className={`card-spotlight ${className}`}>
       {children}
     </div>
   );

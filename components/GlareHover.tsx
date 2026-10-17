@@ -34,7 +34,8 @@ const GlareHover: React.FC<GlareHoverProps> = ({
   transitionDuration = 650,
   playOnce = false,
   className = '',
-  style = {}
+  style = {},
+  ...rest // adapted: data-* (the guide's data-skin) reach the root
 }) => {
   const hex = glareColor.replace('#', '');
   let rgba = glareColor;
@@ -64,6 +65,7 @@ const GlareHover: React.FC<GlareHoverProps> = ({
 
   return (
     <div
+      {...rest}
       className={`glare-hover ${playOnce ? 'glare-hover--play-once' : ''} ${className}`}
       style={{ ...vars, ...style } as React.CSSProperties}
     >

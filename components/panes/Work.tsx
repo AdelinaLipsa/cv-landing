@@ -60,7 +60,7 @@ export function Card({ tile, h }: { tile: Tile; h: number }) {
     <Play.Provider value={hover || touch}>
       <Tilt max={5} scale={1.02}>
         <div className={s.card} onPointerEnter={() => setHover(true)} onPointerLeave={() => setHover(false)}>
-          <SpotlightCard className={s.spot} spotlightColor="rgba(51, 85, 255, 0.18)">
+          <SpotlightCard className={s.spot} data-skin="card" spotlightColor="rgba(51, 85, 255, 0.18)">
             <div className={`${s.media} ${tile.form ? s.bare : ""}`} style={{ height: h }}><Frame tile={tile}><Media tile={tile} /></Frame></div>
           </SpotlightCard>
           <div className={s.caption}><b className={s.ctitle}>{tile.title}</b><span className={s.blurb}>{tile.blurb}</span>{tile.outcome && <span className={s.outcome}>{tile.outcome}</span>}</div>
@@ -162,13 +162,13 @@ export default function Work(_: { ui: UI }) {
   return (
     <div className={p.column}>
       <div className={s.head}>
-        <h1 className={p.title}><ShuffleHeading text="What I built, and what I own" /></h1>
+        <h1 className={p.title} data-skin="title"><ShuffleHeading text="What I built, and what I own" /></h1>
       </div>
 
       {sections.map((sec) => (
         <section key={sec.id} className={s.section}>
           <div className={s.sectionHead}>
-            <h2 className={s.sectionTitle}><ShuffleHeading text={sec.title} /></h2>
+            <h2 className={s.sectionTitle} data-skin="title"><ShuffleHeading text={sec.title} /></h2>
             <p className={s.sectionLede}>{sec.lede}</p>
           </div>
           <div className={s.grid}>

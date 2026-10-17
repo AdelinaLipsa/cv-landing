@@ -1,0 +1,145 @@
+/* The guide's eras: the same panes, dressed as 2003, ~2007 gloss, ~2013 flat, then now (no overrides).
+   [data-era] sits on the shell's .viewport; elements opt in with data-skin = card | title | chip | button | row
+   (plus modifiers: card "dark" and "tile", button "primary"). The era's own palette is set on the viewport, so
+   everything inside picks it up; the skins add the shapes. Era 3 matches nothing here.
+   How era changes move (lib/useEraShift.ts sets data-shift): each change uses the reveal of the era being left.
+   dial/undial (0↔1): a hard band repaints the page in 18 steps. gloss (1↔2): the gloss deflates, the tokens
+   below interpolate. morph: one crossfade. ease: no View Transitions, the tokens ease and the fonts swap. */
+
+@property --sk-top { syntax: "<color>"; inherits: false; initial-value: transparent; }
+@property --sk-bot { syntax: "<color>"; inherits: false; initial-value: transparent; }
+@property --sk-hi { syntax: "<color>"; inherits: false; initial-value: transparent; }
+@property --sk-mid { syntax: "<color>"; inherits: false; initial-value: transparent; }
+
+/* ---------- Palettes and faces ---------- */
+
+/* 2003: default-browser HTML. Black Times on white, link blue, grey button face, navy table headers. */
+[data-era="0"] {
+  --ink: #000; --body-2: #000; --steam: #555; --line: #a0a0a0;
+  --paper: #fff; --surface: #fff; --surface-2: #d4d0c8; --night: #000080; --night-2: #000080; --on-night: #fff;
+  --blueprint: #0000ee; --e-face: #d4d0c8; --e-text: #000;
+  --font-display: "Times New Roman", var(--font-2003), serif; --font-body: "Times New Roman", var(--font-2003), serif;
+}
+[data-theme="dark"] [data-era="0"] {
+  --ink: #e6e6e6; --body-2: #e6e6e6; --steam: #a8a8b8; --line: #5b5980;
+  --paper: #10101c; --surface: #10101c; --surface-2: #3c3a52; --night: #000060; --night-2: #000060;
+  --blueprint: #8fa2ff; --e-face: #3c3a52; --e-text: #e6e6e6;
+}
+/* ~2007: Web 2.0. Lucida/Trebuchet, top-lit gradients, a glass highlight on every edge. */
+[data-era="1"] {
+  --e-hi: rgba(255, 255, 255, 0.9); --e-gloss: rgba(255, 255, 255, 0.5); --e-sheen: rgba(255, 255, 255, 0.14); --e-edge: rgba(23, 21, 58, 0.16);
+  --e-sel: #2f6fd6; --e-sel-2: #6a9cf0;
+  --font-display: "Lucida Grande", "Trebuchet MS", Verdana, sans-serif; --font-body: "Lucida Grande", "Trebuchet MS", Verdana, sans-serif;
+}
+[data-theme="dark"] [data-era="1"] { --e-hi: rgba(255, 255, 255, 0.12); --e-gloss: rgba(255, 255, 255, 0.22); --e-sheen: rgba(255, 255, 255, 0.05); --e-edge: rgba(0, 0, 0, 0.55); }
+/* ~2013: Metro / flat. Open Sans (light headings), solid fills, 2px corners, no shadows. */
+[data-era="2"] {
+  --e-accent: #3355ff;
+  --font-display: var(--font-flat), "Open Sans", sans-serif; --font-body: var(--font-flat), "Open Sans", sans-serif;
+}
+
+[data-theme="dark"] [data-era="2"] { --e-accent: #3b54e8; }
+
+/* body sets font-family once; the eras re-declare it so their --font-body reaches the panes. */
+[data-era="0"], [data-era="1"], [data-era="2"] { font-family: var(--font-body); }
+[data-era="0"] { background: var(--surface); }
+[data-era="1"] { background: var(--surface-2); }
+[data-era="2"] { background: var(--surface); }
+
+/* ---------- Shared shapes (eras 0–2) ---------- */
+/* One image per skin in every early era, so the gloss can deflate token by token instead of snapping. */
+:is([data-era="0"], [data-era="1"], [data-era="2"]) [data-pane] [data-stage] {
+  & [data-skin~="card"], & [data-skin~="row"] { background-color: var(--surface); background-image: linear-gradient(var(--sk-top), var(--sk-bot)); }
+  & [data-skin~="button"], & [data-skin~="chip"] { background-image: linear-gradient(var(--sk-hi), var(--sk-mid) 50%, transparent 50%, transparent); }
+  & [data-skin~="title"] { font-stretch: 100%; }
+  & [data-skin~="button"] { text-decoration: none; }
+}
+
+/* ---------- 2003 ---------- */
+[data-era="0"] [data-pane] [data-stage] {
+  & [data-skin~="card"] { --sk-top: var(--surface); --sk-bot: var(--surface); border: 1px solid var(--line); border-radius: 0; box-shadow: none; }
+  & [data-skin~="card"][data-skin~="dark"] { --sk-top: var(--night); --sk-bot: var(--night); border-color: var(--night); }
+  & [data-skin~="title"] { font-weight: 700; letter-spacing: 0; color: var(--e-text); }
+  /* Grey outset: the form control every page had. System face, not the page's Times. */
+  & [data-skin~="button"], & [data-skin~="chip"] {
+    background-color: var(--e-face); color: var(--e-text); border: 2px outset var(--e-face); border-radius: 0; box-shadow: none;
+    font-family: Tahoma, Verdana, "Segoe UI", sans-serif; font-weight: 400; text-shadow: none;
+  }
+  & [data-skin~="button"]:active, & [data-skin~="button"][aria-checked="true"], & [data-skin~="button"][aria-pressed="true"] { border-style: inset; }
+  & [data-skin~="row"] { --sk-top: transparent; --sk-bot: transparent; background-color: transparent; border-radius: 0; box-shadow: none; }
+  & [data-skin~="row"] b { color: var(--blueprint); text-decoration: underline; font-weight: 400; }
+  & [data-skin~="row"]:is([data-on], :focus-visible) { outline: 1px dotted var(--e-text); outline-offset: -3px; box-shadow: none; }
+  & a:not([data-skin]) { color: var(--blueprint); text-decoration: underline; }
+}
+
+/* ---------- ~2007 gloss ---------- */
+[data-era="1"] [data-pane] [data-stage] {
+  & [data-skin~="card"] {
+    --sk-top: var(--surface); --sk-bot: var(--surface-2);
+    border: 1px solid var(--e-edge); border-radius: 10px; box-shadow: inset 0 1px 0 var(--e-hi), var(--shadow);
+  }
+  & [data-skin~="card"][data-skin~="dark"] { --sk-top: var(--night-2); --sk-bot: var(--night); border-color: rgba(0, 0, 0, 0.4); }
+  /* The headline and its wet-floor reflection. */
+  & [data-skin~="title"] {
+    font-weight: 700; letter-spacing: -0.01em; text-shadow: 0 1px 0 var(--e-hi); margin-bottom: 0.32em;
+    -webkit-box-reflect: below -0.12em linear-gradient(transparent 45%, rgba(0, 0, 0, 0.38));
+  }
+  /* Aqua-era pills: a hard-stop gloss on the top half, a lit rim, a soft drop. Secondary buttons are silver. */
+  & [data-skin~="button"] {
+    --sk-hi: var(--e-gloss); --sk-mid: var(--e-sheen);
+    background-color: var(--surface-2); color: var(--ink); border: 1px solid var(--e-edge); border-radius: 23px;
+    box-shadow: inset 0 1px 0 var(--e-hi), 0 2px 5px rgba(23, 21, 58, 0.18);
+  }
+  & [data-skin~="button"]:is([data-skin~="primary"], [aria-checked="true"]) {
+    background-color: var(--e-sel); color: #fff; border-color: #1f4fa8; text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.3);
+  }
+  & [data-skin~="chip"] {
+    --sk-hi: var(--e-gloss); --sk-mid: var(--e-sheen);
+    border: 1px solid var(--e-edge); border-radius: 12px; box-shadow: inset 0 1px 0 var(--e-hi), 0 1px 2px rgba(23, 21, 58, 0.14);
+  }
+  & [data-skin~="row"] { --sk-top: transparent; --sk-bot: transparent; background-color: transparent; border-radius: 8px; box-shadow: none; }
+  /* Source-list selection: a blue gradient bar with white text. */
+  & [data-skin~="row"]:is([data-on], :hover, :focus-visible) {
+    --sk-top: var(--e-sel-2); --sk-bot: var(--e-sel); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), 0 2px 6px rgba(23, 21, 58, 0.2);
+  }
+  & [data-skin~="row"]:is([data-on], :hover, :focus-visible) :is(b, span, i) { color: #fff; }
+}
+
+/* ---------- ~2013 flat ---------- */
+[data-era="2"] [data-pane] [data-stage] {
+  & [data-skin~="card"] { --sk-top: var(--surface); --sk-bot: var(--surface); border: 1px solid var(--line); border-radius: 2px; box-shadow: none; }
+  & [data-skin~="card"][data-skin~="dark"] { --sk-top: var(--night); --sk-bot: var(--night); border-color: var(--night); }
+  /* Metro tiles: solid colour, white type. */
+  & [data-skin~="card"][data-skin~="tile"] { --sk-top: var(--e-accent); --sk-bot: var(--e-accent); border-color: var(--e-accent); color: #fff; }
+  & [data-skin~="card"][data-skin~="tile"] :is(dt, dd) { color: #fff; }
+  & [data-skin~="title"] { font-weight: 300; letter-spacing: -0.01em; }
+  & [data-skin~="button"] { background-color: transparent; color: var(--ink); border: 1px solid var(--ink); border-radius: 2px; box-shadow: none; font-weight: 600; }
+  & [data-skin~="button"]:is([data-skin~="primary"], [aria-checked="true"]) { background-color: var(--e-accent); color: #fff; border-color: var(--e-accent); }
+  & [data-skin~="chip"] { border: 1px solid transparent; border-radius: 2px; box-shadow: none; }
+  & [data-skin~="row"] { --sk-top: transparent; --sk-bot: transparent; background-color: transparent; border-radius: 2px; box-shadow: none; }
+  & [data-skin~="row"]:is([data-on], :hover, :focus-visible) { --sk-top: var(--e-accent); --sk-bot: var(--e-accent); box-shadow: none; }
+  & [data-skin~="row"]:is([data-on], :hover, :focus-visible) :is(b, span, i) { color: #fff; }
+}
+
+/* ---------- Moving between eras ---------- */
+
+/* gloss (1↔2), and the no-View-Transitions fallback: every skin eases on the slow feel. */
+:is([data-shift="gloss"], [data-shift="ease"]) [data-pane] [data-stage] [data-skin] {
+  transition: background-color 0.9s var(--ease), border-color 0.9s var(--ease), border-radius 0.9s var(--ease),
+    box-shadow 0.9s var(--ease), color 0.9s var(--ease), --sk-top 0.9s var(--ease), --sk-bot 0.9s var(--ease),
+    --sk-hi 0.9s var(--ease), --sk-mid 0.9s var(--ease);
+}
+/* The faces can't interpolate: during gloss they crossfade quickly over the live, deflating page. */
+[data-shift="gloss"]::view-transition-group(root) { animation-duration: 0.45s; animation-timing-function: var(--ease); }
+[data-shift="gloss"]::view-transition-old(root), [data-shift="gloss"]::view-transition-new(root) { animation-duration: 0.45s; }
+
+/* dial (0→1): the new era paints in from the top in 18 hard steps over the old one, like a page on dial-up.
+   undial (1→0) runs the band back up from the bottom. */
+:is([data-shift="dial"], [data-shift="undial"])::view-transition-old(root) { animation: none; mix-blend-mode: normal; }
+[data-shift="dial"]::view-transition-new(root) { animation: era-dial 1.44s steps(18, end) both; mix-blend-mode: normal; }
+[data-shift="undial"]::view-transition-new(root) { animation: era-undial 1.44s steps(18, end) both; mix-blend-mode: normal; }
+@keyframes era-dial { from { clip-path: inset(0 0 100% 0); } to { clip-path: inset(0); } }
+@keyframes era-undial { from { clip-path: inset(100% 0 0 0); } to { clip-path: inset(0); } }
+
+/* morph (2→3, and any jump): one smooth crossfade. */
+[data-shift="morph"]::view-transition-old(root), [data-shift="morph"]::view-transition-new(root) { animation-duration: 0.9s; animation-timing-function: var(--ease); }

@@ -142,6 +142,7 @@ export default function Home({ ui }: { ui: UI }) {
           <motion.h1
             key={touring ? `era-${era}` : "built"}
             className={`${s.name} ${touring ? s.refont : ""}`}
+            data-skin="title"
             data-tour="name"
             initial={false}
             animate={ui.finale ? { scale: [0.94, 1] } : { scale: 1 }}
@@ -179,8 +180,8 @@ export default function Home({ ui }: { ui: UI }) {
           </p>
           <p className={s.about}><Rich text={about[0]} /></p>
           <div className={s.actions}>
-            <Magnet padding={40} magnetStrength={4} disabled={!!reduce}><button type="button" className={`${p.primary} ${s.buildBtn}`} onClick={ui.build} data-tour="build"><Play />{buildLabel}</button></Magnet>
-            <button type="button" className={s.messageBtn} onClick={ui.contact} {...lights("phone")}><WhatsAppIcon size={17} /><DecryptedText text="Message me" animateOn="hover" speed={40} maxIterations={8} /></button>
+            <Magnet padding={40} magnetStrength={4} disabled={!!reduce}><button type="button" className={`${p.primary} ${s.buildBtn}`} onClick={ui.build} data-tour="build" data-skin="button primary"><Play />{buildLabel}</button></Magnet>
+            <button type="button" className={s.messageBtn} data-skin="button" onClick={ui.contact} {...lights("phone")}><WhatsAppIcon size={17} /><DecryptedText text="Message me" animateOn="hover" speed={40} maxIterations={8} /></button>
           </div>
           {/* Skip the cutscene: the whole CV in 30 seconds, for the busy */}
           {!touring && (
@@ -207,7 +208,7 @@ export default function Home({ ui }: { ui: UI }) {
 
       <section className={`${s.preview} ${s.dropper}`} {...drop("home.preview")}>
         <div className={s.previewHead}>
-          <h2 className={s.h2}><ShuffleHeading text="Things that didn’t exist" /></h2>
+          <h2 className={s.h2} data-skin="title"><ShuffleHeading text="Things that didn’t exist" /></h2>
           <button type="button" className={s.seeAll} onClick={() => ui.go(1)}><DecryptedText text="See all" animateOn="hover" speed={40} maxIterations={8} /></button>
         </div>
         <div className={s.tiles} data-tour="preview">
@@ -224,7 +225,7 @@ export default function Home({ ui }: { ui: UI }) {
 
       <section className={`${s.offDuty} ${s.dropper}`} {...drop("home.offduty")}>
         <div className={s.offText} data-tour="offduty">
-          <h2 className={s.h2}><ShuffleHeading text="Off duty" /></h2>
+          <h2 className={s.h2} data-skin="title"><ShuffleHeading text="Off duty" /></h2>
 
           {/* Where it started: the road to the dev branch, on a line that draws itself */}
           <ol ref={originRef} className={s.origin} data-on={originOn || undefined}>
@@ -237,7 +238,7 @@ export default function Home({ ui }: { ui: UI }) {
           <Land className={s.offBlock} delay={0.05}>
             <span className={s.offHead}>Off the clock</span>
             <p className={s.offLine}>{about[1]}</p>
-            <ul className={s.tags}>{OFF.map((t) => <li key={t}>{t}</li>)}</ul>
+            <ul className={s.tags}>{OFF.map((t) => <li key={t} data-skin="chip">{t}</li>)}</ul>
             <GuestbookButton open={ui.sheet} />
           </Land>
 
@@ -261,7 +262,7 @@ export default function Home({ ui }: { ui: UI }) {
       {/* The end of the page: somewhere to go next, the same three ways in as the hero, then her window */}
       <section className={s.outro}>
         <Land className={s.outroMain} delay={0.05}>
-          <h2 className={s.h2}><ShuffleHeading text="You made it to the end of the log." /></h2>
+          <h2 className={s.h2} data-skin="title"><ShuffleHeading text="You made it to the end of the log." /></h2>
           <p className={s.outroLine}>Product roles, full-time or contract. Payments, ops, and internal tools. I reply faster than a 3DS challenge.</p>
           <div className={s.actions}>
             <Magnet padding={40} magnetStrength={4} disabled={!!reduce}><button type="button" className={`${p.primary} ${s.outroBtn} ${s.whatsapp} water`} onClick={ui.contact}><WhatsAppIcon size={17} /><DecryptedText text="Message me" animateOn="hover" speed={40} maxIterations={8} /></button></Magnet>

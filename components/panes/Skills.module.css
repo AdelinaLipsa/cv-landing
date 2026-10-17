@@ -21,9 +21,14 @@
 /* Lit while you hover a skill this role used */
 .pick { transition: border-color 0.3s, box-shadow 0.3s, transform 0.3s var(--ease); }
 .pick[data-lit] { border-color: var(--broth); box-shadow: 0 0 0 3px rgba(245, 181, 63, 0.35); transform: translateY(-2px); }
-.pickBg { position: absolute; inset: -1.5px; border-radius: 999px; background: var(--night); }
+.pickBg { position: absolute; inset: -1.5px; border-radius: inherit; background: var(--night); }
 .pickText { position: relative; transition: color 0.8s var(--ease); }
 .pick[aria-checked="true"] .pickText { color: var(--on-night); }
+/* The guide's eras (app/eras.css skins the pick itself): 2003 shows the pick pressed in, gloss and flat fill it. */
+:global([data-era="0"]) .pickBg { display: none; }
+:global([data-era="0"]) .pick[aria-checked="true"] .pickText { color: inherit; }
+:global([data-era="1"]) .pickBg { inset: -1px; background: linear-gradient(var(--e-gloss), var(--e-sheen) 50%, transparent 50%), var(--e-sel); box-shadow: inset 0 1px 0 var(--e-hi); }
+:global([data-era="2"]) .pickBg { inset: -1px; background: var(--e-accent); }
 
 .layers { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; max-width: 760px; }
 /* Wide screens: two columns, product management across the top. */

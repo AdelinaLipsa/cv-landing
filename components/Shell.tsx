@@ -3,6 +3,7 @@ import { AnimatePresence, animate, motion, MotionConfig, useMotionValue, useTran
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { ease, glide, track } from "@/lib/motion";
 import { useCalm } from "@/lib/useCalm";
+import { useEraShift } from "@/lib/useEraShift";
 import { steps, type BuildKey, type Cue } from "@/content/tour";
 import { jobOf, resolveBuilt } from "@/lib/direction";
 import Boot from "./Boot";
@@ -186,6 +187,8 @@ export default function Shell({ character }: { character: boolean }) {
       return;
     }
     setSheet(null);
+    // The flat era's Open Sans is only fetched once text uses it; ask for it now so it is ready by 2013.
+    document.fonts?.load(`300 1em ${getComputedStyle(document.documentElement).getPropertyValue("--font-flat")}`).catch(() => {});
     setStep(0);
     setHoldMs(hold);
     setTouring(true);
@@ -202,7 +205,8 @@ export default function Shell({ character }: { character: boolean }) {
     remember();
   }, []);
 
-  const era = touring ? steps[step].era : 3;
+  // The era on screen: it follows the step through an era transition (lib/useEraShift, app/eras.css).
+  const { era, shift } = useEraShift(viewport, touring ? steps[step].era : null);
   const done = resolveBuilt(touring, step);
 
   const ui: UI = {
@@ -245,7 +249,7 @@ export default function Shell({ character }: { character: boolean }) {
       >
       {/* Sparks in broth once the page is built. Not during the build, which is its own show. */}
       <ClickSpark sparkColor={touring || reduce ? "transparent" : "#F5B53F"} sparkSize={9} sparkRadius={18} sparkCount={8} duration={500}>
-      <div ref={viewport} className={s.viewport} data-era={era} data-touring={touring || undefined} style={{ "--from": `${dir * 36}px` } as React.CSSProperties}>
+      <div ref={viewport} className={s.viewport} data-era={era} data-shift={shift} data-touring={touring || undefined} style={{ "--from": `${dir * 36}px` } as React.CSSProperties}>
         {/* React Bits SideRays: soft light from the top-right corner, in broth and blueprint. Only once the page is "now". */}
         {era === 3 && !reduce && <div className={s.bg}><SideRays rayColor1={LIGHT[mood][0]} rayColor2={LIGHT[mood][1]} speed={1.2} intensity={2} blend={0.5} opacity={0.8} /></div>}
         <motion.div
