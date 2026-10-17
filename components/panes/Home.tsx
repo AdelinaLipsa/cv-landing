@@ -3,7 +3,7 @@ import { useEffect, useRef, useState, type RefObject } from "react";
 import { motion, useInView } from "motion/react";
 import { useCalm } from "@/lib/useCalm";
 import Image from "next/image";
-import { STAGE } from "@/content/tour";
+import type { BuildKey } from "@/content/tour";
 import { ease, land } from "@/lib/motion";
 import type { UI } from "../Shell";
 import { about, beliefs, origin, profile, ventures } from "@/content/cv";
@@ -99,12 +99,12 @@ export default function Home({ ui }: { ui: UI }) {
     return () => q.removeEventListener("change", on);
   }, []);
 
-  const { era, stage, touring } = ui;
+  const { era, touring } = ui;
   const reduce = useCalm();
   // The timeline draws itself the first time it scrolls into view: dot, line down to the next dot, dot…
   const originRef = useRef<HTMLOListElement>(null);
   const originOn = useInView(originRef, { once: true, amount: 0.25 });
-  const drop = (at: number) => (stage < at ? { "data-drop": "" } : {});
+  const drop = (k: BuildKey) => (ui.built(k) ? {} : { "data-drop": "" });
   const quick = <button type="button" className={`${p.primary} ${s.quick}`} onClick={() => ui.sheet("The 30-second version", <QuickRead contact={ui.contact} />)}><DecryptedText text="Busy? Read the 30-second version →" animateOn="hover" speed={40} maxIterations={8} /></button>;
   const [win95, setWin95] = useState(false); // the retro computer, booted
   // The room's contact objects and the buttons they belong to: hover one, the other lights.
@@ -132,7 +132,7 @@ export default function Home({ ui }: { ui: UI }) {
 
       <div className={s.grid}>
         <div className={s.hero} ref={heroRef}>
-          <div className={s.portrait} data-tour="portrait" data-marks-off={stage < STAGE.portrait || undefined}>
+          <div className={s.portrait} data-tour="portrait" data-marks-off={era < 3 || undefined}>
             <EqualizerRing className={s.ring} />
             <Image className={s.photo} src="/adelina.jpg" alt="Adelina Lipșa" width={132} height={132} sizes="(min-width: 1000px) 132px, 96px" priority />
             {/* Dark mode: the night photo on the mountain fades in over the day one */}
@@ -144,7 +144,7 @@ export default function Home({ ui }: { ui: UI }) {
             className={`${s.name} ${touring ? s.refont : ""}`}
             data-tour="name"
             initial={false}
-            animate={stage === STAGE.finale ? { scale: [0.94, 1] } : { scale: 1 }}
+            animate={ui.finale ? { scale: [0.94, 1] } : { scale: 1 }}
             transition={land}
           >
             {fine && !touring ? (
@@ -194,18 +194,18 @@ export default function Home({ ui }: { ui: UI }) {
             </Magnet>
           )}
           {touring && era === 0 && <VisitorCounter />}
-          <div className={`${s.dock} ${s.dropper}`} {...drop(STAGE.cards)}>
+          <div className={`${s.dock} ${s.dropper}`} {...drop("home.dock")}>
             <Dock items={dockItems(ui)} baseItemSize={60} magnification={92} distance={160} panelHeight={96} dockHeight={96} spring={{ stiffness: 120, damping: 26 }} />
           </div>
         </div>
 
         {/* Her room, baked in Blender. The Workbench that sat here is retired: <Workbench /> */}
-        <div className={`${s.cards} ${s.dropper}`} data-tour="cards" {...drop(STAGE.cards)}>
+        <div className={`${s.cards} ${s.dropper}`} data-tour="cards" {...drop("home.room")}>
           <Finale hot={hot} onHot={setHot} onPick={pick} onScreen={() => { sfx.wake(); setWin95(true); }} />
         </div>
       </div>
 
-      <section className={s.preview}>
+      <section className={`${s.preview} ${s.dropper}`} {...drop("home.preview")}>
         <div className={s.previewHead}>
           <h2 className={s.h2}><ShuffleHeading text="Things that didn’t exist" /></h2>
           <button type="button" className={s.seeAll} onClick={() => ui.go(1)}><DecryptedText text="See all" animateOn="hover" speed={40} maxIterations={8} /></button>
@@ -222,7 +222,7 @@ export default function Home({ ui }: { ui: UI }) {
         </div>
       </section>
 
-      <section className={`${s.offDuty} ${s.dropper}`} {...drop(STAGE.offDuty)}>
+      <section className={`${s.offDuty} ${s.dropper}`} {...drop("home.offduty")}>
         <div className={s.offText} data-tour="offduty">
           <h2 className={s.h2}><ShuffleHeading text="Off duty" /></h2>
 

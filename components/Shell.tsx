@@ -3,7 +3,8 @@ import { AnimatePresence, animate, motion, MotionConfig, useMotionValue, useTran
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { ease, glide, track } from "@/lib/motion";
 import { useCalm } from "@/lib/useCalm";
-import { steps, STAGE } from "@/content/tour";
+import { steps, type BuildKey, type Cue } from "@/content/tour";
+import { jobOf, resolveBuilt } from "@/lib/direction";
 import Boot from "./Boot";
 import EasterEggs from "./EasterEggs";
 import Toasts from "./Toasts";
@@ -14,7 +15,6 @@ import Arcade from "./Arcade";
 import Sheet from "./Sheet";
 import Contact from "./Contact";
 import dynamic from "next/dynamic";
-import type { Snippets } from "./Tour";
 import Home from "./panes/Home";
 import Work from "./panes/Work";
 import Career from "./panes/Career";
@@ -44,7 +44,10 @@ export type UI = {
   returning: boolean;
   character: boolean;
   era: number;
-  stage: number;
+  built: (k: BuildKey) => boolean; // is this piece of the page built yet (always, outside the guide)
+  job: string | null; // the career job on screen during the guide
+  cue: Cue["hot"] | null; // the thing the guide's words are lighting up
+  finale: boolean; // the guide's last step
 };
 
 // The light in the room: cooler on Work, branch colours on Career, warm lamp light once Off duty is on screen.
@@ -52,7 +55,7 @@ const LIGHT: Record<string, [string, string]> = {
   home: ["#F5B53F", "#3355FF"], room: ["#FFB25E", "#EE6E9F"], work: ["#8FB0FF", "#3355FF"], career: ["#F5B53F", "#EE6E9F"], skills: ["#F5B53F", "#3355FF"],
 };
 
-export default function Shell({ code, character }: { code: Snippets; character: boolean }) {
+export default function Shell({ character }: { character: boolean }) {
   const viewport = useRef<HTMLDivElement>(null);
   const [w, setW] = useState(0);
   const [pane, setPane] = useState(0);
@@ -64,6 +67,8 @@ export default function Shell({ code, character }: { code: Snippets; character: 
   const [enter, setEnter] = useState(0); // ms the page takes to come up around the boot monitor; 0: no entrance
   const [touring, setTouring] = useState(false);
   const [step, setStep] = useState(0);
+  const [holdMs, setHoldMs] = useState(0); // the tour waits this long (the boot pull-back) before its clock starts
+  const [cue, setCue] = useState<Cue["hot"] | null>(null);
   const [sheet, setSheet] = useState<{ label: string; body: ReactNode } | null>(null);
   const [term, setTerm] = useState(false);
   const [mood, setMood] = useState("home");
@@ -174,7 +179,7 @@ export default function Shell({ code, character }: { code: Snippets; character: 
     setBuilt(true);
   };
 
-  const startTour = () => {
+  const startTour = (hold = 0) => {
     showBuilt();
     if (matchMedia("(prefers-reduced-motion: reduce)").matches) {
       setSheet({ label: "The build, chapter by chapter", body: <Stepper /> });
@@ -182,6 +187,7 @@ export default function Shell({ code, character }: { code: Snippets; character: 
     }
     setSheet(null);
     setStep(0);
+    setHoldMs(hold);
     setTouring(true);
   };
 
@@ -191,12 +197,13 @@ export default function Shell({ code, character }: { code: Snippets; character: 
   }, []);
 
   const endTour = useCallback(() => {
+    setCue(null);
     setTouring(false);
     remember();
   }, []);
 
   const era = touring ? steps[step].era : 3;
-  const stage = touring ? steps[step].stage : STAGE.all;
+  const done = resolveBuilt(touring, step);
 
   const ui: UI = {
     go: (i) => { if (touring) endTour(); go(i, reduce ? { duration: 0 } : track); },
@@ -208,7 +215,10 @@ export default function Shell({ code, character }: { code: Snippets; character: 
     returning,
     character,
     era,
-    stage,
+    built: (k) => done.has(k),
+    job: touring ? jobOf(steps[step]) : null,
+    cue: touring ? cue : null,
+    finale: touring && step === steps.length - 1,
   };
 
   const panes = [Home, Work, Career, Skills];
@@ -221,7 +231,7 @@ export default function Shell({ code, character }: { code: Snippets; character: 
           <Boot
             key="boot"
             gate={built === null}
-            onBuild={(ms) => { setEnter(ms); showBuilt(); setTimeout(startTour, ms); }}
+            onBuild={(ms) => { setEnter(ms); startTour(ms); }}
             onSkip={(ms) => { setEnter(ms); remember(); showBuilt(); }}
           />
         )}
@@ -255,7 +265,7 @@ export default function Shell({ code, character }: { code: Snippets; character: 
         >
           {panes.map((Pane, i) => (
             <section key={TABS[i]} data-pane data-active={i === pane || undefined} className={s.pane} aria-label={TABS[i]} aria-hidden={i !== pane} inert={i !== pane}>
-              <Pane ui={ui} />
+              <div data-stage className={s.stage}><Pane ui={ui} /></div>
             </section>
           ))}
         </motion.div>
@@ -293,7 +303,7 @@ export default function Shell({ code, character }: { code: Snippets; character: 
       </ClickSpark>
       </motion.main>
 
-      {touring && <Tour code={code} onStep={onStep} onClose={endTour} />}
+      {touring && <Tour from={holdMs ? "boot" : "page"} holdMs={holdMs} onStep={onStep} onCue={setCue} onClose={endTour} />}
       <EasterEggs contact={ui.contact} terminal={ui.terminal} arcade={() => setArcade(true)} />
       {arcade && <Arcade onClose={() => { setArcade(false); setChallenge(null); }} contact={() => { setArcade(false); ui.contact(); }} challenge={challenge} />}
       <Toasts />

@@ -1,17 +1,14 @@
 "use client";
 import { motion, useSpring } from "motion/react";
 import { useEffect, useRef, useState } from "react";
-import { steps, starts, total, stepAt, type Step } from "@/content/tour";
+import { steps, starts, total, stepAt, type Step, type Cue } from "@/content/tour";
+import { TYPE_CPS, cueAt } from "@/lib/direction";
 import { glide, ease } from "@/lib/motion";
 import { unlock } from "@/lib/achievements";
 import s from "./Tour.module.css";
 import RBStepper, { Step as RBStep } from "./Stepper";
 
 const SPEEDS = [0.5, 1, 1.5, 2];
-const TYPE_CPS = 28;
-const CODE_CPS = 60;
-
-export type Snippets = Record<NonNullable<Step["code"]>, { path: string; text: string }>;
 
 function findTarget(sel: string) {
   for (const el of document.querySelectorAll<HTMLElement>(sel)) {
@@ -23,15 +20,20 @@ function findTarget(sel: string) {
 
 const labelFor = (st: Step) => (typeof st.label === "string" ? st.label : innerWidth >= 1000 ? st.label[1] : st.label[0]);
 
-export default function Tour({ code, onStep, onClose }: {
-  code: Snippets;
+// holdMs: the clock stays at 0 and the chrome stays hidden while the boot screen pulls back.
+export default function Tour({ holdMs, onStep, onCue, onClose }: {
+  from: "boot" | "page";
+  holdMs: number;
   onStep: (i: number) => void;
+  onCue: (c: Cue["hot"] | null) => void;
   onClose: () => void;
 }) {
   const [t, setT] = useState(0);
   const [playing, setPlaying] = useState(true);
   const [speed, setSpeed] = useState(1);
-  const clock = useRef({ t: 0, playing: true, speed: 1 });
+  const [held, setHeld] = useState(holdMs > 0);
+  const clock = useRef({ t: 0, playing: true, speed: 1, held: holdMs > 0 });
+  clock.current.held = held;
   clock.current.playing = playing;
   clock.current.speed = speed;
 
@@ -42,6 +44,13 @@ export default function Tour({ code, onStep, onClose }: {
 
   // Tell the shell which step we're on (it slides panes and restyles eras).
   useEffect(() => { onStep(i); }, [i, onStep]);
+  useEffect(() => {
+    if (!holdMs) return;
+    const id = setTimeout(() => setHeld(false), holdMs);
+    return () => clearTimeout(id);
+  }, [holdMs]);
+  const cue = cueAt(step, local);
+  useEffect(() => { onCue(cue); }, [cue, onCue]);
 
   // Scroll the target into view inside its pane, eased by the browser.
   useEffect(() => {
@@ -65,14 +74,13 @@ export default function Tour({ code, onStep, onClose }: {
     let shown = "";
     const loop = (now: number) => {
       const c = clock.current;
-      if (c.playing && c.t < total) {
+      if (c.playing && !c.held && c.t < total) {
         c.t = Math.min(total, c.t + (Math.max(0, now - last) / 1000) * c.speed); // first frame can predate `last`
         const k = stepAt(c.t);
         const st = steps[k], local = c.t - starts[k];
-        // Typing ends at the line's length (+8 for the web aside), the code at its length: no renders after that.
+        // Typing ends at the line's length (+8 for the web aside): no renders after that.
         const typedN = Math.min(Math.floor(local * TYPE_CPS), st.say.length + 8);
-        const codeN = st.code ? Math.min(Math.floor(local * CODE_CPS), code[st.code].text.length) : 0;
-        const key = `${k}:${typedN}:${codeN}:${c.t >= total}`;
+        const key = `${k}:${typedN}:${c.t >= total}`;
         if (key !== shown) { shown = key; setT(c.t); }
       }
       if (bar.current) bar.current.style.transform = `scaleX(${c.t / total})`;
@@ -159,9 +167,8 @@ export default function Tour({ code, onStep, onClose }: {
   }, [step, ox, oy, ow, oh, cx, cy, bx, by]);
 
   const typed = !playing && !finished ? "Presentation paused." : step.say.slice(0, Math.floor(local * TYPE_CPS));
-  const snippet = step.code ? code[step.code] : null;
-  const codeTyped = snippet ? snippet.text.slice(0, Math.floor(local * CODE_CPS)) : "";
 
+  if (held) return null;
   return (
     <div className={s.tour}>
       <motion.div className={s.frame} initial={{ opacity: 0 }} animate={{ opacity: finished ? 0 : 1 }} transition={{ duration: 1.5, ease }} />
@@ -169,13 +176,6 @@ export default function Tour({ code, onStep, onClose }: {
       <motion.div className={s.outline} style={{ x: ox, y: oy, width: ow, height: oh }} aria-hidden="true">
         <span className={s.outlineLabel}>{labelFor(step)}</span>
       </motion.div>
-
-      {snippet && (
-        <motion.pre key={step.code} className={s.code} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={glide} aria-hidden="true">
-          <span className={s.codePath}>{snippet.path}</span>
-          {codeTyped}<span className={s.caret} />
-        </motion.pre>
-      )}
 
       <motion.div
         ref={bubble}
