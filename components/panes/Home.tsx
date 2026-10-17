@@ -242,7 +242,7 @@ export default function Home({ ui }: { ui: UI }) {
           {/* Where it started: the road to the dev branch, on a line that draws itself */}
           <ol ref={originRef} className={s.origin} data-on={originOn || undefined}>
             {origin.map((o, i) => (
-              <motion.li key={o.when} style={{ "--i": i } as React.CSSProperties} {...rise(i)}><span className={s.when}>{o.when}</span><p><Rich text={o.text} /></p></motion.li>
+              <motion.li key={o.when} style={{ "--i": i } as React.CSSProperties} data-tour={i === 0 ? "highschool" : i === 1 ? "highschool-then" : undefined} {...rise(i)}><span className={s.when}>{o.when}</span><p><Rich text={o.text} /></p></motion.li>
             ))}
           </ol>
 
