@@ -18,7 +18,7 @@ const STEP_MS = 900;
 
 const steps = (method: Method, gateway: string) => [
   method === "Card"
-    ? { title: "3DS / SCA check", ok: "authenticated", mine: "I own the 3DS/SCA rollout across thousands of accounts, and measured what it did to conversion." }
+    ? { title: "3DS / SCA check", ok: "authenticated", mine: "I own the 3DS/SCA rollout across thousands of accounts, and measured its effect on a 25-account sample." }
     : { title: `${method} authorization`, ok: "authorized", mine: "I own these payment methods: Paze, PayPal Pay Later and Amazon Pay." },
   { title: `Routed to ${gateway}`, ok: "approved", mine: "I own the gateway integrations, and track approval rates across them." },
   { title: "Kount fraud check", ok: "low risk", mine: "Risk sets the rules. I own how Kount fits into checkout." },
