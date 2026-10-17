@@ -117,8 +117,11 @@ export default function Shell({ code, character }: { code: Snippets; character: 
       e.preventDefault();
       setTerm((v) => !v);
     };
+    // No right-click menu, except where typing needs paste/spellcheck. React's onContextMenu (minesweeper flags) still fires.
+    const onMenu = (e: MouseEvent) => { if (!(e.target as Element).closest?.("input, textarea, [contenteditable]")) e.preventDefault(); };
     window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
+    document.addEventListener("contextmenu", onMenu);
+    return () => { window.removeEventListener("keydown", onKey); document.removeEventListener("contextmenu", onMenu); };
   }, []);
 
   const [arcade, setArcade] = useState(false);
