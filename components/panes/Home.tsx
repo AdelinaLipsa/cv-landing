@@ -90,6 +90,8 @@ function VisitorCounter() {
   );
 }
 
+const SHIPS = ["code.", "dashboards.", "internal tools."]; // what she still ships: the hero's rotating word
+
 export default function Home({ ui }: { ui: UI }) {
   const heroRef = useRef<HTMLDivElement>(null);
   // The name's width axis follows the cursor, only where there is a cursor and motion is welcome.
@@ -172,9 +174,10 @@ export default function Home({ ui }: { ui: UI }) {
           <p className={s.role} data-tour="role">
             <b><Rich text={profile.role} />.</b>{" "}
             <span>
-              <Rich text="Also a full-stack developer, still shipping" />{" "}
-              <RotatingText
-                texts={["code.", "dashboards.", "internal tools."]}
+              <Rich text="Also a full-stack developer, still" />{" "}
+              {/* "shipping" and the word stay together, in a slot as wide as the longest word: the line never reflows */}
+              <span className={s.shipping}>shipping{" "}<span className={s.slot}><span className={s.sizer} aria-hidden="true">{SHIPS.reduce((a, b) => (b.length > a.length ? b : a))}</span><RotatingText
+                texts={SHIPS}
                 mainClassName={s.rotate}
                 splitLevelClassName={s.rotateSplit}
                 staggerFrom="last"
@@ -185,7 +188,8 @@ export default function Home({ ui }: { ui: UI }) {
                 transition={{ type: "spring", stiffness: 120, damping: 26 }}
                 rotationInterval={2800}
                 auto={!reduce}
-              />
+                animatePresenceMode="sync"
+              /></span></span>
             </span>
           </p>
           <p className={s.about}><Rich text={about[0]} /></p>

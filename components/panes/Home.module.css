@@ -248,8 +248,13 @@
 .rotate { display: inline-flex; overflow: hidden; vertical-align: bottom; }
 /* What she still ships is the point of the line: ink and bold, not the grey around it. */
 .role .rotate, .role .rotate span { color: var(--ink); font-weight: 700; }
-/* The rotating word gets its own line: words of different lengths would otherwise wrap and jump between rows. */
-.role .rotate { display: flex; }
+/* The rotating word stays inline, in a slot sized by the longest word (an invisible copy under it), so the line never
+   reflows. Outgoing and incoming words share the slot's one cell and cross, so it is never empty. */
+.shipping { white-space: nowrap; }
+.slot { display: inline-grid; vertical-align: bottom; }
+.slot > *, .role .rotate > * { grid-area: 1 / 1; }
+.sizer { visibility: hidden; font-weight: 700; padding-bottom: 0.1em; }
+.role .rotate { display: grid; width: 100%; }
 .rotateSplit { overflow: hidden; padding-bottom: 0.1em; }
 .counterDigits { display: inline-flex; vertical-align: -3px; }
 
