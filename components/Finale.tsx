@@ -1097,6 +1097,9 @@ async function mount(el: HTMLElement, live: React.RefObject<Live>, alive: () => 
   const ro = new ResizeObserver(resize);
   ro.observe(el);
   resize();
+  // Her reflections (PMREM, a burst of GPU work) are made in the first idle moment after the room's first frame, so
+  // they are ready when she is.
+  if (typeof requestIdleCallback === "function") requestIdleCallback(() => void toy.env(), { timeout: 1000 }); else setTimeout(() => void toy.env(), 200);
   // The canvas fades in over the preview once she's in too (the preview has her on the bed), or after 1.2 s
   // without her; then she fades in on her own.
   let herIn = () => {};

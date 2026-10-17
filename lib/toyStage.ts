@@ -24,6 +24,7 @@ export async function toyStage(el: HTMLElement, lateEnv = false) {
   const pmrem = new THREE.PMREMGenerator(renderer);
   let env: T.Texture | null = null, envP: Promise<void> | null = null, disposed = false;
   const makeEnv = () => envP ??= (async () => {
+    if (disposed) return;
     const room = new RoomEnvironment(), rt = new THREE.WebGLRenderTarget(1, 1), tm = renderer.toneMapping, was = renderer.getRenderTarget();
     renderer.setRenderTarget(rt); renderer.toneMapping = THREE.NoToneMapping; // as PMREM renders it
     const ready = renderer.compileAsync(room, camera).catch(() => {});
