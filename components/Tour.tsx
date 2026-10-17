@@ -102,6 +102,7 @@ export default function Tour({ holdMs, onStep, onCue, onFinish, onClose }: {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const a = api.current;
+      if ((e.target as Element | null)?.closest?.("input, textarea, [contenteditable]")) return; // typing in the guestbook or the terminal
       if (e.key === "Escape") { a.onClose(); return; }
       if (clock.current.held) return;
       if (e.key === " ") {
@@ -126,7 +127,7 @@ export default function Tour({ holdMs, onStep, onCue, onFinish, onClose }: {
   if (held) return null;
   return (
     <div className={s.tour} data-done={done || undefined}>
-      <TourCamera target={step.target} pane={step.pane} finale={i === steps.length - 1} paused={!playing && !finished} />
+      <TourCamera target={step.target} also={step.also} pane={step.pane} finale={i === steps.length - 1} paused={!playing && !finished} />
       <Caption step={step} local={local} paused={!playing && !finished} />
 
       <TourPlayer
