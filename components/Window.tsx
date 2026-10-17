@@ -804,8 +804,11 @@ async function mount(el: HTMLElement, live: React.RefObject<Live>, alive: () => 
   // ---------- the loop ----------
   let flashT = 99;
   const eul = new THREE.Euler(), qHead = new THREE.Quaternion(), X = new THREE.Vector3(1, 0, 0);
-  const spring = (k: keyof typeof cur, target: number, dt: number, w = 26) => { // critically damped: a snap, then still
-    const x = cur[k] - target; const a = -w * w * x - 2 * w * vel[k]; vel[k] += a * dt; cur[k] += vel[k] * dt;
+  // critically damped: a snap, then still. Solved exactly, so it holds at any frame rate (a plain Euler step
+  // overshoots and grows below ~46 fps, and the pigeon tumbled on stilt legs).
+  const spring = (k: keyof typeof cur, target: number, dt: number, w = 26) => {
+    const e = Math.exp(-w * dt), x = cur[k] - target, c = vel[k] + w * x;
+    cur[k] = target + (x + c * dt) * e; vel[k] = (vel[k] - w * c * dt) * e;
   };
   const tick = (t: number, dt: number) => {
     U.uTime.value = t;
