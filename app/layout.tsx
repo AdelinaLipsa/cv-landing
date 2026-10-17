@@ -14,7 +14,9 @@ const flat = Open_Sans({ subsets: ["latin", "latin-ext"], variable: "--font-flat
 const caveat = Caveat({ subsets: ["latin", "latin-ext"], variable: "--font-hand", preload: false }); // the sticky note on the boot screen
 
 // Skip the intro if it was seen in the last day (cv-built holds when), on a deep link to a page, or on an arcade challenge.
-const GATE = `try{var m=localStorage.getItem("cv-theme-v2");var h=new Date().getHours();document.documentElement.dataset.theme=m||(h<5?"dark":"light")}catch(e){}try{var t=+localStorage.getItem("cv-built");if(Date.now()-t<864e5||/^#(home|work|career|skills|contact)$/.test(location.hash)||/[?&]challenge=/.test(location.search))document.documentElement.dataset.built="1"}catch(e){}`;
+// Skipped, the hero room is the first thing on screen: its preview and models start downloading with the page. On the
+// boot screen they wait for its C64 (Shell).
+const GATE = `try{var m=localStorage.getItem("cv-theme-v2");var h=new Date().getHours();document.documentElement.dataset.theme=m||(h<5?"dark":"light")}catch(e){}try{var t=+localStorage.getItem("cv-built");if(Date.now()-t<864e5||/^#(home|work|career|skills|contact)$/.test(location.hash)||/[?&]challenge=/.test(location.search)){document.documentElement.dataset.built="1";[["/models/room-preview.webp","image"],["/models/room.glb","fetch"],["/models/character.glb","fetch"]].forEach(function(f){var l=document.createElement("link");l.rel="preload";l.href=f[0];l.as=f[1];if(f[1]=="image")l.fetchPriority="high";else l.crossOrigin="anonymous";document.head.appendChild(l)})}}catch(e){}`;
 
 const title = "Adelina Lipșa, Technical Product Owner";
 const description = "Technical Product Owner on payments, Technical Support Team Manager, and a full-stack developer still shipping code. It didn’t exist, so I built it.";

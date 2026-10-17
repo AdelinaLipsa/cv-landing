@@ -12,7 +12,6 @@ import Toasts from "./Toasts";
 import Clock from "./Clock";
 import { unlock } from "@/lib/achievements";
 import { fromQuery, type Challenge } from "@/lib/challenge";
-import Arcade from "./Arcade";
 import Sheet from "./Sheet";
 import Contact from "./Contact";
 import dynamic from "next/dynamic";
@@ -21,7 +20,6 @@ import Work from "./panes/Work";
 import Career from "./panes/Career";
 import Skills from "./panes/Skills";
 import ClickSpark from "./ClickSpark";
-import SideRays from "./SideRays";
 import SoundToggle from "./SoundToggle";
 import Rewind from "./Rewind";
 
@@ -31,6 +29,12 @@ import s from "./Shell.module.css";
 const Tour = dynamic(() => import("./Tour"), { ssr: false });
 const Stepper = dynamic(() => import("./Tour").then((m) => m.Stepper), { ssr: false });
 const Terminal = dynamic(() => import("./Terminal"), { ssr: false });
+const Arcade = dynamic(() => import("./Arcade"), { ssr: false });
+const SideRays = dynamic(() => import("./SideRays"), { ssr: false }); // starts after the hero room anyway (lib/stagger)
+
+// A first visit's boot screen: its C64 loads alone, then the room's files follow at low priority (Finale fetches them
+// again from the cache once the visitor chooses). A return visit has them preloaded by the layout's head script.
+const ROOM_FILES = ["/models/room-preview.webp", "/models/room.glb", "/models/character.glb"];
 
 const TABS = ["Home", "Work", "Career", "Skills"] as const;
 const BUILT_KEY = "cv-built"; // when the intro was last seen (ms); it shows again after a day
@@ -107,6 +111,20 @@ export default function Shell({ character }: { character: boolean }) {
     const c = fromQuery(new URLSearchParams(location.search).get("challenge"));
     if (c) { setChallenge(c); setArcade(true); history.replaceState(null, "", location.pathname + location.hash); }
   }, []);
+
+  useEffect(() => {
+    if (built !== false) return;
+    let done = false;
+    const go = () => {
+      if (done) return;
+      done = true; po.disconnect(); clearTimeout(late);
+      for (const u of ROOM_FILES) fetch(u, { priority: "low" }).catch(() => {});
+    };
+    const po = new PerformanceObserver((l) => { if (l.getEntries().some((e) => e.name.endsWith("/c64-monitor.glb"))) go(); });
+    po.observe({ type: "resource", buffered: true });
+    const late = setTimeout(go, 5000); // no C64 (blocked, failed): don't wait for it
+    return () => { done = true; po.disconnect(); clearTimeout(late); };
+  }, [built]);
 
   // The dock's hand-drawn nudges ("click me!", "games!") belong to the first screen; past it they'd sit on the content.
   // The panes scroll, not the window, so listen in the capture phase (scroll doesn't bubble) and read the active one.

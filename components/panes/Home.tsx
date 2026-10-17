@@ -11,7 +11,6 @@ import { tiles } from "@/content/wall";
 import { Card, TileLinks } from "./Work";
 import { useBlueprint } from "../BlueprintBuild";
 // import RetroComputer from "../RetroComputer"; // Off duty's computer: the room in the hero has her PC now
-import Win95 from "../Win95";
 import { LinkedInIcon, WhatsAppIcon } from "../Contact";
 import Dock from "../Dock";
 import VariableProximity from "../VariableProximity";
@@ -31,8 +30,12 @@ import DecryptedText from "../DecryptedText";
 import QuickRead from "../QuickRead";
 import GuestbookButton from "../Guestbook";
 import { sfx } from "@/lib/sfx";
+import dynamic from "next/dynamic";
 import p from "./pane.module.css";
 import s from "./Home.module.css";
+
+// Her old computer's Windows 95, only fetched when it boots.
+const Win95 = dynamic(() => import("../Win95"), { ssr: false });
 
 // The Work wall's teaser: three things she built that explain themselves at a glance (her creations only,
 // it sits under "Things that didn’t exist"). Same tiles as the Work page.
@@ -105,7 +108,6 @@ export default function Home({ ui }: { ui: UI }) {
   const originRef = useRef<HTMLOListElement>(null);
   const originOn = useInView(originRef, { once: true, amount: 0.25 });
   const drop = (k: BuildKey) => (ui.built(k) ? {} : { "data-drop": "" });
-  const quick = <button type="button" className={`${p.primary} ${s.quick}`} onClick={() => ui.sheet("The 30-second version", <QuickRead contact={ui.contact} />)}><DecryptedText text="Busy? Read the 30-second version →" animateOn="hover" speed={40} maxIterations={8} /></button>;
   const [win95, setWin95] = useState(false); // the retro computer, booted
   // The room's contact objects and the buttons they belong to: hover one, the other lights.
   // During the guide, its words light them too ("the phone messages me": ui.cue).
