@@ -1082,16 +1082,16 @@ async function mount(el: HTMLElement, live: React.RefObject<Live>, alive: () => 
   };
   // Warm the GPU before the first frame (shaders in parallel, textures uploaded one per task), so it doesn't stall.
   const lit0 = [phoneMesh.material, screenMesh.material, ledMesh.material] as const;
-  const asDrawn = () => { [phoneMesh.material, screenMesh.material, ledMesh.material] = lit0; };
-  await warm(scene, [ // as drawn, then with each lit screen in
-    asDrawn,
+  const warming = [warm(scene), ...[phoneMesh, screenMesh, ledMesh].map((m) => warm(m, [ // the room as drawn; the screens lit too
     () => { phoneMesh.material = phoneLit[0]; screenMesh.material = screenLit; ledMesh.material = ledLit; },
     () => { phoneMesh.material = phoneLit[1]; screenMesh.material = winLit; },
-  ]);
-  asDrawn();
+  ]))];
+  [phoneMesh.material, screenMesh.material, ledMesh.material] = lit0;
+  await Promise.all(warming);
+  let slice = performance.now();
   for (const map of new Set([...meshes.map((m) => (m.material as T.MeshBasicMaterial).map), ...screens.map((m) => m.map)].filter((t) => t))) {
     renderer.initTexture(map!);
-    await new Promise((r) => setTimeout(r));
+    if (performance.now() - slice > 8) { await new Promise((r) => setTimeout(r)); slice = performance.now(); } // ~8 ms of uploads a task
   }
   mark("warm");
   const ro = new ResizeObserver(resize);
