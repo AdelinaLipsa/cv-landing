@@ -110,15 +110,32 @@ export default function Window() {
 
   useEffect(() => {
     const el = host.current!;
-    let cleanup = () => {}, started = false, dead = false;
-    const io = new IntersectionObserver(async ([e]) => {
-      if (!e.isIntersecting || started) return;
-      started = true;
+    let cleanup = () => {}, dead = false, cancel = () => {}, mo: MutationObserver | undefined;
+    const start = async () => {
       const c = await mount(el, live, () => !dead, () => setReady(true));
       if (dead) c(); else cleanup = c;
+    };
+    // The scene's first load blocks the main thread for ~0.5s. During the guide the poster stands in (the finale's
+    // crane too), so it waits for the guide to close, its settle to finish, and the browser to be idle.
+    const vp = el.closest<HTMLElement>("[data-era]");
+    const later = () => {
+      mo?.disconnect();
+      const id = window.setTimeout(() => {
+        if (!window.requestIdleCallback) { start(); return; }
+        const ric = requestIdleCallback(start, { timeout: 3000 });
+        cancel = () => cancelIdleCallback(ric);
+      }, 2000);
+      cancel = () => clearTimeout(id);
+    };
+    const io = new IntersectionObserver(([e]) => {
+      if (!e.isIntersecting) return;
+      io.disconnect();
+      if (!vp?.hasAttribute("data-touring")) { start(); return; }
+      mo = new MutationObserver(() => { if (!vp.hasAttribute("data-touring")) later(); });
+      mo.observe(vp, { attributes: true, attributeFilter: ["data-touring"] });
     }, { rootMargin: "400px" });
     io.observe(el);
-    return () => { dead = true; io.disconnect(); cleanup(); };
+    return () => { dead = true; io.disconnect(); mo?.disconnect(); cancel(); cleanup(); };
   }, []);
 
   const copy = () => { void navigator.clipboard?.writeText(profile.email).then(() => { sfx.tink(); setCopied(true); window.setTimeout(() => setCopied(false), 1800); }); };
