@@ -197,7 +197,7 @@ export default function Window() {
       <span className={s.grain} aria-hidden="true" />
       {/* Her desk clock, leaning on the window frame: a little LCD clock, her time and her weather */}
       <div className={s.clock}>
-        <span className={s.status}><i aria-hidden="true" />Open to product roles</span>
+        <span className={s.status}><i aria-hidden="true" />Online</span>
         <span className={s.lcd}>
           <span className={s.time} role="timer" aria-label={now ? `My time: ${String(now.h).padStart(2, "0")}:${String(now.m).padStart(2, "0")}` : "My time"}>
             <Roll v={Math.floor((now?.h ?? 0) / 10)} /><Roll v={now?.h ?? 0} />
@@ -216,7 +216,7 @@ export default function Window() {
       </div>
       {/* A Post-it stuck on her window's frame: how to reach her, plain text, readable at a glance */}
       <div ref={note} className={s.note}>
-        <strong>Hiring? Two ways in:</strong>
+        <strong>Hiring? Two more ways in:</strong>
         <ol>
           <li>
             <span className={s.label}>Email · click to copy</span>
@@ -229,7 +229,6 @@ export default function Window() {
             <a href={profile.booking} target="_blank" rel="noopener" aria-label="Book a 30-minute call on Calendly (opens in a new tab)">Book on Calendly ↗</a>
           </li>
         </ol>
-        <small>Full-time or contract.</small>
       </div>
       <span className={s.hint} data-on={hot.h || undefined} style={{ left: `${hot.x}%`, top: `${hot.y}%` }} aria-hidden="true">{hot.h === "pigeon" ? "coo?" : hot.h === "mug" ? "take a sip" : ""}</span>
     </div>
