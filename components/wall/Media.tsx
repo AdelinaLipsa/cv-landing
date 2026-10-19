@@ -2,7 +2,8 @@
 import { useEffect, useRef } from "react";
 import { useInView } from "motion/react";
 import type { Tile } from "@/content/wall";
-import { BiteDemo, ChangeLogDemo, Checkout, DeclinesDemo, DecoderDemo, Flow, Gateways, MobileApp, SUPPORT_RUN, Terminal, ThisSite } from "./Live";
+import DecoderFilm from "./DecoderFilm";
+import { BiteDemo, ChangeLogDemo, Checkout, DeclinesDemo, Flow, Gateways, MobileApp, SUPPORT_RUN, Terminal, ThisSite } from "./Live";
 
 // A screen recording: plays by itself whenever it's on screen, pauses when scrolled away.
 function Recording({ src, poster, label }: { src: string; poster: string; label: string }) {
@@ -12,11 +13,11 @@ function Recording({ src, poster, label }: { src: string; poster: string; label:
   return <video ref={ref} src={src} poster={poster} muted loop playsInline preload="metadata" aria-label={label} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block", background: "#000" }} />;
 }
 
-// Every Work tile is a live demo drawn in code, or a recording of the real thing.
-const LIVE: Record<string, () => React.ReactNode> = {
+// Every Work tile is a live demo drawn in code, a film of it in use (full: in the viewer, with controls), or a recording of the real thing.
+const LIVE: Record<string, (full?: boolean) => React.ReactNode> = {
   bite: () => <BiteDemo />,
   hookwarden: () => <Terminal />,
-  decoder: () => <DecoderDemo />,
+  decoder: (full) => <DecoderFilm full={full} />,
   mobile: () => <MobileApp />,
   "this-site": () => <ThisSite />,
   gateways: () => <Gateways />,
@@ -28,6 +29,6 @@ const LIVE: Record<string, () => React.ReactNode> = {
   pipeline: () => <Flow steps={["Vendor file → S3", "Laravel job, with retries", "SFTP to the partner", "Results → Caspio · Slack alert"]} accent="var(--broth)" />,
 };
 
-export default function Media({ tile }: { tile: Tile }) {
-  return LIVE[tile.id]?.() ?? null;
+export default function Media({ tile, full }: { tile: Tile; full?: boolean }) {
+  return LIVE[tile.id]?.(full) ?? null;
 }

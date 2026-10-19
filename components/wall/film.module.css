@@ -1,0 +1,51 @@
+/* A Work film: the stage is centred and scaled to fit, then the camera moves inside it. */
+.film { position: relative; width: 100%; height: 100%; overflow: hidden; background: var(--surface); }
+/* Transform, right to left: move the camera's point to the stage's middle, fit and zoom about it, centre in the tile. */
+.stage { position: absolute; left: 50%; top: 50%; transform-origin: 50% 50%; will-change: transform; }
+
+.cursor { position: absolute; left: 0; top: 0; z-index: 5; pointer-events: none; filter: drop-shadow(0 2px 3px rgba(23, 21, 58, 0.25)); }
+.cursor svg { display: block; }
+.cursor i { position: absolute; left: -12px; top: -12px; width: 26px; height: 26px; border-radius: 50%; border: 2px solid var(--blueprint); }
+
+/* In the grid: the length, like a video thumbnail; a progress line while it plays. */
+.badge { position: absolute; right: 10px; bottom: 10px; z-index: 6; display: inline-flex; align-items: center; gap: 6px; padding: 3px 8px; border-radius: 999px; background: var(--blueprint); color: var(--on-night); font: 600 10.5px var(--font-mono), monospace; box-shadow: 0 6px 14px rgba(51, 85, 255, 0.3); }
+.progress { position: absolute; left: 0; right: 0; bottom: 0; z-index: 6; height: 3px; background: var(--blueprint); transform-origin: left; }
+
+/* In the viewer: the guide's player, small: blueprint blue, play, a track to scrub, the time. */
+.controls { position: absolute; left: 12px; right: 12px; bottom: 12px; z-index: 6; height: 36px; display: flex; align-items: center; gap: 8px; padding: 0 12px 0 4px; border-radius: 12px; background: var(--blueprint); color: var(--on-night); box-shadow: 0 10px 24px rgba(51, 85, 255, 0.3); }
+.btn { flex: none; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; border: 0; border-radius: 50%; background: rgba(255, 255, 255, 0.16); color: inherit; cursor: pointer; }
+.track { position: relative; flex: 1; height: 28px; cursor: pointer; touch-action: none; }
+.track::before { content: ""; position: absolute; left: 0; right: 0; top: 12px; height: 4px; border-radius: 2px; background: rgba(255, 255, 255, 0.3); }
+.track i { position: absolute; left: 0; right: 0; top: 12px; height: 4px; border-radius: 2px; background: #fff; transform-origin: left; }
+.track b { position: absolute; top: 8px; width: 12px; height: 12px; margin-left: -6px; border-radius: 50%; background: #fff; box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.25); }
+.track:focus-visible { outline: 2px solid var(--broth); outline-offset: 2px; border-radius: 6px; }
+.time { flex: none; font: 600 11px var(--font-mono), monospace; font-variant-numeric: tabular-nums; }
+
+/* Param Decoder's film: the tool's Inspect screen, laid out on its 440 × 290 stage. */
+.pd { position: absolute; inset: 0; background: var(--surface); color: var(--ink); font-size: 11.5px; }
+.pd > * { position: absolute; left: 14px; right: 14px; }
+.pdTabs { top: 12px; height: 26px; display: flex; gap: 2px; padding: 3px; box-sizing: border-box; border: 1px solid var(--line); border-radius: 9px; font-size: 10.5px; font-weight: 600; color: var(--steam); }
+.pdTabs span { flex: 1; display: flex; align-items: center; justify-content: center; border-radius: 6px; }
+.pdTabs span[data-on] { background: var(--night); color: var(--on-night); }
+.pdField, .pdOut { height: 32px; display: flex; align-items: center; padding: 0 10px; box-sizing: border-box; border-radius: 10px; border: 1px solid var(--line); background: var(--paper); font: 11px var(--font-mono), monospace; color: var(--body-2); white-space: nowrap; overflow: hidden; transition: border-color 0.3s, box-shadow 0.3s; }
+.pdField { top: 48px; }
+.pdField[data-focus] { border-color: var(--blueprint); box-shadow: 0 0 0 3px rgba(51, 85, 255, 0.15); }
+.pdPh { color: var(--steam); font-family: var(--font-display), sans-serif; font-size: 11.5px; }
+.pdCaret { display: inline-block; width: 1.5px; height: 14px; margin-left: 1px; background: var(--blueprint); }
+.ins { display: inline-block; overflow: hidden; vertical-align: bottom; }
+.pdRow { height: 20px; display: grid; grid-template-columns: 72px 1fr; align-items: center; gap: 10px; }
+.pdRow code { font: 10.5px var(--font-mono), monospace; color: var(--steam); white-space: nowrap; }
+.pdRow > span { grid-column: 2; grid-row: 1; }
+.pdBad { color: #d64545; font-weight: 600; }
+.pdOk { color: #1d8a52; font-weight: 600; }
+.pd > .pdFix { left: 268px; right: auto; top: 119px; padding: 2px 10px; border-radius: 6px; background: var(--night); color: var(--on-night); font-size: 10.5px; font-weight: 700; }
+.pd > .pdWord { left: 96px; right: auto; top: 172px; transform-origin: 0 50%; font: 700 38px/1 var(--font-display), sans-serif; font-stretch: 85%; letter-spacing: -0.03em; color: var(--ink); white-space: nowrap; }
+.pdWord span { display: inline-block; }
+.pdWord i { position: absolute; left: 0; right: 0; bottom: -6px; height: 4px; border-radius: 2px; background: var(--blueprint); transform-origin: left; }
+.pdLabel { top: 180px; font-size: 10px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--steam); }
+.pdOut { top: 196px; padding-right: 70px; }
+.pdOut b { font-weight: 600; color: #1d8a52; border-radius: 3px; }
+.pdCopy { position: absolute; right: 4px; top: 4px; padding: 4px 10px; border-radius: 7px; background: var(--night); color: var(--on-night); font: 700 10.5px var(--font-display), sans-serif; }
+.pdCopy[data-done] { background: #1d8a52; }
+.pdStatus { top: 252px; display: flex; align-items: center; gap: 7px; padding-top: 10px; border-top: 1px solid var(--line); font-size: 10.5px; color: var(--steam); }
+.pdStatus i { width: 7px; height: 7px; border-radius: 50%; background: #1d8a52; }

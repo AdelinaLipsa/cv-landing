@@ -133,7 +133,7 @@ function Viewer({ list, at, onMove, onClose }: { list: Tile[]; at: number; onMov
       >
         <AnimatePresence mode="popLayout" initial={false} custom={dir}>
           <motion.div key={tile.id} className={s.viewerInner} custom={dir} variants={slide} initial="enter" animate="center" exit="exit" transition={glide}>
-            <div className={`${s.viewerMedia} ${tile.form === "phone" || tile.form === "popup" ? s.viewerPortrait : ""}`}><Media tile={tile} /></div>
+            <div className={`${s.viewerMedia} ${tile.form === "phone" || tile.form === "popup" ? s.viewerPortrait : ""}`}><Media tile={tile} full /></div>
             <div className={s.viewerBody}>
               <div className={s.zoomHead}>
                 <h2 className={p.sheetTitle}>{tile.title}</h2>
