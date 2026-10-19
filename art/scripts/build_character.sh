@@ -6,8 +6,9 @@
 set -e
 cd "$(dirname "$0")/../.."
 cp art/scripts/pivot_nodes.mjs "$GT/" && node "$GT/pivot_nodes.mjs" art/bake/character_raw.glb art/bake/character_pivot.glb
-# flatten/join/palette off: keep node names, hierarchy and material names; simplify off: decimation is done in Blender
+# flatten/join/palette off: keep node names, hierarchy and material names; simplify at 0.0003 of each mesh's size
+# (about half a millimetre on her: no visible change, a third fewer vertices); heavier decimation is done in Blender
 npx -y @gltf-transform/cli optimize art/bake/character_pivot.glb art/bake/character_opt.glb \
-  --compress meshopt --texture-compress webp --flatten false --join false --palette false --simplify false
+  --compress meshopt --texture-compress webp --flatten false --join false --palette false --simplify-error 0.0003
 node art/scripts/meshopt_v1.mjs art/bake/character_opt.glb public/models/character.glb   # lossless v1 repack (art/README.md)
 ls -l public/models/character.glb

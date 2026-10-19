@@ -35,10 +35,12 @@ transparent) to use as the loading poster.
    node art/scripts/pivot_nodes.mjs art/bake/room_raw.glb /tmp/room_pivot.glb   # meshes onto <name>Mesh children
    npx @gltf-transform/cli webp /tmp/room_pivot.glb /tmp/room_webp.glb --quality 90
    npx @gltf-transform/cli optimize /tmp/room_webp.glb /tmp/room_opt.glb --compress meshopt \
-     --texture-compress false --flatten false --join false --simplify false --prune false --instance false --palette false
+     --texture-compress false --flatten false --join false --simplify-error 0.0003 --prune false --instance false --palette false
    node art/scripts/list_nodes.mjs /tmp/room_opt.glb          # check the node tree
    node art/scripts/meshopt_v1.mjs /tmp/room_opt.glb public/models/room.glb   # lossless repack, see below
    ```
+   `--simplify-error 0.0003` drops vertices that move less than 0.03% of their mesh's size (about a millimetre):
+   257k → 123k vertices, 2.6 → 1.9 MB, no visible change in the hero at 2×.
    The `false` flags matter: the defaults flatten the hierarchy, join the named meshes and prune the empties.
    `pivot_nodes.mjs` matters too: meshopt quantization folds an offset/scale into any node that carries a mesh,
    so every named node keeps its Blender pivot and its mesh sits on a `<name>Mesh` child (e.g. `ChairSeat` →
