@@ -19,7 +19,7 @@ const caveat = Caveat({ subsets: ["latin", "latin-ext"], variable: "--font-hand"
 const GATE = `try{var m=localStorage.getItem("cv-theme-v2");var h=new Date().getHours();document.documentElement.dataset.theme=m||(h<5?"dark":"light")}catch(e){}try{var t=+localStorage.getItem("cv-built");if(Date.now()-t<864e5||/^#(home|work|career|skills|contact)$/.test(location.hash)||/[?&]challenge=/.test(location.search)){document.documentElement.dataset.built="1";[["/models/room-preview.webp","image"],["/models/room.glb","fetch"],["/models/character.glb","fetch"]].forEach(function(f){var l=document.createElement("link");l.rel="preload";l.href=f[0];l.as=f[1];if(f[1]=="image")l.fetchPriority="high";else l.crossOrigin="anonymous";document.head.appendChild(l)})}}catch(e){}`;
 
 const title = "Adelina Lipșa, Technical Product Owner";
-const description = "Technical Product Owner on payments, Technical Support Team Manager, and a full-stack developer still shipping code. It didn’t exist, so I built it.";
+const description = "Technical Product Owner who works closely with the founder on whatever is needed, and makes sure it gets delivered and actually works. Also a full-stack developer, still shipping code. It didn’t exist, so I built it.";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
@@ -45,7 +45,7 @@ const person = {
   alumniOf: education.map((e) => ({ "@type": "EducationalOrganization", name: e.where })),
   hasCredential: certifications.map((name) => ({ "@type": "EducationalOccupationalCredential", name })),
   knowsLanguage: languages.map((l) => l.split(",")[0]),
-  knowsAbout: ["Payments", "3DS/SCA", "Checkout", "Chargebacks", "Fraud monitoring", "Product ownership", "Full-stack development"],
+  knowsAbout: ["Product ownership", "Delivery", "Customer support operations", "Internal tools", "Full-stack development"],
 };
 
 export const viewport: Viewport = { themeColor: [{ media: "(prefers-color-scheme: light)", color: "#F7F6FB" }, { media: "(prefers-color-scheme: dark)", color: "#0E0D1C" }], width: "device-width", initialScale: 1, viewportFit: "cover" };

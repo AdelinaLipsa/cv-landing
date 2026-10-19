@@ -10,7 +10,6 @@ import { about, beliefs, origin, profile, ventures } from "@/content/cv";
 import { tiles } from "@/content/wall";
 import { Card, TileLinks } from "./Work";
 import { useBlueprint } from "../BlueprintBuild";
-// import RetroComputer from "../RetroComputer"; // Off duty's computer: the room in the hero has her PC now
 import { LinkedInIcon, WhatsAppIcon } from "../Contact";
 import Dock from "../Dock";
 import VariableProximity from "../VariableProximity";
@@ -19,7 +18,6 @@ import Counter from "../Counter";
 import Mark from "../Mark";
 import ShuffleHeading from "../ShuffleHeading";
 import Land from "../Land";
-// import Workbench from "../Workbench"; // the room took its spot in the hero
 import Finale, { type Prop } from "../Finale";
 import Window from "../Window";
 import { Rich } from "../Keyword";
@@ -210,7 +208,7 @@ export default function Home({ ui }: { ui: UI }) {
           </div>
         </div>
 
-        {/* Her room, baked in Blender. The Workbench that sat here is retired: <Workbench /> */}
+        {/* Her room, baked in Blender. */}
         <div className={`${s.cards} ${s.dropper}`} data-tour="cards" {...drop("home.room")}>
           <Finale hot={hot} warm={ui.ended /* the guide's last beat: the lamp warms once it has played to the end */} onHot={setHot} onPick={pick} onScreen={() => { sfx.wake(); setWin95(true); }} />
         </div>
@@ -267,7 +265,6 @@ export default function Home({ ui }: { ui: UI }) {
             <span aria-hidden="true">&gt;_</span> psst… there’s a terminal in here<span className={s.termHint}>. Press `</span>
           </button>
         </div>
-        {/* The computer moved to the room in the hero: <RetroComputer className={s.retroCanvas} character={ui.character} onScreen={() => setWin95(true)} /> */}
         {!touring && <button type="button" className={s.bootBtn} onClick={() => { sfx.wake(); setWin95(true); }}><span aria-hidden="true">▶</span> Boot the old computer</button>}
         {win95 && <Win95 onClose={() => setWin95(false)} contact={ui.contact} />}
       </section>
@@ -276,7 +273,7 @@ export default function Home({ ui }: { ui: UI }) {
       <section className={s.outro}>
         <Land className={s.outroMain} delay={0.05}>
           <h2 className={s.h2} data-skin="title"><ShuffleHeading text="You made it to the end of the log." /></h2>
-          <p className={s.outroLine}>Product roles, full-time or contract. Payments, ops, and internal tools. I reply faster than a 3DS challenge.</p>
+          <p className={s.outroLine}>Product roles, full-time or contract. Delivery, ops, and internal tools. I reply faster than a postback fires.</p>
           <div className={s.actions}>
             <Magnet padding={40} magnetStrength={4} disabled={!!reduce}><button type="button" className={`${p.primary} ${s.outroBtn} ${s.whatsapp} water`} onClick={ui.contact}><WhatsAppIcon size={17} /><DecryptedText text="Message me" animateOn="hover" speed={40} maxIterations={8} /></button></Magnet>
             <Magnet padding={30} magnetStrength={5} disabled={!!reduce}><a className={`${s.messageBtn} ${s.outroBtn} ${s.pdfFill} water`} href={profile.pdf} download><DecryptedText text="Download the PDF" animateOn="hover" speed={40} maxIterations={8} /><span className={s.dl} aria-hidden="true">↓</span></a></Magnet>

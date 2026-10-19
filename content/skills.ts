@@ -2,14 +2,18 @@
 // Left out on purpose: micro-frontends (the Ubisoft architecture predates her).
 // Added in her own words (2026-10-01): Grafana and Jira, used at Ubisoft; Hookwarden's stack from its repo (Astro, Vitest, AST parsing, MCP, GitHub Actions, package publishing); iOS, Android, store publishing and Tailwind UI at AgroCity;
 // Ruby on Rails, TypeScript, Vue.js, Node.js, Next.js, .NET, Docker and technical leadership at Fabel X; SOPs at Yomali (it owns BuyGoods); Figma.
+// Payments (her words, 2026-10-19): about 1% of her work. She writes the specs from the CRO’s documents and the devs build them, so the layer
+// holds only that, plus Param Decoder’s decline codes (her repo). Nothing beyond that. Moved down the stack to match its weight.
+// Zendesk (2026-10-01, 2026-10-19): she turned the AI agents’ calls into scenarios and tested them against it; Zendesk's AI
+// agent builder (2026-10-19): she built workflows in it for all of Yomali’s SOPs and documents.
 export const layers = [
   { name: "Product Management", chips: ["Product ownership", "Backlog management", "Requirements gathering", "PRDs", "SOPs", "Stakeholder management", "Cross-functional delivery", "Vendor evaluation", "Cost modelling", "Business plans", "Technical leadership"] },
   { name: "Agile Delivery", chips: ["Scrum", "Agile", "Standups", "Dependency & risk tracking", "Change management", "Status reporting"] },
-  { name: "Payments", chips: ["Gateway & acquirer integration", "3DS", "SCA", "Alternative payment methods", "Buy Now Pay Later", "Fraud prevention (Kount)", "Chargebacks & disputes"] },
   { name: "Analytics", chips: ["SQL", "Datadog", "Kibana", "Grafana", "Log analysis", "Approval & decline analysis", "Checkout conversion", "Dashboards & reporting"] },
   { name: "Development", chips: ["PHP", "Laravel", "JavaScript", "TypeScript", "Vue.js", "React", "Next.js", "Node.js", "Ruby on Rails", ".NET", "Python", "HTML", "CSS", "TailwindCSS", "Tailwind UI", "Webpack", "REST APIs", "Webhooks", "Capacitor", "iOS (Xcode)", "Android", "Electron", "Astro", "Vitest", "AST parsing (Babel, tree-sitter)", "MCP servers"] },
   { name: "DevOps and Cloud", chips: ["Docker", "Kubernetes", "Rancher", "AWS (S3, IAM, Lambda)", "SFTP", "Git", "GitLab", "Production deployments", "App Store & Google Play publishing", "Secrets management", "GitHub Actions", "Package publishing (npm, PyPI, Homebrew)"] },
-  { name: "Tools", chips: ["Figma", "Jira", "ClickUp", "Asana", "Caspio", "Factorial"] },
+  { name: "Payments", chips: ["Payment integration specs", "Decline codes (Stripe, Braintree, NMI)"] },
+  { name: "Tools", chips: ["Figma", "Jira", "ClickUp", "Asana", "Caspio", "Factorial", "Zendesk", "Zendesk AI agent builder"] },
 ] as const;
 
 type Chip = (typeof layers)[number]["chips"][number];
@@ -30,9 +34,9 @@ export const things: Thing[] = [
     used: [
       "Product ownership", "Backlog management", "Requirements gathering", "PRDs", "SOPs", "Stakeholder management", "Cross-functional delivery", "Vendor evaluation", "Cost modelling", "Business plans",
       "Standups", "Dependency & risk tracking", "Change management", "Status reporting",
-      "Gateway & acquirer integration", "3DS", "SCA", "Alternative payment methods", "Buy Now Pay Later", "Fraud prevention (Kount)", "Chargebacks & disputes",
+      "Payment integration specs",
       "SQL", "Datadog", "Log analysis", "Approval & decline analysis", "Checkout conversion", "Dashboards & reporting",
-      "ClickUp", "Factorial",
+      "ClickUp", "Factorial", "Zendesk", "Zendesk AI agent builder",
     ],
   },
   {

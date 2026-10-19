@@ -20,7 +20,7 @@ export type Tile = {
 
 export const sections: { id: Section; title: string; lede: string }[] = [
   { id: "built", title: "Things that didn’t exist", lede: "Until I built them, at work and after it." },
-  { id: "owned", title: "Products I own", lede: "Payments and delivery: what ships, in what order, and how it performs." },
+  { id: "owned", title: "Specs I write", lede: "Payments is one small area of many. The devs build it; I make sure it ships and works." },
 ];
 
 export const tiles: Tile[] = [
@@ -66,20 +66,22 @@ export const tiles: Tile[] = [
   },
   {
     id: "support-flows", form: "terminal", chrome: "support-flows", title: "Customer support automations", section: "built",
-    blurb: "I code the automations behind customer support’s flows, from the AI voice agent’s call to Zendesk.",
+    blurb: "I code automations for customer support’s flows, test our AI agents against Zendesk with scenarios from their real calls, and built workflows in Zendesk’s AI agent builder for all our SOPs.",
     more: [
-      "With the head of customer support, I code the automations behind their flows. When an AI voice agent call ends, my automation maps it and sends it to Zendesk, routed to a person when it needs one.",
-      "I test the AI voice agents’ calls with call scenarios, end to end, until each one lands in Zendesk the way it should.",
+      "Part of a bigger job: in recent months I reworked the customer support department.",
+      "With the head of customer support, I code the automations behind their flows.",
+      "I wrote a report on our AI agents’ calls, then turned those calls into scenarios and ran them against Zendesk, end to end, until each one lands the way it should.",
+      "I built workflows in Zendesk’s AI agent builder for all our SOPs and documents.",
       "I also run customer support’s statistics.",
       "Demo run, demo data.",
     ],
   },
   {
     id: "declines", form: "window", chrome: "declines · Datadog", title: "Where declines come from", section: "owned",
-    blurb: "I run the analysis in Datadog, log data and SQL to find the source of a decline rate.",
+    blurb: "I went through six months of AWS and Datadog logs to find where our declines come from.",
     more: [
-      "I analyse payment performance across the gateways in Datadog, log data and SQL: approval rates, declines, and checkout conversion.",
-      "The question each time: where does this decline rate come from? I break it down by gateway, by decline code, and by 3DS until one source stands out.",
+      "I went through six months of AWS and Datadog logs across the gateways: approval rates, declines, and checkout conversion.",
+      "The question each time: where does this decline rate come from? I break it down by gateway, by decline code, and by bank until one source stands out.",
       "Demo dashboard, demo numbers.",
     ],
   },
@@ -96,19 +98,18 @@ export const tiles: Tile[] = [
   },
   {
     id: "ruined-saints", form: "window", chrome: "ruined saints", title: "Ruined Saints", section: "built",
-    blurb: "My streetwear label, and the store I built for it.",
+    blurb: "My streetwear label, done alone: the brand identity, the clothing, and the store.",
     more: ["The store runs on Next.js, with Medusa for commerce and Meilisearch for search. This is its gate and hero."],
   },
   {
     id: "gateways", title: "Gateway routing", section: "owned",
-    blurb: "Chase Paymentech, NMI, Braintree, PayPal, and Stripe, plus 3DS/SCA.",
-    outcome: "The 3DS/SCA rollout spans thousands of accounts, with tracking I built in ClickUp.",
-    more: ["Product owner for the gateway and acquirer integrations: Chase Paymentech, NMI, Braintree, PayPal, and Stripe. I decide what ships, spec it, deliver it, and track approval rates and declines across them.", "I own the 3DS/SCA rollout across thousands of accounts, and analysed a 25-account sample to separate its effect."],
+    blurb: "I write the specs for gateway integrations, and work with the devs until they ship.",
+    more: ["I write the specs for gateway integrations from the Chief Risk Officer’s documents, then work with the devs on delivery until each one ships and works.", "Demo routing, generic names."],
   },
   {
     id: "apms", form: "phone", title: "Ways to pay", section: "owned",
-    blurb: "Paze, PayPal Pay Later, and Amazon Pay at checkout.",
-    more: ["I own the alternative payment methods: Paze, PayPal Pay Later, and Amazon Pay.", "Demo checkout, demo amount."],
+    blurb: "New ways to pay at checkout: I write the specs, the devs build them.",
+    more: ["I write the specs for new payment methods and work with the devs on delivery.", "Demo checkout, generic names, demo amount."],
   },
   {
     id: "pipeline", title: "Eligibility pipeline", section: "built",

@@ -58,15 +58,14 @@ const TERMINAL = [
   { t: "done. nothing left the machine.", c: "muted" },
 ];
 
-// Customer support automations: an AI voice agent call runs through her automation into Zendesk, then the
-// scenario tests. Same story as the Workbench Customers panel; demo data.
+// Customer support automations: her scenarios, made from the AI agents' real calls, run against Zendesk until each
+// lands the way it should (she tests the calls; the call-to-Zendesk automation isn't hers). Demo data.
 export const SUPPORT_RUN = [
   { t: "$ test-call --scenario refund", c: "" },
-  { t: "ai voice call ended · intent: refund", c: "muted" },
-  { t: "→ support-flows automation", c: "muted" },
-  { t: "map intent, order, transcript", c: "muted" },
-  { t: "needs a human → escalate", c: "muted" },
-  { t: "✓ landed in Zendesk", c: "ok" },
+  { t: "ai voice agent call · scenario: refund", c: "muted" },
+  { t: "check intent, order, transcript", c: "muted" },
+  { t: "check hand-off to a person", c: "muted" },
+  { t: "✓ landed in Zendesk as expected", c: "ok" },
   { t: "✓ 4/4 call scenarios pass", c: "ok" },
 ];
 
@@ -168,12 +167,12 @@ export function DecoderDemo() {
   );
 }
 
-// Where declines come from: one decline rate, broken down by gateway, then decline code, then 3DS, until one
+// Where declines come from: one decline rate, broken down by gateway, then decline code, then bank, until one
 // source stands out. Demo gateways, demo shares; no real numbers. Paused: the last breakdown, source found.
 const DD = [
   { by: "gateway", q: "declines by {gateway}", rows: [["Gateway A", 22], ["Gateway B", 18], ["Gateway C", 60]] },
   { by: "decline code", q: "declines{gateway:c} by {code}", rows: [["05 do not honor", 64], ["51 no funds", 24], ["54 expired", 12]] },
-  { by: "3DS", q: "declines{code:05} by {3ds}", rows: [["challenged", 15], ["frictionless", 20], ["no 3DS", 65]] },
+  { by: "bank", q: "declines{code:05} by {bank}", rows: [["Bank A", 18], ["Bank B", 67], ["Bank C", 15]] },
 ] as const;
 export function DeclinesDemo() {
   const [ref, on] = useLive();
@@ -193,13 +192,13 @@ export function DeclinesDemo() {
           </div>
         ))}
       </div>
-      <motion.span className={s.pdNote} animate={{ opacity: k >= 2 ? 1 : 0 }}>{g === DD.length - 1 ? "Source: gateway C, code 05, no 3DS." : `Stands out: ${DD[g].rows.find((r) => r[1] === top)![0]}. Next: drill in.`}</motion.span>
+      <motion.span className={s.pdNote} animate={{ opacity: k >= 2 ? 1 : 0 }}>{g === DD.length - 1 ? "Source: gateway C, code 05, bank B." : `Stands out: ${DD[g].rows.find((r) => r[1] === top)![0]}. Next: drill in.`}</motion.span>
     </div>
   );
 }
 
 // Change log: entries move through their statuses. Demo entries, generic on purpose.
-const LOG = ["3DS routing rule updated", "Pay Later at checkout", "Self-service refund flow"];
+const LOG = ["Find Order journey updated", "Pay Later at checkout", "Self-service refund flow"];
 const STATUS = ["Specced", "Testing", "Shipped"];
 export function ChangeLogDemo() {
   const [ref, on] = useLive();
@@ -293,8 +292,8 @@ export function ThisSite() {
   );
 }
 
-// Gateway routing: each payment goes to one of the gateways she owns (CV).
-const GATEWAYS = ["Chase Paymentech", "NMI", "Braintree", "PayPal", "Stripe"];
+// Gateway routing: each payment goes to one of the gateways. Generic names: she writes the specs, she doesn't own the integrations (her words, 2026-10-19).
+const GATEWAYS = ["Gateway A", "Gateway B", "Gateway C", "Gateway D", "Gateway E"];
 export function Gateways() {
   const [ref, on] = useLive();
   const t = useTick(GATEWAYS.length, 1300, on);
@@ -302,7 +301,7 @@ export function Gateways() {
     <div ref={ref} className={`${s.live} ${s.white} ${s.route}`}>
       <span className={s.node}>Checkout</span>
       <span className={s.arrow} aria-hidden="true">↓</span>
-      <span className={`${s.node} ${s.nodeInk}`}>3DS / SCA · routing</span>
+      <span className={`${s.node} ${s.nodeInk}`}>Routing</span>
       <span className={s.arrow} aria-hidden="true">↓</span>
       <div className={s.gws}>
         {GATEWAYS.map((g, i) => (
@@ -313,8 +312,8 @@ export function Gateways() {
   );
 }
 
-// Alternative payment methods at checkout (CV: Paze, PayPal Pay Later, Amazon Pay). Demo amount.
-const METHODS = ["Card", "PayPal Pay Later", "Paze", "Amazon Pay"];
+// Alternative payment methods at checkout. Generic names: she writes the specs, the devs build them (her words, 2026-10-19). Demo amount.
+const METHODS = ["Card", "Pay later", "Digital wallet", "Bank transfer"];
 export function Checkout() {
   const [ref, on] = useLive();
   const t = useTick(METHODS.length, 1500, on);

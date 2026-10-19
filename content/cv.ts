@@ -1,4 +1,4 @@
-// Transcribed from content/Adelina_Lipsa_CV.pdf. Nothing here that isn't on the CV,
+// Transcribed from the CV (public/Adelina_Lipsa_CV.pdf, printed from content/cv-pdf.html). Nothing here that isn't on the CV,
 // except `about` (the brief's default copy) and fields marked tbc.
 // Third-party client names from SiteRocket Labs are left out on purpose.
 
@@ -9,7 +9,7 @@ export const profile = {
   initials: "AL",
   role: "Technical Product Owner",
   roleSecond: "Also a full-stack developer, still shipping code.",
-  headline: "Technical Product Owner | Payments, 3DS, Checkout and Chargebacks",
+  headline: "Technical Product Owner | Delivery Across Teams, Support Operations, and Internal Tools",
   location: "Bucharest, Romania",
   email: "adelina.lipsa@gmail.com",
   phone: "+40 745 362 663",
@@ -18,11 +18,11 @@ export const profile = {
   whatsapp: "https://wa.me/40745362663?text=" + encodeURIComponent("Hi Adelina, I came for the CV and stayed for the cat. Let’s talk."),
   pdf: "/Adelina_Lipsa_CV.pdf",
   booking: "https://calendly.com/adelina-lipsa/30min",
-  lookingFor: "Product roles, full-time or contract. Payments, ops, internal tools. Based in Bucharest.",
+  lookingFor: "Product roles, full-time or contract. Delivery, ops, internal tools. Based in Bucharest.",
 };
 
 export const about = [
-  "I build the thing that’s missing. Tools, flows, dashboards, and sometimes the clothes I’m wearing. Allergic to letting my tech knowledge expire like milk, so I keep shipping on both branches: the payments spec and the code.",
+  "I build the thing that’s missing. Tools, flows, dashboards, and sometimes the clothes I’m wearing. Allergic to letting my tech knowledge expire like milk, so I keep shipping on both branches: the spec and the code.",
   "When I’m not shipping, you’ll find me playing video games and eating ramen in the dark like a raccoon with WiFi.",
   "I believe a few lines of code can save the day, that putting milk in before cereal is a federal offense, and that the Oxford comma is non-negotiable.",
 ];
@@ -68,15 +68,22 @@ export const jobs: Job[] = [
     place: "United States",
     branch: "product",
     lines: [
-      "Owns the payments product: gateway and acquirer integrations, 3DS/SCA, alternative payment methods, and the product side of Kount fraud monitoring, chargebacks, and disputes.",
+      // Adelina's own words, 2026-10-19: "I basically own every gap in the company", "I fill all the gaps at yomali/buygoods", "I work closely with the founder on whatever is needed",
+      // and her approved framing: "making sure things get delivered and actually work across the company, whatever area they're in."
+      "Owns every gap in the company, working closely with the founder on whatever is needed across Yomali and BuyGoods, the platform it owns: makes sure things get delivered and actually work, whatever area they’re in.",
       "Product manager for the core engineering team and manager of the technical support team: pixels, postbacks, parameters, the API, and checkout integrations. Runs PRDs, standups, weekly reporting, and the change log in ClickUp.",
-      // Adelina's own words, 2026-10-01 (the guide's "Now" line says the same).
-      "With the head of customer support: codes the automations behind their flows and runs their statistics.",
-      // Adelina's own words, 2026-10-01.
-      "Wrote SOPs for BuyGoods, the platform Yomali owns, and moved HR operations from spreadsheets to Factorial.",
-      "Product owner for the refund and return journey (Find Order) and the AI voice agent’s human escalation protocol. Proposed a self-service refund flow, now in testing.",
+      // Adelina's own words, 2026-10-19 (the rework) and 2026-10-01 (automations, statistics, AI voice agent calls).
+      "Reworked the customer support department in recent months. With the head of customer support, codes the automations behind their flows and runs their statistics. Built workflows in Zendesk’s AI agent builder for all the SOPs and documents.",
+      // 2026-10-19: the report on the AI agents' calls and the CV's AI platform evaluation are one piece of work, merged on her say-so.
+      "Evaluated the customer support AI agents: wrote a report on their calls, turned those calls into test scenarios run against Zendesk, and assessed AI quality scoring and support platforms through vendor assessment, cost modelling, and scorecard design.",
+      // Adelina's own words, 2026-10-19 (she wrote the training documents and brought them in; Factorial at the start of her mandate) and 2026-10-01 (SOPs).
+      "From the start, wrote the team’s training documents and got everyone working from them, and moved HR operations from spreadsheets to Factorial. Wrote SOPs for BuyGoods.",
+      // 2026-10-19: the escalation protocol is the head of customer support's; Adelina translated it and made it clearer.
+      "Product owner for the refund and return journey (Find Order). Proposed a self-service refund flow, now in testing. Translated the head of customer support’s AI voice agent escalation protocol and made it easier to follow.",
+      // Adelina's own words, 2026-10-19: payments are about 1% of her work; she writes the specs from the CRO's documents, and the devs build them.
+      "Also writes the specs for payments work, from the Chief Risk Officer’s documents, and works with the devs on delivery.",
     ],
-    stack: ["3DS/SCA", "Kount", "SQL", "Datadog", "ClickUp"],
+    stack: ["ClickUp", "Factorial", "Zendesk", "SQL", "Datadog"],
   },
   {
     id: "siterocket",
@@ -163,13 +170,12 @@ export const stillShipping = {
     // Adelina's own words, 2026-09-30.
     "Built BITE (BuyGoods Internal Tools), a Chrome extension that checks whether BuyGoods tracking is on a page, including injected and network-fired tracking.",
     "Built the reporting pipeline and dashboard that replaced a 1.5 to 2 hour manual daily report.",
-    "Built 3DS rollout tracking in ClickUp and analysed a 25-account sample to measure the rollout’s effect.",
   ],
   stack: ["Dashboards", "SQL", "ClickUp", "JavaScript"],
 };
 
 export const ventures = [
-  { name: "Ruined Saints", role: "Founder & Creative Director", dates: "Jun 2025 to now", note: "Independent streetwear label." },
+  { name: "Ruined Saints", role: "Founder & Creative Director", dates: "Jun 2025 to now", note: "Independent streetwear label. The brand identity, the clothing, and the store: all done alone." },
   { name: "Bitly Digital", role: "Founder", dates: "Mar 2025 to now", note: "Consulting and custom web development." },
 ];
 

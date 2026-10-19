@@ -1,15 +1,14 @@
 // Words worth a second look, each with its proof. Every proof is a fact from cv.ts.
 // Matched whole-word, case-insensitive, first time per paragraph only.
 export const keywords: Record<string, string> = {
-  "Technical Product Owner": "Yomali, Sep 2025 to now: product owner on payments, product manager for core engineering, and manager of technical support.",
+  "Technical Product Owner": "Yomali, Sep 2025 to now: I work closely with the founder on whatever is needed, and make sure it gets delivered and actually works.",
   "Full-stack developer": "Since 2020, and still: AgroCity to Ubisoft, then Hookwarden, BITE, and the Param Decoder.",
   "Full-stack web developer": "Since 2020, and still: AgroCity to Ubisoft, then Hookwarden, BITE, and the Param Decoder.",
   "Technical Lead": "Fabel X, Jul to Dec 2023.",
   Tools: "Param Decoder, BITE, Hookwarden, and the change log, all four on the Work tab.",
   BITE: "BuyGoods Internal Tools: a Chrome extension that checks tracking on any page, plus VSL Skipper.",
   dashboards: "One of them replaced a 1.5 to 2 hour manual daily report.",
-  "payments stack": "The product I own: gateways, 3DS/SCA, and payment methods. What ships, in what order, and how it performs.",
-  "3DS": "Rolled out across thousands of accounts; I analysed a 25-account sample to isolate its effect.",
+  "payments stack": "One of the areas I work across: I write the specs and work with the devs on delivery.",
   "1.5 to 2 hour": "A daily report done by hand, until I built the pipeline that replaced it.",
   PRDs: "Run in ClickUp, with standups, weekly reporting, and the change log.",
   Kubernetes: "Ubisoft’s QA platform, deployed to production and monitored in Rancher.",
