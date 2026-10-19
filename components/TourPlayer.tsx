@@ -30,8 +30,8 @@ function Graph({ w }: { w: number }) {
       <path d={`M${PAD} ${Y.dev}H${end}`} stroke={COLOR.dev} strokeWidth="4" strokeLinecap="round" fill="none" />
       <path d={`M${fx} ${Y.dev}C${fx + 8} ${Y.dev} ${fx + 6} ${Y.product} ${fx + 15} ${Y.product}H${end}`} stroke={COLOR.product} strokeWidth="4" strokeLinecap="round" fill="none" />
       {steps.map((st, i) => (st.year
-        ? <circle key={i} cx={x(i)} cy={Y[laneOf(i)]} r={w < 300 ? 3.5 : 4.5} fill={i === FORK ? COLOR.product : COLOR[laneOf(i)]} stroke="var(--night)" strokeWidth="1.5" />
-        : <circle key={i} cx={x(i)} cy={Y[laneOf(i)]} r="1.4" fill="var(--night)" />))}
+        ? <circle key={i} cx={x(i)} cy={Y[laneOf(i)]} r={w < 300 ? 3.5 : 4.5} fill={i === FORK ? COLOR.product : COLOR[laneOf(i)]} stroke="var(--blueprint)" strokeWidth="1.5" />
+        : <circle key={i} cx={x(i)} cy={Y[laneOf(i)]} r="1.4" fill="var(--blueprint)" />))}
     </>
   );
 }

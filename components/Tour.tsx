@@ -128,6 +128,7 @@ export default function Tour({ holdMs, onStep, onCue, onFinish, onClose }: {
   return (
     <div className={s.tour} data-done={done || undefined}>
       <TourCamera target={step.target} also={step.also} pane={step.pane} finale={i === steps.length - 1} paused={!playing && !finished} />
+      <div className={s.frame} aria-hidden="true" />
       <Caption step={step} local={local} paused={!playing && !finished} />
 
       <TourPlayer
