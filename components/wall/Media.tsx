@@ -1,34 +1,26 @@
 "use client";
-import { useEffect, useRef } from "react";
-import { useInView } from "motion/react";
 import type { Tile } from "@/content/wall";
+import { Clip } from "./Film";
 import DecoderFilm from "./DecoderFilm";
-import { BiteDemo, ChangeLogDemo, Checkout, DeclinesDemo, Flow, Gateways, MobileApp, SUPPORT_RUN, Terminal, ThisSite } from "./Live";
+import { BiteFilm, ChangeLogFilm, CheckoutFilm, DeclinesFilm, GatewaysFilm, HookwardenFilm, MobileFilm, PipelineFilm, SupportFilm, ThisSiteFilm } from "./films";
 
-// A screen recording: plays by itself whenever it's on screen, pauses when scrolled away.
-function Recording({ src, poster, label }: { src: string; poster: string; label: string }) {
-  const ref = useRef<HTMLVideoElement>(null);
-  const on = useInView(ref, { amount: 0.3 });
-  useEffect(() => { const v = ref.current; if (v) { if (on) v.play().catch(() => {}); else v.pause(); } }, [on]);
-  return <video ref={ref} src={src} poster={poster} muted loop playsInline preload="metadata" aria-label={label} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block", background: "#000" }} />;
-}
-
-// Every Work tile is a live demo drawn in code, a film of it in use (full: in the viewer, with controls), or a recording of the real thing.
-const LIVE: Record<string, (full?: boolean) => React.ReactNode> = {
-  bite: () => <BiteDemo />,
-  hookwarden: () => <Terminal />,
+// Every Work tile is a film: the tool in use, drawn in code (films.tsx, DecoderFilm.tsx), or a recording of the
+// real thing. In the grid they play on hover; in the viewer (full) they play with controls.
+const FILMS: Record<string, (full?: boolean) => React.ReactNode> = {
+  bite: (full) => <BiteFilm full={full} />,
+  hookwarden: (full) => <HookwardenFilm full={full} />,
   decoder: (full) => <DecoderFilm full={full} />,
-  mobile: () => <MobileApp />,
-  "this-site": () => <ThisSite />,
-  gateways: () => <Gateways />,
-  apms: () => <Checkout />,
-  "change-log": () => <ChangeLogDemo />,
-  "support-flows": () => <Terminal lines={SUPPORT_RUN} />,
-  declines: () => <DeclinesDemo />,
-  "ruined-saints": () => <Recording src="/media/ruined-saints.mp4" poster="/media/ruined-saints.webp" label="The Ruined Saints site: the PRAY? gate, then the hero" />,
-  pipeline: () => <Flow steps={["Vendor file → S3", "Laravel job, with retries", "SFTP to the partner", "Results → Caspio · Slack alert"]} accent="var(--broth)" />,
+  mobile: (full) => <MobileFilm full={full} />,
+  "this-site": (full) => <ThisSiteFilm full={full} />,
+  gateways: (full) => <GatewaysFilm full={full} />,
+  apms: (full) => <CheckoutFilm full={full} />,
+  "change-log": (full) => <ChangeLogFilm full={full} />,
+  "support-flows": (full) => <SupportFilm full={full} />,
+  declines: (full) => <DeclinesFilm full={full} />,
+  "ruined-saints": (full) => <Clip src="/media/ruined-saints.mp4" poster="/media/ruined-saints.webp" length={12.4} full={full} label="The Ruined Saints site: the PRAY? gate, then the hero" />,
+  pipeline: (full) => <PipelineFilm full={full} />,
 };
 
 export default function Media({ tile, full }: { tile: Tile; full?: boolean }) {
-  return LIVE[tile.id]?.(full) ?? null;
+  return FILMS[tile.id]?.(full) ?? null;
 }
