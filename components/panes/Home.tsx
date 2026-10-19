@@ -61,14 +61,14 @@ const OFF = ["Video games", "Anime", "Ramen in the dark", "MMA", "Drawing in Pro
 const dockItems = (ui: UI) => [
   { label: "Change log", icon: <Svg><circle cx="6.5" cy="7" r="1.4" /><circle cx="6.5" cy="12" r="1.4" /><circle cx="6.5" cy="17" r="1.4" /><path d="M10.5 7h8M10.5 12h8M10.5 17h5" /></Svg> },
   { label: "Hookwarden", className: "ink-2", icon: <Mark src="/brand/hookwarden-mark.svg" className="dock-mark-tall" /> },
-  { label: "BITE", icon: <Image src="/brand/bite-logo.png" alt="" width={200} height={200} className="dock-logo" /> },
+  { label: "BITE", icon: <Image src="/brand/bite-logo.webp" alt="" width={200} height={200} className="dock-logo" /> },
   { label: "Param Decoder", className: "ink", icon: <Svg><path d="M8 5 3.5 12 8 19M16 5l4.5 7L16 19" /><circle cx="12" cy="12" r="2.2" /></Svg> },
 ].map((d) => ({ ...d, onClick: () => ui.go(1) })).concat(
   // Her streetwear label: opens a short recording of its site, the gate and the hero.
   {
     label: "Ruined Saints", className: "ink", icon: <img src="/brand/ruined-saints.svg" alt="" className="dock-wide" />, onClick: () => ui.sheet(ventures[0].name, (
       <>
-        <video className={p.sheetVideo} src="/media/ruined-saints.mp4" poster="/media/ruined-saints.jpg" autoPlay muted loop playsInline aria-label="The Ruined Saints site: the PRAY? gate, then the hero" />
+        <video className={p.sheetVideo} src="/media/ruined-saints.mp4" poster="/media/ruined-saints.webp" autoPlay muted loop playsInline aria-label="The Ruined Saints site: the PRAY? gate, then the hero" />
         <p className={p.lede}>{ventures[0].note} {ventures[0].role}, {ventures[0].dates}.</p>
       </>
     ))

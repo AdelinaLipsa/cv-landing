@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
+import { preconnect } from "react-dom";
 import { motion, useSpring, useTransform, type MotionValue } from "motion/react";
 import DecryptedText from "./DecryptedText";
 import { profile } from "@/content/cv";
@@ -128,6 +129,7 @@ const Pix = ({ rows }: { rows: string[] }) => (
 );
 
 export default function Window() {
+  preconnect("https://api.open-meteo.com", { crossOrigin: "anonymous" }); // the weather fetch on mount: the connection is open by then
   const host = useRef<HTMLDivElement>(null), note = useRef<HTMLDivElement>(null);
   const [now, setNow] = useState<ReturnType<typeof herClock> | null>(null);
   const [wx, setWx] = useState<Wx | null>(null);

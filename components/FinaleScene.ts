@@ -434,7 +434,7 @@ export async function mount(el: HTMLElement, live: React.RefObject<Live>, alive:
     const load = (src: string) => new Promise<HTMLImageElement | null>((ok) => { const im = new Image(); im.onload = () => ok(im); im.onerror = () => ok(null); im.src = src; });
     const fam = getComputedStyle(el).getPropertyValue("--font-hand").trim() || "cursive";
     const [[saints, tabby, birman, ivy, lunch, summer, rock, blep]] = await Promise.all([
-      Promise.all(["/media/ruined-saints.jpg", ...[1, 2, 3, 4, 5, 6, 7].map((n) => `/media/wall/photo-${n}.jpg`)].map(load)),
+      Promise.all(["/media/ruined-saints.webp", ...[1, 2, 3, 4, 5, 6, 7].map((n) => `/media/wall/photo-${n}.jpg`)].map(load)),
       document.fonts.load(`42px ${fam}`).catch(() => null)]);
     if (!alive()) return;
     const shots: Record<string, [Shot, string]> = {

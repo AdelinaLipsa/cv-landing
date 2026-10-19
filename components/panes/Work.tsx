@@ -33,7 +33,7 @@ function Frame({ tile, children }: { tile: Tile; children: React.ReactNode }) {
   return (
     <div className={`${s.frame} ${s[f] ?? ""}`}>
       {(f === "window" || f === "terminal") && <div className={s.bar}><i /><i /><i /><span>{tile.chrome ?? tile.title}</span></div>}
-      {f === "popup" && <div className={s.bar}><img src="/brand/bite-logo.png" alt="" width={20} height={20} /><span>{tile.title.split(",")[0]}</span></div>}
+      {f === "popup" && <div className={s.bar}><img src="/brand/bite-logo.webp" alt="" width={20} height={20} /><span>{tile.title.split(",")[0]}</span></div>}
       <div className={s.screen}>{children}</div>
     </div>
   );

@@ -24,7 +24,7 @@ const LIVE: Record<string, () => React.ReactNode> = {
   "change-log": () => <ChangeLogDemo />,
   "support-flows": () => <Terminal lines={SUPPORT_RUN} />,
   declines: () => <DeclinesDemo />,
-  "ruined-saints": () => <Recording src="/media/ruined-saints.mp4" poster="/media/ruined-saints.jpg" label="The Ruined Saints site: the PRAY? gate, then the hero" />,
+  "ruined-saints": () => <Recording src="/media/ruined-saints.mp4" poster="/media/ruined-saints.webp" label="The Ruined Saints site: the PRAY? gate, then the hero" />,
   pipeline: () => <Flow steps={["Vendor file → S3", "Laravel job, with retries", "SFTP to the partner", "Results → Caspio · Slack alert"]} accent="var(--broth)" />,
 };
 

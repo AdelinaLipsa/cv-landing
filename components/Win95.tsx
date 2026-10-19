@@ -78,7 +78,7 @@ function Saints() {
   const v = ventures[0];
   return (
     <div className={s.paint}>
-      <video src="/media/ruined-saints.mp4" poster="/media/ruined-saints.jpg" autoPlay muted loop playsInline aria-label={`${v.name}: the PRAY? gate, then the site’s hero`} />
+      <video src="/media/ruined-saints.mp4" poster="/media/ruined-saints.webp" autoPlay muted loop playsInline aria-label={`${v.name}: the PRAY? gate, then the site’s hero`} />
       <p>{v.name}: {v.note}</p>
     </div>
   );
