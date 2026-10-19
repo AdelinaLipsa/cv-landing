@@ -49,6 +49,10 @@
 }
 [data-drag] .track { cursor: grabbing; }
 .svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
+/* The years still ahead: one pale blue for both lanes (yellow and pink at 30% read as two muddy greys on the blue). */
+.ahead { opacity: 0.35; }
+.ahead path { stroke: #fff; }
+.ahead circle { fill: #fff; }
 .done { clip-path: inset(0 calc((1 - var(--p, 0)) * (100% - 16px) + 8px) 0 0); }
 .year { font: 500 9px var(--font-mono), monospace; fill: var(--on-night); opacity: 0.75; }
 

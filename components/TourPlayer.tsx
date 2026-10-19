@@ -148,7 +148,7 @@ export default function TourPlayer({ ref, t, playing, speed, onSeek, onToggle, o
         {w > 0 && (
           <>
             <svg className={s.svg} aria-hidden="true">
-              <g opacity="0.3"><Graph w={w} /></g>
+              <g className={s.ahead}><Graph w={w} /></g>
               {YEARS.map((k, n) => labels[n] && (
                 <text key={k} x={PAD + AT[k] * w} y="41" textAnchor={n === 0 ? "start" : "middle"} className={s.year}>{steps[k].year}</text>
               ))}
