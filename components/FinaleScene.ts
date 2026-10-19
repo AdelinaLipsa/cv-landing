@@ -431,7 +431,8 @@ export async function mount(el: HTMLElement, live: React.RefObject<Live>, alive:
   wall.add(cord); meshes.push(cord);
   scene.add(wall);
   void (async () => { // her own shots from public/, the rest drawn; the captions in the site's hand (Caveat)
-    const load = (src: string) => new Promise<HTMLImageElement | null>((ok) => { const im = new Image(); im.onload = () => ok(im); im.onerror = () => ok(null); im.src = src; });
+    // decode(): decoded off the main thread, so drawing them below doesn't decode them on it (8 at once froze ~190 ms)
+    const load = (src: string) => { const im = new Image(); im.src = src; return im.decode().then(() => im, () => null); };
     const fam = getComputedStyle(el).getPropertyValue("--font-hand").trim() || "cursive";
     const [[saints, tabby, birman, ivy, lunch, summer, rock, blep]] = await Promise.all([
       Promise.all(["/media/ruined-saints.webp", ...[1, 2, 3, 4, 5, 6, 7].map((n) => `/media/wall/photo-${n}.jpg`)].map(load)),
@@ -447,7 +448,10 @@ export async function mount(el: HTMLElement, live: React.RefObject<Live>, alive:
     };
     for (const [k, mat] of faces) { // 2x: crisp when the camera flies in. A fresh texture: a size change can't reuse the old one's storage
       const tex = new THREE.CanvasTexture(polaroid(shots[k][0], shots[k][1], fam, 2, WIDE_K.has(k))); tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = 4;
+      renderer.initTexture(tex); // onto the GPU now, one polaroid a task, not all eight on the next frame
       mat.map!.dispose(); mat.map = tex; mat.needsUpdate = true;
+      await new Promise((r) => setTimeout(r));
+      if (!alive()) return;
     }
     if (reduce) window.setTimeout(() => draw()); // no loop: show them once they're painted
   })();
@@ -784,6 +788,14 @@ export async function mount(el: HTMLElement, live: React.RefObject<Live>, alive:
   for (const mt of [bloom.materialHighPassFilter, ...bloom.separableBlurMaterials, bloom.compositeMaterial, bloom.blendMaterial]) fx.add(new THREE.Mesh(quad, mt));
   const fxOut = new THREE.Mesh(quad, add.material);
   let fxDone = false;
+  // Textures onto the GPU ~8 ms a task: uploaded on a first frame, they froze it (her 41 took ~200 ms in one go).
+  const upload = async (maps: Iterable<T.Texture>) => {
+    let slice = performance.now();
+    for (const map of maps) {
+      renderer.initTexture(map);
+      if (performance.now() - slice > 8) { await new Promise((r) => setTimeout(r)); slice = performance.now(); }
+    }
+  };
   const warm = (root: T.Object3D, variants: (() => void)[] = [() => {}]) => {
     const jobs: Promise<unknown>[] = [];
     renderer.setRenderTarget(glowRT);
@@ -1020,11 +1032,7 @@ export async function mount(el: HTMLElement, live: React.RefObject<Live>, alive:
   ]))];
   [phoneMesh.material, screenMesh.material, ledMesh.material] = lit0;
   await Promise.all(warming);
-  let slice = performance.now();
-  for (const map of new Set([...meshes.map((m) => (m.material as T.MeshBasicMaterial).map), ...screens.map((m) => m.map)].filter((t) => t))) {
-    renderer.initTexture(map!);
-    if (performance.now() - slice > 8) { await new Promise((r) => setTimeout(r)); slice = performance.now(); } // ~8 ms of uploads a task
-  }
+  await upload(new Set([...meshes.map((m) => (m.material as T.MeshBasicMaterial).map), ...screens.map((m) => m.map)].filter((t) => t) as T.Texture[]));
   mark("warm");
   const ro = new ResizeObserver(resize);
   ro.observe(el);
@@ -1184,7 +1192,8 @@ export async function mount(el: HTMLElement, live: React.RefObject<Live>, alive:
     // before she is drawn (warm()): compiled on her first frame they froze the page.
     const faded = () => { for (const mt of mats.keys()) mt.transparent = true; };
     const asMade = () => { for (const [mt, [tr]] of mats) mt.transparent = tr; };
-    void Promise.all([warm(char, [asMade, faded]), warm(scene)]).then(() => {
+    const maps = new Set([...mats.keys()].flatMap((mt) => Object.values(mt).filter((v): v is T.Texture => (v as T.Texture)?.isTexture)));
+    void Promise.all([warm(char, [asMade, faded]), warm(scene)]).then(() => upload(maps)).then(() => {
       asMade();
       if (!alive()) { free(char); key.shadow.dispose(); lamp.dispose(); return; }
       fade = reduce || !("live" in el.dataset) ? 1 : 0; // not live yet: the canvas's own fade-in brings her in
