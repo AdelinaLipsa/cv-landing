@@ -4,7 +4,7 @@
 #   Blender -b /tmp/boot.blend --python art/scripts/boot_plate.py -- on  /tmp/boot-on.png  [width] [samples]
 #   Blender -b /tmp/boot.blend --python art/scripts/boot_plate.py -- off /tmp/boot-off.png [width] [samples]
 # "on" has the tube's light on the desk; "off" is the same frame with the tube dark (the site crossfades on switch-off).
-# The C64 (public/models/c64-monitor.glb, untouched) stands on the desk but is invisible to the camera: it only
+# The C64 (art/downloads/props/c64_monitor.glb, the untouched download; the site ships a meshopt copy Blender can't import) stands on the desk but is invisible to the camera: it only
 # casts its shadow and blocks light. The live three.js monitor is drawn over the plate.
 import bpy, math, sys
 from mathutils import Vector
@@ -36,7 +36,7 @@ for c in ("Character", "Dust", "Helpers"):
 
 # ---- the C64 in the desk's corner, facing the room diagonally, as far back as its body allows
 before = set(D.objects)
-bpy.ops.import_scene.gltf(filepath="/Users/adelinalipsa/Documents/GitHub/adelina-cv/public/models/c64-monitor.glb")
+bpy.ops.import_scene.gltf(filepath="/Users/adelinalipsa/Documents/GitHub/adelina-cv/art/downloads/props/c64_monitor.glb")
 parts = [o for o in D.objects if o not in before]
 rig = D.objects.new("BootC64", None); sc.collection.objects.link(rig)
 for o in parts:

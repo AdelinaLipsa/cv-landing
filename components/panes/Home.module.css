@@ -99,15 +99,6 @@
 .bootBtn { position: absolute; left: 50%; top: 8px; transform: translateX(-50%); z-index: 2; padding: 4px 10px; border: 1px solid var(--blueprint); border-radius: 999px; background: var(--surface); color: var(--blueprint); font: 700 12px var(--font-mono), monospace; white-space: nowrap; cursor: pointer; opacity: 0; pointer-events: none; }
 .bootBtn:focus-visible { opacity: 1; pointer-events: auto; }
 .bootBtn span { font-size: 9px; }
-.retroCanvas { width: 100%; height: 100%; }
-.retroCanvas canvas {
-  display: block; width: 100% !important; height: 100% !important;
-  /* Soft edges: zoomed in, the room fades out at the frame instead of being cut by a straight line. */
-  -webkit-mask-image: linear-gradient(to right, transparent, #000 6%, #000 94%, transparent), linear-gradient(to bottom, transparent, #000 6%, #000 94%, transparent);
-  -webkit-mask-composite: source-in;
-  mask-image: linear-gradient(to right, transparent, #000 6%, #000 94%, transparent), linear-gradient(to bottom, transparent, #000 6%, #000 94%, transparent);
-  mask-composite: intersect;
-}
 /* Off duty: where it started */
 /* The timeline: a dot per step, and a piece of line from each dot to the next, so it starts and ends on a dot.
    Drawn in sequence when it scrolls into view (data-on): each dot pops, then its line runs down. */

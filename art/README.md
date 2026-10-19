@@ -108,7 +108,8 @@ CC0:
 
 - Poly Haven: `wood_floor` texture (Dimitrios Savva), `desk_lamp_arm_01` (Kuutti Siitonen, Yann Kervran),
   `potted_plant_02` (Rico Cilliers). https://polyhaven.com
-- Her figures come from `public/models/` (megaman, kid-goku, pokeball, digivice, straw-hat).
+- Her figures (megaman, kid-goku, pokeball, digivice) live in `room_source.blend`; their GLBs left `public/models/` once
+  the site stopped loading them (git history has them).
 - Everything else is modelled for this room; textures are generated with PIL.
 
 # The boot screen's room
