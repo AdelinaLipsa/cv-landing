@@ -255,6 +255,7 @@
 .termLink:hover, .termLink:focus-visible { transform: translateY(-2px); box-shadow: 0 14px 30px rgba(23, 21, 58, 0.26); }
 .termHint { display: none; color: var(--on-ink-muted); }
 @media (hover: hover) and (pointer: fine) { .termHint { display: inline; } }
+.key { display: inline-block; min-width: 20px; margin-left: 4px; padding: 1px 5px 2px; border: 1px solid rgba(255, 255, 255, 0.25); border-bottom-width: 2px; border-radius: 5px; font: inherit; line-height: 1.2; text-align: center; color: var(--on-ink); }
 
 /* "Busy? The 30-second version": a quiet link under the hero buttons. A faint underline at rest says "link";
    on hover/focus an ink one draws over it left to right and the arrow nudges on. */
@@ -272,7 +273,7 @@
 
 /* The end of the page: the CTA, then her window full bleed, then a signed sign-off, clear of the bottom nav. */
 .outro { display: flex; flex-direction: column; gap: 40px; margin: 72px 0 0; padding: 48px 0 40px; border-top: 1px solid var(--line); }
-.outro .h2 { font-size: clamp(34px, 4.6vw, 64px); line-height: 1.02; text-align: left; }
+.outro .h2 { font-size: clamp(34px, 4.6vw, 64px); line-height: 1.02; text-align: left; padding-bottom: 0.18em; } /* room for the descenders above the line under it */
 .outro .h2 :global(.shuffle-parent) { text-align: left !important; } /* Shuffle sets center inline; this heading wraps */
 .outroMain { display: flex; flex-direction: column; gap: 14px; }
 .outroLine { max-width: 520px; font-size: 17px; line-height: 1.55; color: var(--body-2); }

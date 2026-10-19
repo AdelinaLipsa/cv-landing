@@ -262,7 +262,7 @@ export default function Home({ ui }: { ui: UI }) {
           </Land>
 
           <button type="button" className={s.termLink} onClick={ui.terminal}>
-            <span aria-hidden="true">&gt;_</span> psst… there’s a terminal in here<span className={s.termHint}>. Press `</span>
+            <span aria-hidden="true">&gt;_</span> psst… there’s a terminal in here<span className={s.termHint}>. Press <kbd className={s.key}>`</kbd></span>
           </button>
         </div>
         {!touring && <button type="button" className={s.bootBtn} onClick={() => { sfx.wake(); setWin95(true); }}><span aria-hidden="true">▶</span> Boot the old computer</button>}

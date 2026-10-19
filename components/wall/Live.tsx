@@ -163,6 +163,7 @@ export function DecoderDemo() {
           </motion.div>
         )}
       </AnimatePresence>
+      <span className={`${s.pdNote} ${s.foot} ${s.pdStatus}`}><i aria-hidden="true" />local · nothing leaves the browser</span>
     </div>
   );
 }
@@ -197,8 +198,8 @@ export function DeclinesDemo() {
   );
 }
 
-// Change log: entries move through their statuses. Demo entries, generic on purpose.
-const LOG = ["Find Order journey updated", "Pay Later at checkout", "Self-service refund flow"];
+// Change log: entries move through their statuses. Demo entries from her own work (CV, her words 2026-10-19).
+const LOG = ["Find Order journey updated", "Pay Later at checkout", "Self-service refund flow", "Training documents for the team", "HR moved to Factorial", "BITE: deep scan"];
 const STATUS = ["Specced", "Testing", "Shipped"];
 export function ChangeLogDemo() {
   const [ref, on] = useLive();
@@ -209,7 +210,7 @@ export function ChangeLogDemo() {
         const st = (t + r) % 3;
         return <div key={e} className={s.logRow}><span>{e}</span><span className={`${s.pill} ${s[`st${st}`]}`}>{STATUS[st]}</span></div>;
       })}
-      <span className={s.liveCap}>One view of what changed, and when.</span>
+      <span className={`${s.liveCap} ${s.foot}`}>One view of what changed, and when.</span>
     </div>
   );
 }
@@ -281,13 +282,13 @@ export function BiteDemo() {
 }
 
 // This site: what it's made of, typed out. All true of this repo.
-const SITE = ["next 16 · react 19 · typescript", "motion · gsap · three", "react bits, restyled", "lofi: web audio, no files", "career: a git graph", "cv as json: /api/cv"];
+const SITE = ["next 16 · react 19 · typescript", "motion · gsap · three", "react bits, restyled", "lofi: web audio, no files", "career: a git graph", "room: blender → three.js", "guide: a git log you can scrub", "cv as json: /api/cv"];
 export function ThisSite() {
   const [ref, on] = useLive();
   const t = useTick(SITE.length + 2, 700, on);
   return (
     <div ref={ref} className={`${s.live} ${s.white} ${s.stack} ${s.mono}`}>
-      {SITE.map((l, i) => <motion.span key={l} animate={{ opacity: t > i ? 1 : 0 }}>› {l}</motion.span>)}
+      {SITE.map((l, i) => <motion.span key={l} animate={{ opacity: t > i ? 1 : 0 }}>› {l}{i === SITE.length - 1 && <span className={s.cursor} aria-hidden="true" />}</motion.span>)}
     </div>
   );
 }
