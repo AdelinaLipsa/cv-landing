@@ -45,7 +45,7 @@ transparent) to use as the loading poster.
    `ChairSeatMesh`; rotate `ChairSeat` to swivel, `Plant` to sway).
    The two `.mjs` need `@gltf-transform/core`, `@gltf-transform/extensions` and `meshoptimizer` installed.
 
-## Last step for every model in `public/models/` (not `c64-monitor.glb`, which stays the untouched download)
+## Last step for every model in `public/models/`
 
 `node art/scripts/meshopt_v1.mjs in.glb out.glb` re-packs a gltf-transform meshopt file as `KHR_meshopt_compression`
 with meshopt's v1 vertex codec at its top level (three r186's `MeshoptDecoder` reads it; up to a fifth smaller geometry).
@@ -91,8 +91,9 @@ Loaded live in the room, not baked (`public/models/`, optimized with gltf-transf
   CC BY 4.0 (normal/AO/roughness maps and the screws dropped, textures 256 px: 12 MB → 216 KB; the record spins).
 
 The boot screen's monitor (`c64-monitor.glb`, `components/Boot.tsx`): "C64 Monitor" by hoschu,
-https://sketchfab.com/3d-models/c64-monitor-b005d2125a1545ad9e0994e0deb5e82e, CC BY 4.0 (the download, unmodified;
-the 2003 page is real DOM laid over its glass).
+https://sketchfab.com/3d-models/c64-monitor-b005d2125a1545ad9e0994e0deb5e82e, CC BY 4.0 (the download, kept in
+`art/downloads/props/c64_monitor.glb`; shipped through the room's step 3 commands minus `pivot_nodes.mjs`, WebP 90:
+977 KB → 129 KB, the mesh within 0.001 units of the original; the 2003 page is real DOM laid over its glass).
 
 In `character.glb`:
 

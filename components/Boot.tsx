@@ -47,11 +47,12 @@ const BODY_W = (BODY.half * 2 * FACE) / F.w; // the monitor's width, in frame wi
 
 // The model around the page: loads after first paint and fades in. The screen's light on the plastic goes out with the tube.
 async function monitor(el: HTMLDivElement, alive: () => boolean) {
-  const [THREE, { GLTFLoader }, { RoomEnvironment }] = await Promise.all([
-    import("three"), import("three/examples/jsm/loaders/GLTFLoader.js"), import("three/examples/jsm/environments/RoomEnvironment.js"),
+  const [THREE, { GLTFLoader }, { MeshoptDecoder }, { RoomEnvironment }] = await Promise.all([
+    import("three"), import("three/examples/jsm/loaders/GLTFLoader.js"), import("three/examples/jsm/libs/meshopt_decoder.module.js"),
+    import("three/examples/jsm/environments/RoomEnvironment.js"),
   ]);
   if (!alive()) return null;
-  const gltf = await new GLTFLoader().loadAsync("/models/c64-monitor.glb"); // the model as authored, untouched
+  const gltf = await new GLTFLoader().setMeshoptDecoder(MeshoptDecoder).loadAsync("/models/c64-monitor.glb"); // the download, meshopt + WebP (art/README.md)
   if (!alive()) return null;
   const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
   renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
