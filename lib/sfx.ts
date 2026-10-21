@@ -1,13 +1,11 @@
 // Chiptune sound effects for the arcade, synthesised on the fly: no audio files.
 // The context is created on the first sound, which always follows a click into a game (the site's audio opt-in).
-// Big moments also buzz the phone (Android; iOS Safari has no vibration API). One toggle mutes both, remembered per visitor.
-const KEY = "cv-arcade-sound";
+// Big moments also buzz the phone (Android; iOS Safari has no vibration API). Always on.
 let ctx: AudioContext | null = null;
 let master: GainNode | null = null;
-let muted = (() => { try { return localStorage.getItem(KEY) === "off"; } catch { return false; } })();
 
 const out = () => {
-  if (muted || typeof window === "undefined") return null;
+  if (typeof window === "undefined") return null;
   if (!ctx) {
     ctx = new AudioContext();
     master = ctx.createGain();
@@ -53,7 +51,7 @@ const noise = (dur: number, vol = 0.6, cutoff = 2400, delay = 0) => {
   src.start(t);
 };
 
-const buzz = (pattern: number | number[]) => { if (!muted) try { navigator.vibrate?.(pattern); } catch { } };
+const buzz = (pattern: number | number[]) => { try { navigator.vibrate?.(pattern); } catch { } };
 
 const arp = (notes: number[], step: number, type: OscillatorType = "square", vol = 0.35) =>
   notes.forEach((n, i) => tone(n, n, step * 1.6, type, vol, i * step));
@@ -135,7 +133,7 @@ const strum = (notes: number[], at = 0, dur = 1.8, vol = 0.5) => {
   });
 };
 
-// A short recorded clip, fetched and decoded once, played through the same mute.
+// A short recorded clip, fetched and decoded once.
 const clips = new Map<string, Promise<AudioBuffer | null>>();
 const sample = (url: string, vol = 4) => {
   const c = out(), m = master;
@@ -143,7 +141,7 @@ const sample = (url: string, vol = 4) => {
   let p = clips.get(url);
   if (!p) { p = fetch(url).then((r) => r.arrayBuffer()).then((b) => c.decodeAudioData(b)).catch(() => null); clips.set(url, p); }
   void p.then((b) => {
-    if (!b || muted) return;
+    if (!b) return;
     const src = c.createBufferSource(), g = c.createGain();
     src.buffer = b; g.gain.value = vol; // the master is set quiet for blips; a voice needs it back up
     src.connect(g).connect(m);
@@ -220,9 +218,3 @@ export const sfx = {
   lose: () => { arp([494, 440, 392, 330, 262], 0.14, "triangle", 0.4); buzz(250); },
 };
 
-export const isMuted = () => muted;
-export const setMuted = (m: boolean) => {
-  muted = m;
-  try { localStorage.setItem(KEY, m ? "off" : "on"); } catch { }
-  if (m) ctx?.suspend();
-};

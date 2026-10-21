@@ -27,8 +27,6 @@
 .touch { display: none; }
 @media (pointer: coarse) { .keys { display: none; } .touch { display: flex; } }
 .tips { margin: 2px 0 0; font-size: 12.5px; line-height: 1.45; color: var(--steam); }
-.sound { display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 12px; border: 1px solid var(--line); border-radius: 999px; background: var(--surface); color: var(--ink); font-size: 13px; font-weight: 700; cursor: pointer; }
-.sound[aria-pressed="true"] { border-color: var(--blueprint); }
 /* Leaderboard: arcade-cabinet style */
 .scores { margin-top: 8px; padding: 12px 14px; border-radius: 14px; background: #0d0b24; color: #e8e6ff; font-family: var(--font-mono), monospace; font-size: 12.5px; }
 .scores > b { display: block; margin-bottom: 6px; color: var(--broth); letter-spacing: 0.08em; text-transform: uppercase; }
@@ -57,7 +55,6 @@
 /* A game fills the screen: as wide as the height allows (16:10), leaving room for the header and controls below */
 .body > .playing { max-width: min(1600px, max(760px, (100dvh - 230px) * 1.6)); }
 .overlay .back { color: #b9b6e0; font-size: 14px; padding: 10px 4px; }
-.overlay .sound { height: 44px; background: #13113a; border-color: #3a3670; color: #e8e6ff; }
 .overlay .controls dt { color: #e8e6ff; border-color: #3a3670; }
 .overlay .controls dd { color: #b9b6e0; }
 .overlay .tips { color: #8e8cae; }

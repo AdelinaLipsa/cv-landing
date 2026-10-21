@@ -1,7 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
-import { isMuted, setMuted } from "@/lib/sfx";
 import { ACHIEVEMENTS, toast, unlock, unlocked } from "@/lib/achievements";
 import GamePreview from "./GamePreview";
 import FuzzyText from "./FuzzyText";
@@ -46,11 +45,10 @@ const GAMES = [
 export default function Arcade({ onClose, contact, challenge }: { onClose: () => void; contact: () => void; challenge?: Challenge | null }) {
   const [on, setOn] = useState<string | null>(challenge?.game ?? null); // a challenge link opens straight into its game
   const [last, setLast] = useState<number | null>(null); // the latest final score, for the leaderboard
-  const [quiet, setQuiet] = useState(false);
   const [found, setFound] = useState(0);
   const [best, setBest] = useState<Record<string, number>>({});
   useEffect(() => {
-    setQuiet(isMuted()); unlock("arcade");
+    unlock("arcade");
     setFound(unlocked().length);
     try { setBest(Object.fromEntries(GAMES.filter((g) => g.best).map((g) => [g.id, Number(localStorage.getItem(g.best)) || 0]))); } catch { }
   }, [on]);
@@ -63,12 +61,10 @@ export default function Arcade({ onClose, contact, challenge }: { onClose: () =>
   const facing = challenge && on === challenge.game ? challenge : null; // the challenge in play, if this is its game
   const beaten = !!facing && last != null && last > facing.score;
   useEffect(() => { if (beaten) toast({ icon: "🥇", title: `You beat ${facing!.by}!`, body: `${last} to ${facing!.score}. Send it back to them.` }); }, [beaten]); // eslint-disable-line react-hooks/exhaustive-deps
-  const toggle = () => setQuiet((q) => { setMuted(!q); return !q; });
-  // M toggles sound mid-game; Esc closes. The page behind doesn't scroll while you play.
+  // Esc closes. The page behind doesn't scroll while you play.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if ((e.target as Element).closest?.("input, textarea")) return;
-      if (e.key === "m" || e.key === "M") toggle();
       if (e.key === "Escape") onClose();
     };
     const root = document.documentElement, was = root.style.overflow;
@@ -84,9 +80,6 @@ export default function Arcade({ onClose, contact, challenge }: { onClose: () =>
       <header className={s.head}>
         {on ? <button type="button" className={s.back} onClick={() => { setOn(null); setLast(null); }}>← Arcade</button> : <b className={s.title}>Arcade</b>}
         <span className={s.headRight}>
-          <button type="button" className={s.sound} onClick={toggle} aria-pressed={!quiet} title="Sound and vibration (M)">
-            <span aria-hidden="true">{quiet ? "🔇" : "🔊"}</span> {quiet ? "Sound off" : "Sound on"}
-          </button>
           <button type="button" className={s.close} onClick={onClose} aria-label="Close the arcade">✕</button>
         </span>
       </header>
